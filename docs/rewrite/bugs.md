@@ -32,6 +32,7 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 | BUG-017 | Domain / `ProjectAnalytics.contactRequests` | Low      | Unknown                             | Needs more evidence                                                                     |
 | BUG-018 | Testing / historical search E2E coverage    | Medium   | Fix (close the gap)                 | Action item for the new Playwright suite                                                |
 | BUG-019 | Design / rich-text editor field-order bug   | Low      | N/A — tied to architecture decision | Moot once Slate is replaced; verify the new editor doesn't reintroduce an analogous bug |
+| BUG-020 | Security / SSR Apollo client shared state   | Low      | Replace (moot)                      | Resolved — pre-implementation review pass, 2026-09-18                                   |
 
 ---
 
@@ -67,6 +68,19 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
   inherits `Project::visible()`, applied to every read path (not just `show`).
 - Regression test: a Feature test asserting a request under a private project is never returned by
   any query/search result the request's owner didn't make.
+- **Resolved context (pre-implementation review pass, 2026-09-18)**: the permission gap is real and
+  must still be fixed at the API/Policy layer, but it was **never actually exploited by the
+  historical product**. Two independent facts confirm this: (1) the search indexer itself
+  (`search.function.js`) fetches the parent project via an admin-secret call and only indexes a
+  request when the parent is public — so private-project requests were never discoverable via
+  search regardless of the Hasura gap (see `docs/search/README.md`); (2) no frontend code path was
+  found anywhere in `webapp/src/**` that queries `Request` independently of `projects_by_pk.requests`
+  (a nested field, naturally scoped by the parent project query returning nothing for a private
+  project a non-owner requests — see `docs/rewrite/open-questions.md`, the `/projects/{id}` SSR
+  resolution). The fix remains required — a hand-crafted GraphQL query against Hasura directly could
+  still have exploited the gap, and Nusszopf 2 must not reproduce an equivalent unscoped read path
+  even if none was ever built historically — but this is defense-in-depth against a *possible*
+  exposure, not closing a *demonstrated* historical leak.
 - Full spec: `docs/rewrite/intentional-changes.md` → "`Request` visibility inherits from its parent
   `Project`".
 
@@ -259,29 +273,40 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
   preflight) with `Access-Control-Allow-Origin: *` and `Access-Control-Allow-Credentials: true`,
   confirmed in both staging and production nginx configs, not just local dev.
 - Evidence: `docs/security/README.md`.
-- Severity/impact: Medium — a risky CORS pattern in general; actual exploitability depends on
-  whether the frontend ever called this API with `credentials: 'include'` and whether a
-  restricted (vs. master) Meilisearch API key was used in the browser — both Unknown from this
-  evidence.
-- Classification: **Unknown**, leaning **Replace**: Nusszopf 2's architecture already eliminates
-  the *need* for this pattern (Meilisearch is queried server-side via Scout, never directly from
-  the browser — see `docs/architecture/mapping.md`), so the question is moot for the rewrite
-  regardless of how it's classified historically. No further investigation needed unless a public
-  search API is ever added as a new product decision.
+- Severity/impact: Low (revised down from Medium — see resolution below).
+- Classification: **Replace (moot)** — resolved, no longer Unknown.
+- **Resolved (pre-implementation review pass, 2026-09-18)**: `search.service.js` confirms the
+  browser queries Meilisearch directly with `MEILI_PK` (named as a public/search-only key, distinct
+  from the `MEILI_API_KEY`/admin-style key used server-side by the indexer in
+  `search.function.js`), so the risky CORS pattern was at least paired with what looks like a
+  restricted key, not the master key, in the browser — partially resolving the "Unknown: which key"
+  question from `docs/security/README.md`. More importantly, the confirmed indexing-time visibility
+  gate (`docs/search/README.md`) means **no private content was ever present in the index for this
+  CORS pattern to expose**, regardless of the key's exact scope — there was nothing sensitive to
+  leak via this specific vector historically. Nusszopf 2's architecture removes the pattern
+  entirely regardless (Meilisearch is only ever queried server-side via Scout, never from the
+  browser), so this is fully moot for the rewrite, not just low-risk historically.
 
-### BUG-017 — `ProjectAnalytics.contactRequests` may have no real increment call site
+### BUG-017 — `ProjectAnalytics.contactRequests` has no real increment call site
 
 - Affected area: Domain, `ProjectAnalytics`
 - Historical behavior: the column exists, is covered by the same open-write permission as `views`,
-  but no confirmed call site incrementing it was found anywhere in the frontend files read across
-  this archaeology pass (unlike `views`, which has a fully traced increment path in
-  `pages/projects/[id].js`).
+  but no call site incrementing it exists anywhere in the frontend.
 - Evidence: `docs/domain/entities.md`, `docs/rewrite/open-questions.md`.
-- Severity/impact: Low — if genuinely unused, it's dead schema, not a functional gap; if it *is*
-  used somewhere not yet read (e.g. inside `ContactDialog.js`'s submit handler), that path needs
-  the same server-side-only fix as `views` (BUG-001).
-- Classification: **Unknown** — needs one more targeted read (`ContactDialog.js`'s submit handler)
-  before deciding whether Nusszopf 2 needs a `contactRequests`-equivalent field at all.
+- Severity/impact: Low — dead schema, not a functional gap.
+- Classification: **Resolved / Fix (do not reproduce)**.
+- **Resolved (pre-implementation review pass, 2026-09-18)**: `ContactDialog.js`'s `handleSubmit` was
+  read in full — it posts only to `/api/contact` (the email-sending route) and contains no
+  GraphQL mutation of any kind. Combined with the earlier confirmed read of `pages/projects/[id].js`
+  (which only ever increments `views`), both plausible call sites are now exhausted:
+  `contactRequests` is genuinely dead schema, never wired to any product behavior at any point in
+  the evidence available.
+- Intended Nusszopf 2 behavior: **do not implement a `contactRequests` counter or field.** Per
+  `CLAUDE.md`'s "Never: invent domain behavior" — there is no historical trigger to revive, and
+  building one (e.g. "increment on contact-dialog submit") would be inventing new product behavior,
+  not reviving existing behavior, however plausible it seems from the column name alone. If a
+  "contact requests" metric is wanted for Nusszopf 2, it needs its own fresh product decision, not
+  a silent revival of an unused historical column.
 
 ### BUG-018 — Historical search E2E coverage was entirely stubbed out
 
@@ -309,3 +334,33 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
   replaced entirely. The regression-test *symptom* (a form silently failing to submit under some
   field-interaction order) should be explicitly tested against for whatever editor replaces Slate,
   in case an analogous issue exists in the replacement.
+
+### BUG-020 — SSR Apollo client's shared mutable `accessToken` module state
+
+- Affected area: Security, `/projects/{id}` (and every other SSR page using `apolloClient.js`)
+- Historical behavior: `webapp/src/utils/libs/apolloClient.js` declares `let accessToken` at
+  **module scope** (not per-request). `requestAccessTokenServer(req, res)`, called from the
+  `authLink`'s `setContext` callback on every SSR GraphQL request, `await`s the current request's
+  Auth0 session and then assigns the result to this shared module variable before the
+  `Authorization` header is read from it. Because the assignment and the read both happen across
+  an `await` boundary on a variable shared by the whole Node.js process (not scoped to the request
+  closure), two SSR requests handled by the same warm process/instance in close succession could,
+  in principle, interleave: request A's `accessToken` assignment could be overwritten by request
+  B's before request A's own header-construction step reads it back, causing **one visitor's
+  session token to be used for another visitor's outbound Hasura query** in that request's window.
+- Evidence: `webapp/src/utils/libs/apolloClient.js` (`accessToken`, `requestAccessTokenServer`,
+  `authLink`), read in full during the pre-implementation review pass (2026-09-18).
+- Severity/impact: Low/Unknown-in-practice — the code pattern is a genuine shared-mutable-state
+  race condition (bad practice regardless of platform), but whether it was ever actually
+  exploitable depends on Vercel's specific concurrency model for this deployment (whether a single
+  warm Next.js server process ever handled two different users' `getServerSideProps` calls with
+  interleaved async execution) — Unknown, unverifiable from this repository, and not something to
+  guess at. No evidence exists that this was ever observed or reported as an incident.
+- Classification: **Replace (moot)** — Nusszopf 2's architecture has no equivalent hazard: Laravel
+  serves each HTTP request in its own process/request lifecycle (traditional PHP-FPM
+  request-per-process model, not a shared long-lived event-loop process with module-level mutable
+  state), so there is no shared variable for one request's authentication context to bleed into
+  another's. Nothing needs to be "fixed" — the architecture change itself eliminates the class of
+  bug. Recorded here only so a future contributor porting SSR-adjacent patterns doesn't
+  reintroduce an analogous shared-mutable-state hazard (e.g. a static/singleton HTTP client
+  carrying per-request auth state in a queue worker or long-running process).

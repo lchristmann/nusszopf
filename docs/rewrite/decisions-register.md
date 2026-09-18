@@ -41,28 +41,58 @@ These are established and should not be silently re-litigated by a future contri
 - Dedicated `queue-worker` and `scheduler` Compose services (LCxHolz's pattern) — Nusszopf has real
   background work (search indexing, mail) that needs them, unlike two of the three references.
 
-## Requires human decision
+## Decision categories (pre-implementation review pass, 2026-09-18)
 
-Only genuinely open items — see the linked entry for full context before deciding.
+The 16 items previously listed as a flat "Requires human decision" list have been re-audited and
+reclassified into exactly one of three categories, per the pre-implementation specification review
+(`docs/rewrite/specification-review.md`, §7). The goal is to minimize decision overhead for the
+human maintainer without letting Claude silently resolve a genuine product/security/foundational
+question — see that document for the reasoning behind each reclassification.
 
-| # | Question | Recommendation | Full detail |
+- **A — Must decide before implementation**: a product, security, or foundational architecture
+  decision that genuinely blocks work.
+- **B — Claude may decide**: a technical implementation detail where a reasonable engineering
+  choice does not alter the historical product. Claude has authority to choose the simplest
+  defensible option (the recommendation already on file below) and proceed; the choice is recorded
+  here as **Adopted**, not left open.
+- **C — Defer**: safely postponable without affecting the first implementation slices.
+
+### A — Must decide before implementation
+
+| # | Question | Why it's genuinely A | Full detail |
 |---|---|---|---|
-| 1 | Container registry: Docker Hub vs. GHCR? | GHCR (ties provenance to the repo, no extra credential in CI) | `architecture-decisions.md` → "Container registry" |
-| 2 | Who writes changelog entries: PR author (CI-enforced) or maintainer at release time? | Maintainer-curated for now (single-maintainer reality); revisit with more contributors | `architecture-decisions.md` → "Who writes changelog entries" |
-| 3 | Backup tier for v1: plain `pg_dump`+`tar`+cron, or `spatie/laravel-backup`-equivalent from day one? | Start with the simple tier, document the advanced tier as an upgrade path | `architecture-decisions.md` → "Backup tier for the first release" |
-| 4 | Health-check depth: bare Laravel `/up`, or a dependency-by-dependency status page? | `spatie/laravel-health`-equivalent — small dependency, directly serves the self-hosting goal | `architecture-decisions.md` → "Health-check depth" |
-| 5 | Object storage in v1: local disk (S3 as documented upgrade) or required from the start? | Local disk in v1, S3-compatible storage as a documented later upgrade | `architecture-decisions.md` → "Object storage" |
-| 6 | Mail provider default: SMTP-only, or document specific transactional providers too? | Document SMTP as the universal path, list common providers as options — never hard-couple to SendGrid | `architecture-decisions.md` → "Mail provider default recommendation" |
-| 7 | Rich-text editor replacement for Slate — which package/approach? | A Livewire-compatible package configured down to exactly bold/italic/underline/lists/link (the confirmed historical toolbar) | `architecture-decisions.md` → "Rich-text editor replacement" |
-| 8 | `Request` model naming — `App\Models\Request` (clashes with `Illuminate\Http\Request`) or `App\Models\ProjectRequest`? | `ProjectRequest` — avoids permanent import friction; no product-visible effect (German UI copy unaffected) | `architecture-decisions.md` → "`Request` model naming" |
-| 9 | `ProjectAnalytics` — separate table/model, or columns directly on `Project`? | Keep separate (preserves hot-write/content-write isolation, low-stakes either way) | `architecture-decisions.md` → "`ProjectAnalytics` as its own model" |
-| 10 | Visual-parity testing mechanism — Playwright's built-in screenshot comparison, or a dedicated visual-regression tool? | Playwright's built-in `toHaveScreenshot` — lowest setup cost, same suite | `architecture-decisions.md` → "Visual parity testing mechanism" |
-| 11 | Newsletter opt-in asymmetry (BUG-011): should the signup-checkbox path also require double opt-in? | Preserve as historically observed by default (product-fidelity default); revisit only if GDPR-compliance review says otherwise | `docs/rewrite/bugs.md` → BUG-011 |
-| 12 | Native `window.confirm()` for destructive actions (BUG-013): preserve, or upgrade to a styled dialog? | Preserve as historically observed by default | `docs/rewrite/bugs.md` → BUG-013 |
-| 13 | Login return destination (BUG-015): always `/user/projects`, or return to the referring context? | Preserve as historically observed by default | `docs/rewrite/bugs.md` → BUG-015 |
-| 14 | `ProjectAnalytics.contactRequests` (BUG-017): confirm real usage before deciding whether to keep an equivalent field | Investigate `ContactDialog.js` before implementation; default to keeping the field if intent is clear even if wiring is unconfirmed | `docs/rewrite/bugs.md` → BUG-017 |
-| 15 | Auth: IP-block thresholds / breached-password-check scope — both were Auth0 platform features with no in-repo configuration | Laravel `throttle` middleware with a documented, reasonable default (e.g. 5 attempts/minute) for IP-block-equivalent; breached-password check is optional, not required for parity | `docs/authentication/README.md` §7–8 |
-| 16 | Auth: preserve the 8-hour rolling session duration? | Preserve as the default; no evidence it's arbitrary, no reason to change it without one | `docs/rewrite/open-questions.md` → "8-hour rolling session duration" |
+| 1 | Newsletter opt-in asymmetry (BUG-011): should the signup-checkbox path also require double opt-in? | A real product/compliance-intent question (GDPR-style consent semantics), not resolvable from code or engineering judgment alone — the two plausible answers have materially different legal/UX consequences | `docs/rewrite/bugs.md` → BUG-011 |
+
+### B — Claude may decide (adopted defaults)
+
+| # | Question | Adopted | Why this is safely Claude's call |
+|---|---|---|---|
+| 1 | Container registry: Docker Hub vs. GHCR? | **GHCR** | Ties provenance to the repo, no extra credential in CI; purely an operational/CI choice, zero product impact. (Note: this is the one B-item worth a light human sanity check before the *first* release specifically, since changing registries later breaks every operator's pull command — not because the decision itself needs product judgment.) |
+| 2 | Backup tier for v1: plain `pg_dump`+`tar`+cron, or `spatie/laravel-backup`-equivalent from day one? | **Simple tier first**, advanced tier documented as an upgrade path | Purely an ops/engineering maturity tradeoff, fully reversible later, no product-behavior implication |
+| 3 | Health-check depth: bare Laravel `/up`, or a dependency-by-dependency status page? | **`spatie/laravel-health`-equivalent** | Small dependency, directly serves the self-hosting goal, no product impact |
+| 4 | Object storage in v1: local disk (S3 as documented upgrade) or required from the start? | **Local disk in v1**, S3-compatible storage as a documented later upgrade | Reversible infrastructure choice; avatars are the only affected feature and their historical behavior is unaffected either way |
+| 5 | Mail provider default: SMTP-only, or document specific transactional providers too? | **SMTP as the universal path**, common providers documented as options | Self-hosting operational concern, not a product decision — never hard-couple to a paid vendor |
+| 6 | Rich-text editor replacement for Slate — which package/approach? | **Any Livewire-compatible package, configured down to exactly the confirmed six-tool historical toolbar** (bold/italic/underline, ordered/unordered list, link) | The product-visible capability ceiling is already Confirmed from evidence (`architecture-decisions.md`) — only the implementing package is left, a pure technical substitution with zero product-visible difference as long as the toolbar is configured down correctly |
+| 7 | `Request` model naming — `App\Models\Request` vs. `App\Models\ProjectRequest`? | **`ProjectRequest`** | Avoids permanent import friction with `Illuminate\Http\Request`; no product-visible effect (German UI copy unaffected either way) |
+| 8 | `ProjectAnalytics` — separate table/model, or columns directly on `Project`? | **Keep separate** | Preserves hot-write/content-write isolation; low-stakes and reversible via a later migration either way |
+| 9 | Visual-parity testing mechanism — Playwright's built-in screenshot comparison, or a dedicated visual-regression tool? | **Playwright's built-in `toHaveScreenshot`** | Lowest setup cost, same suite, purely a tooling choice |
+| 10 | Native `window.confirm()` for destructive actions (BUG-013): preserve, or upgrade to a styled dialog? | **Preserve as historically observed** | `CLAUDE.md`'s product-fidelity default already answers this absent contrary evidence: preserve unless demonstrably defective. The historical pattern is 100% consistent (never once uses the app's own `Dialog`), which is evidence of a deliberate-enough pattern to preserve, not evidence of a bug — and it is fully testable via Playwright's own `page.on('dialog', ...)`, so there's no engineering reason to deviate |
+| 11 | Login return destination (BUG-015): always `/user/projects`, or return to the referring context? | **Preserve as historically observed** | Same reasoning as above — no evidence of unintended behavior, product-fidelity default applies directly |
+| 12 | Auth: IP-block threshold for the `throttle`-middleware equivalent | **A documented, reasonable default (e.g. 5 attempts/minute)** | Auth0's actual threshold is unrecoverable from any available evidence (platform config, not in-repo) — there is no historical value to match, so any reasonable, documented default is an equally valid engineering judgment call, not a product decision |
+| 13 | Auth: preserve the 8-hour rolling session duration? | **Preserve as the default** | No evidence it's arbitrary and no reason to change it without one; already the `docs/rewrite/open-questions.md` recommendation — this entry only formalizes moving it out of "open" |
+
+### C — Defer
+
+| # | Question | Why deferred | Full detail |
+|---|---|---|---|
+| 1 | Who writes changelog entries: PR author (CI-enforced) or maintainer at release time? | Explicitly revisit-once-there-are-more-contributors; does not affect the first implementation slices at all | `architecture-decisions.md` → "Who writes changelog entries" |
+| 2 | Auth: breached-password-check scope (Auth0's breached-password detection feature) | An optional enhancement beyond historical parity (nothing user-facing beyond one email template depended on it uniquely) — not required for the first slices, and can be added later without rework | `docs/authentication/README.md` §7–8 |
+
+### Resolved (moved out of the decision register)
+
+| # | Question | Resolution | Full detail |
+|---|---|---|---|
+| 1 | `ProjectAnalytics.contactRequests` (BUG-017): confirm real usage before deciding whether to keep an equivalent field | **Resolved, Confirmed dead** — `ContactDialog.js`'s submit handler was read in full and contains no GraphQL mutation of any kind. Nusszopf 2 does not reproduce this field. | `docs/rewrite/bugs.md` → BUG-017 |
 
 ## Explicitly not open (do not re-ask)
 

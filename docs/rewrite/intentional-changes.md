@@ -148,6 +148,32 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 
 ---
 
+### `ProjectAnalytics.contactRequests` is not reproduced
+
+- Status: Proposed
+- Date: 2026-09-18 (pre-implementation review pass)
+- Historical behavior: `projects_analytics.contactRequests` exists in the schema with the same
+  bounds/permission shape as `views` (`docs/domain/entities.md`), but has **no increment call site
+  anywhere in the frontend** — confirmed by an exhaustive read of both `pages/projects/[id].js`
+  (which only increments `views`) and `containers/projects/ContactDialog/ContactDialog.js` (whose
+  submit handler only calls `/api/contact`, no GraphQL mutation at all).
+- Why it is defective/incomplete or why change is required: this is not a bug to fix so much as a
+  historical feature that was never actually built — the column and its permission model exist,
+  but no product behavior was ever wired to it. Reproducing it would mean inventing new behavior
+  (deciding *when* it increments) with no historical evidence to base that decision on, which
+  `CLAUDE.md` explicitly forbids ("Never: invent domain behavior").
+- New behavior: Nusszopf 2's `ProjectAnalytics` (or equivalent) model has a `views` counter only,
+  server-incremented per BUG-001's fix. No `contactRequests`-equivalent field is implemented.
+- Affected screens: none (the field was never surfaced in any UI).
+- Affected domain: `ProjectAnalytics` (`docs/domain/entities.md`).
+- Affected workflows: none.
+- Migration implications: none (a column that never existed in Nusszopf 2's own fresh schema).
+- Tests: none needed beyond the absence of a `contactRequests` column/ability in the model/policy
+  test suite.
+- Approval: pending.
+
+---
+
 ## Explicitly deferred (not proposed here, need a product decision first — see `docs/rewrite/open-questions.md` / `docs/rewrite/architecture-decisions.md`)
 
 The following were identified during archaeology as *possible* candidates for change but are deliberately **not** proposed above, because reasonable product intent could explain the historical behavior as-is:

@@ -28,10 +28,15 @@ A strictly ordered sequence, mirroring the LCxHolz onboarding shape:
 6. `npm install && npm run dev`
 7. `php artisan migrate && php artisan db:seed`
 8. `php artisan storage:link`
-9. Create the first application user/administrator (exact command depends on Nusszopf's own authentication/authorization design — not yet decided; see `docs/authentication/README.md` and `docs/domain/permissions.md`).
+9. Open the application and register a normal account through the registration screen — **there is
+   no separate admin/first-user bootstrap step**. Nusszopf has no admin/staff role anywhere in the
+   historical product (`docs/domain/entities.md`, "Entities confirmed absent"); every account is an
+   ordinary equal-privilege user, in development exactly as in production. (Corrected during the
+   pre-implementation specification review, 2026-09-18 — this step previously assumed an
+   LCxHolz-style admin-bootstrap command that does not apply to Nusszopf's domain.)
 10. Open the application at the documented local URL.
 
-The exact compose service names, ports, and step 9's command are placeholders until the Docker architecture (`docs/architecture/README.md`) and authentication design are finalized. This section must be updated to match the real implementation before it is trusted as onboarding documentation.
+The exact compose service names and ports are placeholders until the Docker architecture (`docs/architecture/README.md`) is finalized. This section must be updated to match the real implementation before it is trusted as onboarding documentation.
 
 ## One canonical command per concern
 

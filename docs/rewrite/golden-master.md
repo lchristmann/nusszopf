@@ -47,3 +47,21 @@ A first complete pass across all three historical repositories is done. See `doc
 ## Second pass (specification hardening, 2026-09-18)
 
 Following the archaeology pass above, a second pass critically reviewed the findings, resolved a targeted set of previously-Unknown items against additional historical source (see `docs/rewrite/open-questions.md` for each item's resolution and evidence), and produced the remaining Golden Master deliverables (authorization matrix, screen-by-screen checklist, consolidated bugs register, decision register, first-slice proposal). Remaining Unknowns (a few unresolved frontend-vs-backend cross-references, exact CMS copy, the Meilisearch visibility-filtering question, several product-intent questions that only a human can settle) are tracked individually in `docs/rewrite/open-questions.md` and `docs/rewrite/decisions-register.md` rather than guessed here. Suspected historical bugs are tracked as proposed corrections (not yet accepted) in `docs/rewrite/intentional-changes.md`, indexed by `docs/rewrite/bugs.md`. This pass did not implement anything; it is a specification and architecture baseline only.
+
+## Third pass (pre-implementation adversarial review, 2026-09-18)
+
+A full adversarial review of the entire specification against itself and against the historical
+source, per `docs/rewrite/specification-review.md`. This pass resolved both flagged
+security-critical unknowns (Meilisearch visibility filtering, `/projects/{id}` SSR enforcement) by
+reading the actual historical source directly, found and fixed a genuine cross-document
+contradiction (a phantom "create first administrator account" self-hosting step, copied from
+reference projects that have an admin role Nusszopf does not), discovered one new historical defect
+(BUG-020, moot for the rewrite), reclassified 3 previously-Unknown bugs with new evidence, and
+reduced the 16-item decision register to 1 required human decision (Category A), 13 Claude-decided
+adopted defaults (Category B), and 2 deferred items (Category C). Produced
+`docs/rewrite/specification-review.md` (full audit) and `docs/rewrite/implementation-contract.md`
+(the concise contract for implementation agents), and substantially expanded
+`docs/rewrite/first-slice.md` with the confirmed historical wizard mechanics and an explicit
+final-behavior-vs-scaffolding distinction. Final status: **READY WITH EXPLICIT DECISIONS** — one
+human decision (BUG-011, newsletter opt-in asymmetry) remains, and it does not block the first
+vertical slice.

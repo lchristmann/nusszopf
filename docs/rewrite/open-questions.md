@@ -48,27 +48,21 @@ Unresolved historical behavior, consolidated from the archaeology pass across `d
 
 ### `ProjectAnalytics.contactRequests` — possibly dead/unused historically
 
-- Status: Unknown
+- Status: **Resolved** — interpretation (b) confirmed correct
 - Area: Domain / Project
-- Sources inspected: `webapp/src/pages/projects/[id].js` (the file expected to contain a contact-counter increment call, alongside the confirmed `views` increment).
-- Historical evidence: no increment call site for `contactRequests` was found in any file read across either research pass, despite the column existing in the schema with the same permission shape as `views` (see BUG-001).
-- Conflicting evidence: the column's existence and its identical bounds/permissions to `views` strongly suggest it was intended to be used the same way.
-- Possible interpretations: (a) a call site exists elsewhere in `webapp/src/**` not yet read (most likely — e.g. inside `ContactDialog`'s submit handler); (b) the feature was built at the schema level and never wired up on the frontend.
-- Recommended investigation: grep `contactRequests`/`contact_requests`/`addProjectAnalytics` across all of `webapp/src/**` before the rewrite decides whether to keep an equivalent field.
-- Decision: pending investigation. Do not silently drop the field from Nusszopf 2's `ProjectAnalytics` model without confirming (a)/(b) — the historical *intent* (count contact actions) is clear from the column name and the contact dialog's existence, even if the wiring is unconfirmed.
-- Date: 2026-09-18
+- Sources inspected (pre-implementation review pass, 2026-09-18): `webapp/src/containers/projects/ContactDialog/ContactDialog.js` (the specific file flagged as the most likely remaining call site) in full.
+- Resolution: **Confirmed dead.** `ContactDialog`'s `handleSubmit` posts only to `/api/contact` (the email-sending route); no GraphQL mutation, no `ProjectAnalytics`/`contactRequests` write of any kind appears anywhere in the file. Combined with the earlier exhaustive read of `pages/projects/[id].js` (which only increments `views`), this closes out both plausible call sites named in the original archaeology. Interpretation (b) is correct: `contactRequests` was built at the schema/permission level (`docs/domain/entities.md`, `docs/domain/permissions.md`) and **never wired up anywhere in the frontend** — it is genuinely dead schema, not a feature with unconfirmed wiring.
+- Decision: Nusszopf 2 does **not** reproduce a `contactRequests` counter or any UI/behavior around it. Per `CLAUDE.md`'s "Never: invent domain behavior/UI" — building a counter with no historical increment trigger anywhere in evidence would require inventing *when* it increments, which is not a revival of existing behavior. Recorded as BUG-017's resolution in `docs/rewrite/bugs.md`.
+- Date resolved: 2026-09-18 (pre-implementation specification review pass)
 
 ### Does `/projects/{id}`'s SSR enforce `visibility`, or only existence?
 
-- Status: Unknown
+- Status: **Resolved** — interpretation (a) confirmed correct
 - Area: Security / Domain / Project
-- Sources inspected: `docs/domain/permissions.md` (Hasura `select_permissions` on `projects`, which deny a private project to any non-owner), `docs/design/screens.md` (confirms `getServerSideProps` returns `notFound: true` only when "the project id does not resolve", not specifically checked against a `visibility`-aware query in this pass).
-- Historical evidence: the Hasura permission layer is unambiguous — a private project is not selectable by anyone but its owner. Whether the `webapp`'s own server-side data-fetching code for `/projects/{id}` actually goes through that same permission-checked path (using the viewer's own role/token) or instead uses an elevated/admin credential server-side (which would bypass the visibility filter and only fail on true non-existence) was not confirmed in either archaeology pass.
-- Conflicting evidence: none directly, but an unverified note surfaced during the second pass speculated that "private" might mean "unlisted but reachable via direct link" — this would contradict the Hasura evidence above if true, so it must not be assumed either way.
-- Possible interpretations: (a) SSR uses the viewer's own token/role, so the Hasura filter applies normally and a private project 404s for non-owners (expected, consistent with all other evidence); (b) SSR uses an elevated credential and only checks existence, meaning private projects are actually viewable by anyone with the direct URL — a real, additional authorization gap beyond BUG-002, not yet recorded as such.
-- Recommended investigation: read `webapp/src/pages/projects/[id].js`'s `getServerSideProps` in full, specifically which GraphQL client/credential it uses for the initial fetch.
-- Decision: pending investigation. Do not implement Nusszopf 2's project-detail route without this being resolved — default to the safe interpretation (a) (enforce visibility, not just existence) unless investigation proves otherwise.
-- Date: 2026-09-18
+- Sources inspected (pre-implementation review pass, 2026-09-18): `webapp/src/pages/projects/[id].js`'s `getServerSideProps` in full; `webapp/src/utils/libs/apolloClient.js` (`createApolloClient`, `authLink`, `requestAccessTokenServer`).
+- Resolution: **Confirmed.** `getServerSideProps` builds its Apollo client via `initializeApollo(null, ctx)`, which attaches an `authLink` that calls `requestAccessTokenServer(ctx.req, ctx.res)` — this resolves the **current request's own Auth0 session** (`auth0.getSession(req, res)`) and forwards its access token as `Authorization: Bearer <token>` on the `GET_PROJECT` query; if there is no session, no `Authorization` header is sent at all (falls through to Hasura's `anonymous` role). The query therefore always executes as the viewer's own role/identity, never an elevated/admin credential — Hasura's `select_permissions` filter (`visibility = public OR user_id = caller`, `docs/domain/permissions.md`) applies exactly as for any other request. `projects_by_pk` returns `null` for a private project queried by a non-owner, and `getServerSideProps` returns `{ notFound: true }` in that case — a genuine hard 404, not a soft/late redirect. **Interpretation (a) is correct**: private projects are not reachable via direct URL by non-owners historically. There is no additional authorization gap beyond BUG-002 here.
+- Residual note (recorded as BUG-020, see `docs/rewrite/bugs.md`): the SSR Apollo client construction itself has a latent concurrency defect (a module-level mutable `accessToken` variable written and read across an `await` boundary), which is a *different* concern from this question — it's about whether one visitor's token could bleed into a concurrent visitor's request under a shared Node.js process, not about whether the query's intended role is correct. Classified `Replace (moot)`: Nusszopf 2's per-request Laravel process model has no equivalent shared-mutable-state hazard, so nothing needs to be "fixed" here, only not reproduced.
+- Date resolved: 2026-09-18 (pre-implementation specification review pass)
 
 ### `NavHeader mode="external"` and `Footer variant="auth0"` actual usage sites
 

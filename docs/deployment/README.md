@@ -96,7 +96,17 @@ Every variable must have a documented default or an explicit "you must set this"
 3. Edit `.env`: set `APP_URL`, `APP_ENV=production`, `APP_DEBUG=false`, database/Meilisearch credentials.
 4. `docker network create nusszopf-network && docker compose up -d`
 5. Generate and set `APP_KEY`, restart.
-6. Create the first administrator account via a documented Artisan command (exact command Unknown until authentication/authorization archaeology is complete).
+6. Open the app and register a normal account through the ordinary registration screen — **there is
+   no separate "first administrator" bootstrap step and no Artisan command for this.** Corrected
+   during the pre-implementation specification review (2026-09-18): this step originally mirrored
+   LCxHolz's/Waffle Dashboard's own installation guides (`php artisan make:filament-admin` and
+   equivalent), both of which have a real admin/staff role to bootstrap. Nusszopf's domain
+   archaeology **confirms no admin/staff role exists anywhere in the historical product**
+   (`docs/domain/entities.md`, "Entities confirmed absent"; `docs/rewrite/decisions-register.md`,
+   "Explicitly not open") — every account is an ordinary equal-privilege user. Copying the
+   reference projects' bootstrap-an-admin step here would have been exactly the kind of
+   reference-project business-logic leakage `.claude/rules/03-reference-projects.md` forbids. This
+   is a genuine self-hosting simplification versus both references: one fewer required command.
 7. Verify health (see `docs/deployment/operations.md`).
 
 ## Reverse proxy and TLS
@@ -140,4 +150,4 @@ Recorded for `docs/rewrite/architecture-decisions.md`:
 2. Whether to bundle a reverse proxy/TLS solution or document it as operator-owned (all evidence points to "operator-owned," but no reference makes this an explicit product decision — it's just what each project happened to do).
 3. Whether Meilisearch's index is backed up or always rebuilt from PostgreSQL on restore.
 4. Exact `.env` variable list and defaults — pending completion of domain/authentication/search archaeology.
-5. First-admin-account bootstrap command — depends on Nusszopf's authentication implementation (Laravel-native, replacing Auth0 — see `docs/authentication/README.md`), not yet designed.
+5. ~~First-admin-account bootstrap command~~ — **Resolved (pre-implementation review pass, 2026-09-18): moot.** Nusszopf has no admin/staff role (confirmed absent from the entire historical product); operators create their own account through the ordinary registration screen like any user. See the corrected "Installation (operator path)" step 6 above.
