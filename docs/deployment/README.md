@@ -62,14 +62,15 @@ LCxHolz papers over this with a custom nginx entrypoint that deletes and re-copi
 
 ## Required configuration
 
-**(needs approval — exact variable list)**. Minimum expected, following the `.env` shape common to all three references plus Meilisearch:
+**Decided** (finalized during the first vertical slice's implementation, 2026-09-18 — `.env.example` is the source of truth; this is a copy for reference):
 
 ```
-APP_NAME=
+APP_NAME=Nusszopf
 APP_ENV=production
 APP_KEY=                 # generated once via `docker compose run --rm --entrypoint php php-fpm artisan key:generate --show`
 APP_URL=
-APP_TIMEZONE=
+APP_TIMEZONE=Europe/Berlin
+APP_LOCALE=de
 
 DB_CONNECTION=pgsql
 DB_HOST=postgres
@@ -77,13 +78,22 @@ DB_DATABASE=
 DB_USERNAME=
 DB_PASSWORD=
 
+SESSION_DRIVER=redis
+SESSION_LIFETIME=480     # 8-hour rolling session, preserved from history (docs/rewrite/open-questions.md)
+CACHE_STORE=redis
+QUEUE_CONNECTION=redis
 REDIS_HOST=redis
 
 MEILISEARCH_HOST=http://meilisearch:7700
 MEILISEARCH_KEY=
+SCOUT_DRIVER=meilisearch
+SCOUT_QUEUE=true          # closes BUG-009 — search sync is queued, not fire-and-forget
 
-MAIL_MAILER=              # see docs/email/README.md — historical Nusszopf used Auth0/SendGrid; Nusszopf uses Laravel-native mail
+MAIL_MAILER=smtp          # any Laravel-supported driver; see docs/email/README.md
+FILESYSTEM_DISK=local     # avatars on local disk in v1, S3-compatible storage a documented upgrade
 ```
+
+This is the first slice's real, verified list — it will grow (not shrink) as mail/newsletter/object-storage land in later slices.
 
 Every variable must have a documented default or an explicit "you must set this" note in `.env.example`, following Waffle Dashboard's `WAFFLE-INSTALLATION-GUIDE.md` pattern of naming exactly which lines a first-time operator has to edit (there: `APP_ENV`, `APP_DEBUG`, `APP_URL`, and optionally `APP_TIMEZONE`/`APP_LOCALE`).
 
@@ -149,5 +159,5 @@ Recorded for `docs/rewrite/architecture-decisions.md`:
 1. Container registry: GHCR (LCxHolz's private-package pattern) vs. Docker Hub (Waffle Dashboard's public pattern) — Nusszopf, being FOSS, likely wants a public registry, but this hasn't been decided.
 2. Whether to bundle a reverse proxy/TLS solution or document it as operator-owned (all evidence points to "operator-owned," but no reference makes this an explicit product decision — it's just what each project happened to do).
 3. Whether Meilisearch's index is backed up or always rebuilt from PostgreSQL on restore.
-4. Exact `.env` variable list and defaults — pending completion of domain/authentication/search archaeology.
+4. ~~Exact `.env` variable list and defaults~~ — **Resolved**, see "Required configuration" above.
 5. ~~First-admin-account bootstrap command~~ — **Resolved (pre-implementation review pass, 2026-09-18): moot.** Nusszopf has no admin/staff role (confirmed absent from the entire historical product); operators create their own account through the ordinary registration screen like any user. See the corrected "Installation (operator path)" step 6 above.

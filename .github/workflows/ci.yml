@@ -1,0 +1,147 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  PHP_VERSION: "8.5"
+
+jobs:
+  lint:
+    name: Formatting (Pint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+      - uses: ramsey/composer-install@v3
+      - run: composer lint:check
+
+  static-analysis:
+    name: Static analysis (Larastan)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+      - uses: ramsey/composer-install@v3
+      - run: composer larastan
+
+  test:
+    name: Tests (Pest)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: nusszopf_testing
+          POSTGRES_USER: nusszopf
+          POSTGRES_PASSWORD: nusszopf
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U nusszopf"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+      redis:
+        image: redis:alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+      meilisearch:
+        image: getmeili/meilisearch:v1.11
+        env:
+          MEILI_MASTER_KEY: nusszopf-ci-master-key
+          MEILI_NO_ANALYTICS: "true"
+        ports: ["7700:7700"]
+        options: >-
+          --health-cmd "wget -qO- http://127.0.0.1:7700/health"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: pdo_pgsql, pgsql, bcmath, intl, zip, gd, exif, pcntl, redis
+      - uses: ramsey/composer-install@v3
+      - run: cp .env.example .env
+      - run: php artisan key:generate
+      - name: Point the app at the CI services
+        run: |
+          php artisan config:clear
+          {
+            echo "DB_HOST=127.0.0.1"
+            echo "DB_DATABASE=nusszopf_testing"
+            echo "REDIS_HOST=127.0.0.1"
+            echo "MEILISEARCH_HOST=http://127.0.0.1:7700"
+            echo "MEILISEARCH_KEY=nusszopf-ci-master-key"
+            echo "SCOUT_DRIVER=meilisearch"
+          } >> .env
+      - run: php artisan scout:sync-index-settings
+      - run: composer test
+
+  build-assets:
+    name: Frontend build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+
+  docker-build:
+    name: Docker build (php-fpm + nginx)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - run: docker compose -f compose.prod.yaml build php-fpm web
+
+  e2e:
+    name: Browser tests (Playwright)
+    runs-on: ubuntu-latest
+    needs: [test, build-assets]
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - run: cp .env.example .env
+      - name: Start the real dev stack
+        run: docker compose -f compose.dev.yaml up -d --build web php-fpm queue-worker postgres redis meilisearch
+      - name: Wait for the app to be healthy
+        run: |
+          timeout 120 sh -c 'until docker compose -f compose.dev.yaml ps php-fpm | grep -q healthy; do sleep 2; done'
+      - name: Initialize the application
+        run: |
+          docker compose -f compose.dev.yaml exec -T php-fpm php artisan key:generate
+          docker compose -f compose.dev.yaml exec -T php-fpm php artisan migrate --force
+          docker compose -f compose.dev.yaml exec -T php-fpm php artisan scout:sync-index-settings
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps ${{ matrix.project }}
+      - run: npx playwright test --project=${{ matrix.project }}
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:8080
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-${{ matrix.project }}
+          path: playwright-report/
+          retention-days: 7

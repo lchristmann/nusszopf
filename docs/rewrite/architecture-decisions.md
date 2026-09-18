@@ -141,7 +141,7 @@ Decisions about how Nusszopf 2 itself should work — as distinct from `docs/rew
 
 ### Required environment variable list (exact set)
 
-- Status: Undecided (draft exists)
+- Status: **Decided** — finalized during the first vertical slice's implementation (2026-09-18); see `.env.example` and `docs/deployment/README.md`'s "Required configuration".
 - Date: 2026-09-18
 - Context: `docs/deployment/README.md` has a draft minimum `.env` shape but marks the exact list "(needs approval — exact variable list)."
 - Requirement: `.claude/rules/06-self-hosting.md` — "a small number of environment variables."

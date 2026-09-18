@@ -1,6 +1,6 @@
 # Development
 
-This document defines Nusszopf's local development workflow. It is written to be **directly actionable once the Docker/Laravel skeleton exists** — every command below should become copy-pasteable in `README-DEV.md` without redesign. Until the skeleton exists, the commands are the *intended* canonical form (per `docs/references/lcxholz.md`), not yet verified against a running Nusszopf codebase.
+This document defines Nusszopf's local development workflow. The Docker/Laravel skeleton now exists (first vertical slice, 2026-09-18) and every command below has been verified against a running Nusszopf codebase — `README-DEV.md` is the copy-pasteable, kept-in-sync version of this same command set.
 
 See `docs/references/lcxholz.md` for the full evidence behind these choices and what was deliberately not copied from LCxHolz.
 
@@ -36,7 +36,7 @@ A strictly ordered sequence, mirroring the LCxHolz onboarding shape:
    LCxHolz-style admin-bootstrap command that does not apply to Nusszopf's domain.)
 10. Open the application at the documented local URL.
 
-The exact compose service names and ports are placeholders until the Docker architecture (`docs/architecture/README.md`) is finalized. This section must be updated to match the real implementation before it is trusted as onboarding documentation.
+The compose service names above (`web`, `php-fpm`, `workspace`, `queue-worker`, `scheduler`, `postgres`, `redis`, `meilisearch`) and the default `APP_PORT=8080` are the real implementation, verified 2026-09-18.
 
 ## One canonical command per concern
 
@@ -56,7 +56,8 @@ The exact compose service names and ports are placeholders until the Docker arch
 | Fresh DB + seed | `php artisan migrate:fresh --seed` |
 | Queue worker (dev) | `php artisan queue:listen` |
 | Scheduler (dev) | `php artisan schedule:work` |
-| Search reindex | `php artisan meilisearch:import` (or Laravel Scout's equivalent — command name to confirm once search integration is implemented) |
+| Sync search index settings | `php artisan scout:sync-index-settings` |
+| Full search reindex | `php artisan scout:import "App\Models\Project"` |
 | Logs | `docker compose -f compose.dev.yaml logs -f [service]` |
 
 This table must stay in sync with `composer.json`/`package.json` scripts as they are implemented — a command listed here that no longer exists, or an implemented script missing from here, is a documentation bug.
