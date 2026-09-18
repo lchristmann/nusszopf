@@ -1,0 +1,113 @@
+name: nusszopf-prod
+
+x-app-environment: &app-environment
+  env_file:
+    - .env
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      target: nginx
+    image: ghcr.io/nusszopf/nusszopf-web:${NUSSZOPF_VERSION:-dev}
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:80"
+    depends_on:
+      php-fpm:
+        condition: service_healthy
+
+  php-fpm:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      target: php-fpm
+    image: ghcr.io/nusszopf/nusszopf-php-fpm:${NUSSZOPF_VERSION:-dev}
+    restart: unless-stopped
+    <<: *app-environment
+    volumes:
+      - laravel-storage:/var/www/storage/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+
+  queue-worker:
+    image: ghcr.io/nusszopf/nusszopf-php-fpm:${NUSSZOPF_VERSION:-dev}
+    restart: unless-stopped
+    <<: *app-environment
+    volumes:
+      - laravel-storage:/var/www/storage/app
+    command: ["php", "artisan", "queue:work", "--tries=3", "--max-time=3600"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  scheduler:
+    image: ghcr.io/nusszopf/nusszopf-php-fpm:${NUSSZOPF_VERSION:-dev}
+    restart: unless-stopped
+    <<: *app-environment
+    volumes:
+      - laravel-storage:/var/www/storage/app
+    command: ["php", "artisan", "schedule:work"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.11
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      MEILI_ENV: production
+      MEILI_NO_ANALYTICS: "true"
+    volumes:
+      - meilisearch-data:/meili_data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:7700/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres-data:
+  redis-data:
+  meilisearch-data:
+  laravel-storage:

@@ -1,0 +1,207 @@
+@import 'tailwindcss';
+
+@import '@fontsource/barlow/400.css';
+@import '@fontsource/barlow/500.css';
+@import '@fontsource/barlow/600.css';
+@import '@fontsource/barlow/700.css';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+/*
+ * Nusszopf's historical Tailwind config (`tailwind.config.js`) replaces the
+ * entire default color palette rather than extending it — `bg-blue-500`
+ * does not mean stock Tailwind blue in this product. See
+ * docs/design/visual-language.md for the evidence and the full hex table.
+ * `--color-*: initial` clears Tailwind's built-in scales so only the
+ * palette below exists.
+ */
+@theme {
+    --color-*: initial;
+    --color-transparent: transparent;
+    --color-current: currentColor;
+    --color-black: #000;
+    --color-white: #fff;
+
+    --color-warning-100: #ffeee5;
+    --color-warning-200: #fdd1b9;
+    --color-warning-300: #f8a87c;
+    --color-warning-700: #b84405;
+
+    --color-steel-50: #f1f6f9;
+    --color-steel-100: #eceff1;
+    --color-steel-200: #cfd8dc;
+    --color-steel-300: #afbec5;
+    --color-steel-400: #90a4ae;
+    --color-steel-500: #546e7a;
+    --color-steel-600: #455963;
+    --color-steel-700: #37474f;
+    --color-steel-800: #263238;
+
+    --color-stone-200: #f2f2f2;
+    --color-stone-300: #e0e0e0;
+    --color-stone-400: #c7c7c7;
+    --color-stone-600: #828282;
+    --color-stone-800: #404040;
+
+    --color-livid-100: #eef5f7;
+    --color-livid-200: #cbe1e6;
+    --color-livid-300: #bad7de;
+    --color-livid-500: #64a6b4;
+    --color-livid-800: #213e45;
+
+    --color-lilac-100: #f4f2f6;
+    --color-lilac-150: #f2f0f4;
+    --color-lilac-200: #e5e1e9;
+    --color-lilac-300: #cbc3d3;
+    --color-lilac-400: #b1a6bc;
+    --color-lilac-500: #89799a;
+    --color-lilac-600: #645673;
+    --color-lilac-800: #403749;
+
+    --color-moss-200: #eaf0a8;
+    --color-moss-300: #e0e97c;
+    --color-moss-400: #d5e151;
+    --color-moss-450: #c0ca33;
+    --color-moss-800: #3e410b;
+
+    --color-yellow-100: #fffff0;
+    --color-yellow-200: #fcfdb5;
+    --color-yellow-250: #f7f97b;
+    --color-yellow-300: #f6f151;
+    --color-yellow-400: #ead706;
+    --color-yellow-500: #d6b300;
+    --color-yellow-800: #574800;
+
+    --color-red-100: #ffe9e5;
+    --color-red-200: #ffcdc6;
+    --color-red-300: #fca99c;
+    --color-red-500: #f5624d;
+    --color-red-600: #d51407;
+
+    --color-turquoise-100: #e5fff5;
+    --color-turquoise-200: #c9f7e6;
+    --color-turquoise-300: #9be9cb;
+    --color-turquoise-500: #4dcbae;
+    --color-turquoise-700: #005c4c;
+
+    --color-blue-100: #eaf3ff;
+    --color-blue-200: #d1e3fc;
+    --color-blue-300: #abcbf8;
+    --color-blue-400: #87b2ed;
+    --color-blue-500: #6395dc;
+    --color-blue-700: #00378a;
+
+    --color-pink-100: #ffeef1;
+    --color-pink-200: #ffccd5;
+    --color-pink-300: #ff99aa;
+    --color-pink-500: #f1507e;
+    --color-pink-700: #c20a5d;
+
+    --font-sans: 'Barlow', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+
+    --spacing-18: 4.75rem;
+    --spacing-84: 21rem;
+    --spacing-128: 32rem;
+
+    --shadow-lg-dark: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
+    --animate-opacity-fade: opacityFade 200ms cubic-bezier(0.08, 0.82, 0.17, 1);
+    --animate-scale-fade: scaleFade 200ms cubic-bezier(0.08, 0.82, 0.17, 1);
+
+    @keyframes opacityFade {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes scaleFade {
+        from {
+            opacity: 0;
+            transform: scale(0.85);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+}
+
+/*
+ * The historical product's closed, 11-item type scale (`Text.theme.js`).
+ * Every heading/body text uses one of exactly these variants via the
+ * <x-text> component — see docs/design/visual-language.md.
+ */
+@layer components {
+    .nz-title-lg {
+        @apply text-4xl font-semibold leading-tight;
+    }
+    .nz-title-md {
+        @apply text-3xl font-bold leading-tight;
+    }
+    .nz-title-sm {
+        @apply text-xl font-bold leading-snug;
+    }
+    .nz-title-sm-semi {
+        @apply text-xl font-semibold leading-snug;
+    }
+    .nz-text-lg-semi {
+        @apply text-2xl font-semibold leading-snug;
+    }
+    .nz-text-lg {
+        @apply text-2xl font-medium leading-snug;
+    }
+    .nz-text-lg-thin {
+        @apply text-2xl font-normal leading-snug;
+    }
+    .nz-text-md {
+        @apply text-xl font-medium leading-snug;
+    }
+    .nz-text-sm-medium {
+        @apply text-lg font-medium;
+    }
+    .nz-text-sm {
+        @apply text-lg;
+    }
+    .nz-text-xs {
+        @apply text-base;
+    }
+
+    /* Button color/border ring treatment — see Button.css in docs/design/visual-language.md. */
+    .nz-btn-stone {
+        @apply transition-shadow duration-200 ease-out border-2 rounded-full ring-2 ring-transparent text-stone-800 border-stone-800;
+        @apply hover:ring-stone-800/25 focus:ring-stone-800/25;
+    }
+    .nz-btn-steel {
+        @apply transition-shadow duration-200 ease-out border-2 rounded-full ring-2 ring-transparent text-steel-700 border-steel-700;
+        @apply hover:ring-steel-700/25 focus:ring-steel-700/25;
+    }
+    .nz-btn-lilac {
+        @apply transition-shadow duration-200 ease-out border-2 rounded-full ring-2 ring-transparent text-lilac-800 border-lilac-800;
+        @apply hover:ring-lilac-800/25 focus:ring-lilac-800/25;
+    }
+    .nz-btn-warning {
+        @apply transition-shadow duration-200 ease-out border-2 rounded-full ring-2 ring-transparent text-warning-700 border-warning-700;
+        @apply hover:ring-warning-700/25 focus:ring-warning-700/25;
+    }
+    .nz-btn-blue {
+        @apply text-blue-700 transition-shadow duration-200 ease-out border-2 border-blue-700 rounded-full ring-2 ring-transparent;
+        @apply hover:ring-blue-700/25 focus:ring-blue-700/25;
+    }
+    .nz-btn-turquoise {
+        @apply transition-shadow duration-200 ease-out border-2 rounded-full ring-2 ring-transparent text-turquoise-700 border-turquoise-700;
+        @apply hover:ring-turquoise-700/25 focus:ring-turquoise-700/25;
+    }
+    .nz-btn-yellow {
+        @apply text-yellow-800 transition-shadow duration-200 ease-out border-2 border-yellow-800 rounded-full ring-2 ring-transparent;
+        @apply hover:ring-yellow-800/25 focus:ring-yellow-800/25;
+    }
+    .nz-btn-moss {
+        @apply transition-shadow duration-200 ease-out border-2 rounded-full text-moss-800 border-moss-800 ring-2 ring-transparent;
+        @apply hover:ring-moss-800/25 focus:ring-moss-800/25;
+    }
+}
