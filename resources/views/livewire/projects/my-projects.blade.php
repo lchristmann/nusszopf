@@ -3,7 +3,7 @@
         <x-framed-grid-card.header>
             <div class="flex items-center justify-between">
                 <x-text as="h1" variant="titleMd">Meine Projekte</x-text>
-                <x-button as="a" href="{{ route('projects.create') }}" color="lilac">Projekt erstellen</x-button>
+                <x-button as="a" href="{{ route('projects.create') }}" color="lilac" data-test="btn_create-project_user-projects">Projekt erstellen</x-button>
             </div>
         </x-framed-grid-card.header>
     </x-frame>
@@ -19,7 +19,7 @@
                 @else
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         @foreach ($projects as $project)
-                            <div class="border-2 border-lilac-300 rounded-lg p-5">
+                            <div class="border-2 border-lilac-300 rounded-lg p-5" data-test="card_edit-project">
                                 <x-text as="h2" variant="textLgSemi">{{ $project->title }}</x-text>
                                 <x-text as="p" variant="textXs" class="mt-1 text-steel-600">
                                     {{ $project->visibility === 'public' ? 'Öffentlich' : 'Privat' }}
@@ -28,7 +28,7 @@
                                     <a href="{{ route('projects.show', $project) }}" class="underline">
                                         <x-text as="span" variant="textSm">Ansehen</x-text>
                                     </a>
-                                    <a href="{{ route('projects.edit', $project) }}" class="underline">
+                                    <a href="{{ route('projects.edit', $project) }}" class="underline" data-test="link_edit-project">
                                         <x-text as="span" variant="textSm">Bearbeiten</x-text>
                                     </a>
                                 </div>

@@ -5,6 +5,7 @@
             <x-input
                 wire:model.live.debounce.500ms="query"
                 name="query"
+                data-test="input_search"
                 color="moss"
                 aria-label="Projekte durchsuchen"
                 placeholder="Projekte durchsuchen"
@@ -23,10 +24,11 @@
         @else
             {{-- Masonry via CSS columns, not a JS library — docs/architecture/mapping.md
                  flags this as achievable without a client-side dependency. --}}
-            <div class="columns-1 sm:columns-2 lg:columns-3 gap-4 [column-fill:_balance]">
+            <div class="columns-1 sm:columns-2 lg:columns-3 gap-4 [column-fill:_balance]" data-test="search-results">
                 @foreach ($hits as $hit)
                     <a
                         href="{{ route('projects.show', $hit) }}"
+                        data-test="card_search-hit"
                         class="block break-inside-avoid mb-4 border-2 border-lilac-300 rounded-lg p-5 hover:ring-2 hover:ring-lilac-300"
                     >
                         <x-text as="h2" variant="textLgSemi">{{ $hit->title }}</x-text>

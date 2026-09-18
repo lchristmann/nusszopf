@@ -94,6 +94,23 @@ services:
       redis:
         condition: service_healthy
 
+  playwright:
+    # Playwright's bundled browsers need glibc; the app's own Alpine-based
+    # `workspace` image can't run them reliably. Microsoft's official image
+    # is Debian-based with every browser + OS dependency preinstalled, and
+    # is dev/CI-only — never part of the application runtime.
+    image: mcr.microsoft.com/playwright:v1.63.0-noble
+    working_dir: /var/www
+    environment:
+      PLAYWRIGHT_BASE_URL: http://web
+    volumes:
+      - .:/var/www:cached
+      - playwright-node-modules:/var/www/node_modules
+    command: ["tail", "-f", "/dev/null"]
+    depends_on:
+      web:
+        condition: service_healthy
+
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
@@ -146,3 +163,4 @@ volumes:
   meilisearch-data:
   vendor-cache:
   node-modules-cache:
+  playwright-node-modules:

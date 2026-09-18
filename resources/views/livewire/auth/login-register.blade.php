@@ -3,6 +3,7 @@
         <div class="flex gap-6 mb-8 border-b-2 border-steel-200">
             <button
                 type="button"
+                data-test="tab_login"
                 wire:click="$set('tab', 'login')"
                 @class([
                     'pb-3 -mb-0.5 border-b-2',
@@ -14,6 +15,7 @@
             </button>
             <button
                 type="button"
+                data-test="tab_register"
                 wire:click="$set('tab', 'register')"
                 @class([
                     'pb-3 -mb-0.5 border-b-2',
@@ -31,6 +33,7 @@
                     <x-input
                         wire:model="emailOrName"
                         name="emailOrName"
+                        data-test="input_email-or-name"
                         aria-label="E-Mail-Adresse / Username"
                         placeholder="E-Mail-Adresse / Username"
                         color="lilac"
@@ -42,6 +45,7 @@
                         wire:model="loginPassword"
                         type="password"
                         name="loginPassword"
+                        data-test="input_login-password"
                         aria-label="Passwort"
                         placeholder="Passwort"
                         color="lilac"
@@ -49,7 +53,7 @@
                     <x-input-error :message="$errors->first('loginPassword')" />
                 </div>
                 <div class="text-center pt-2">
-                    <x-button type="submit" color="lilac">Einloggen</x-button>
+                    <x-button type="submit" color="lilac" data-test="btn_login">Einloggen</x-button>
                 </div>
             </form>
         @else
@@ -58,6 +62,7 @@
                     <x-input
                         wire:model="username"
                         name="username"
+                        data-test="input_username"
                         aria-label="Öffentlicher Username"
                         placeholder="Öffentlicher Username"
                         color="lilac"
@@ -70,6 +75,7 @@
                         wire:model="email"
                         type="email"
                         name="email"
+                        data-test="input_email"
                         aria-label="E-Mail-Adresse"
                         placeholder="E-Mail-Adresse"
                         color="lilac"
@@ -81,6 +87,7 @@
                         wire:model="registerPassword"
                         type="password"
                         name="registerPassword"
+                        data-test="input_register-password"
                         aria-label="Passwort"
                         placeholder="Passwort"
                         color="lilac"
@@ -88,7 +95,7 @@
                     <x-input-error :message="$errors->first('registerPassword')" />
                 </div>
                 <div>
-                    <x-checkbox wire:model="privacy" name="privacy" aria-label="Datenschutzerklärung">
+                    <x-checkbox wire:model="privacy" name="privacy" data-test="checkbox_privacy" aria-label="Datenschutzerklärung">
                         Ich stimme den
                         <a href="{{ route('privacy') }}" class="underline">Datenschutzbedingungen</a>
                         zu
@@ -96,7 +103,7 @@
                     <x-input-error :message="$errors->first('privacy')" class="!ml-8" />
                 </div>
                 <div class="text-center pt-2">
-                    <x-button type="submit" color="lilac">Registrieren</x-button>
+                    <x-button type="submit" color="lilac" data-test="btn_register">Registrieren</x-button>
                 </div>
             </form>
         @endif

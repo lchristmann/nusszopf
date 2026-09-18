@@ -16,6 +16,7 @@
                         <x-input
                             wire:model="title"
                             name="title"
+                            data-test="input_project-title"
                             color="lilac"
                             maxlength="40"
                             aria-label="Projekttitel"
@@ -31,6 +32,7 @@
                             as="textarea"
                             wire:model="goal"
                             name="goal"
+                            data-test="input_project-goal"
                             color="lilac"
                             maxlength="150"
                             rows="2"
@@ -54,6 +56,7 @@
                             as="textarea"
                             wire:model="description"
                             name="description"
+                            data-test="input_project-description"
                             color="lilac"
                             rows="6"
                             aria-label="Projektbeschreibung"
@@ -67,14 +70,14 @@
                         <x-field-title info="Soll das Projekt allgemein oder nur für bestimmte Personen sichtbar sein?">Sichtbarkeit</x-field-title>
                         <div class="mt-2 space-y-2">
                             <label class="flex items-start gap-3 cursor-pointer">
-                                <input type="radio" wire:model="visibility" value="private" class="mt-1 border-2 border-steel-700" />
+                                <input type="radio" wire:model="visibility" name="visibility" value="private" data-test="radio_visibility-private" class="mt-1 border-2 border-steel-700" />
                                 <span>
                                     <x-text as="span" variant="textSmMedium" class="block">Privat</x-text>
                                     <x-text as="span" variant="textXs" class="block text-steel-500">Projekt ist nur zugänglich für Personen, die den Projektlink kennen</x-text>
                                 </span>
                             </label>
                             <label class="flex items-start gap-3 cursor-pointer">
-                                <input type="radio" wire:model="visibility" value="public" class="mt-1 border-2 border-steel-700" />
+                                <input type="radio" wire:model="visibility" name="visibility" value="public" data-test="radio_visibility-public" class="mt-1 border-2 border-steel-700" />
                                 <span>
                                     <x-text as="span" variant="textSmMedium" class="block">Öffentlich</x-text>
                                     <x-text as="span" variant="textXs" class="block text-steel-500">Projekt kann über Nusszopf und Suchmaschinen gefunden werden</x-text>
@@ -85,7 +88,7 @@
                     </div>
 
                     <div class="text-center">
-                        <x-button type="submit" color="lilac">
+                        <x-button type="submit" color="lilac" data-test="btn_save_project-form">
                             {{ $project ? 'Speichern' : 'Erstellen' }}
                         </x-button>
                     </div>
