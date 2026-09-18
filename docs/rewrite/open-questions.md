@@ -4,63 +4,79 @@ Unresolved historical behavior, consolidated from the archaeology pass across `d
 
 ### Lead (newsletter) creation route
 
-- Status: Unknown
+- Status: **Resolved**
 - Area: Domain / Newsletter
-- Sources inspected: `be-nusszopf/hasura/metadata/tables.yaml` (confirms `anonymous`/`user` cannot insert `leads` directly), `be-nusszopf/auth0/rules/syncWithHasura.js` (confirms a `POST /api/newsletter` call exists for the signup-opt-in case)
-- Historical evidence: the actual `/api/newsletter` route implementation lives in `web-nusszopf` (Next.js API route, not opened in the backend-focused archaeology pass) and is presumably also how the public newsletter-subscribe form (`containers/home/NewsletterSection`) creates leads.
-- Conflicting evidence: none — just unread.
-- Possible interpretations: single shared privileged endpoint for both "opt in during signup" and "opt in via the public home-page form"; or two separate paths that happen to share a name.
-- Recommended investigation: read `web-nusszopf/projects/webapp/src/pages/api/newsletter.js` and `src/utils/functions/newsletter.function.js`.
-- Decision: pending investigation.
-- Date: 2026-09-18
+- Sources inspected: `web-nusszopf/projects/webapp/src/pages/api/newsletter.js`, `src/utils/functions/newsletter.function.js`, `src/utils/services/newsletter.service.js`, `src/utils/hasura/queries/newsletter.query.js`, `src/assets/data/newsletter.data.js`.
+- Resolution: a single privileged endpoint, `POST /api/newsletter`, action-dispatches to both paths as suspected. Full mechanism now documented in `docs/domain/entities.md` (`Lead` entity) and `docs/domain/workflows.md` ("Workflow: newsletter lead creation, confirmation..."). Headline finding: the two creation paths (public form vs. signup checkbox) have **different confirmation guarantees** — the signup-checkbox path auto-confirms with no verification email, unlike the public form's true double opt-in. Flagged as a candidate historical-bugs entry, not yet a formal intentional-change proposal.
+- Date resolved: 2026-09-18
 
 ### `Project.location` / `Project.period` exact JSON shape
 
-- Status: Unknown
+- Status: **Resolved** (fully — including `location.data`'s complete shape)
 - Area: Domain / Project
-- Sources inspected: `be-nusszopf/hasura/migrations` (confirms both are `jsonb NOT NULL`, no shape enforced at the DB level)
-- Historical evidence: frontend code references `location.data.osm`, `location.data.city` (`webapp/src/pages/projects/[id].js`) and a `remote` boolean + `searchTerm` (`user/project/create.js` initial values) — enough to know the shape has at least `{ remote, searchTerm, data: { osm, city, ... } }` for location and `{ flexible, from, to }` for period, but not the complete shape (e.g. what `osm` contains beyond `type`/`id`).
-- Conflicting evidence: none.
-- Possible interpretations: `location.data` mirrors an OpenStreetMap Nominatim result subset.
-- Recommended investigation: read `ProjectForm/LocationField.js`, `PeriodField.js`, and the `Combobox`-based location search implementation.
-- Decision: pending investigation.
-- Date: 2026-09-18
+- Sources inspected: `webapp/src/containers/user/ProjectForm/LocationField.js`, `PeriodField.js`, `webapp/src/utils/services/location.service.js`, `pages/projects/[id].js`.
+- Resolution: `location = { remote: boolean, searchTerm: string, data: object }`; `period = { flexible: boolean, from: string, to: string }` with `from`/`to` in **`dd.MM.yyyy`** string format (Confirmed by Yup validation), not ISO 8601. `location.data`'s complete shape is now Confirmed: `{ key, postcode, city, countryCode, geo: {lat,lon}, osm: {id,type} }`, sourced from the **LocationIQ** autocomplete API (`api.locationiq.com`, German cities/towns/villages only) — not OpenStreetMap Nominatim directly, correcting the earlier guess. Full detail in `docs/domain/entities.md`'s `Project` entity.
+- Date resolved: 2026-09-18
 
 ### `Request.category` value set
 
-- Status: Unknown
+- Status: **Resolved**
 - Area: Domain / Request
-- Sources inspected: `be-nusszopf/hasura/migrations`, `tables.yaml` (confirms `category` is unconstrained free text, no CHECK/enum)
-- Historical evidence: `webapp/src/utils/enums.js` defines `REQUEST_CATEGORY = { companions, rooms, materials, financials, others, none }` — this is the frontend's own enum, and E2E (`_projects.spec.js`) selects `companions` by value.
-- Conflicting evidence: none — this is actually resolved by frontend evidence already read (`docs/design/screens.md` cites the same enum). Downgrading this entry's severity: the **value set** is Confirmed (`companions`, `rooms`, `materials`, `financials`, `others`, `none`); what remains Unknown is only the exact **displayed German labels** for each category.
-- Possible interpretations: labels likely appear in `assets/data/request-form.data.js` or similar, not yet read.
-- Recommended investigation: read `webapp/src/assets/data/*.data.js` for the category select's option labels.
-- Decision: pending investigation.
-- Date: 2026-09-18
+- Sources inspected: `webapp/src/assets/data/request-form.data.js`.
+- Resolution: German labels confirmed: `companions` → "Mitstreiter:innen", `rooms` → "Räume", `materials` → "Materialien", `financials` → "Finanzielles", `others` → "Sonstiges"; the select's empty state is a literal `-` placeholder, not a labeled `none` option. Recorded in `docs/domain/entities.md`'s `Request` entity.
+- Date resolved: 2026-09-18
 
 ### `ProjectAnalytics` row auto-creation mechanism
 
+- Status: **Resolved**
+- Area: Domain / Project
+- Sources inspected: `webapp/src/pages/projects/[id].js` (`updateViews` effect), re-verified directly.
+- Resolution: **Confirmed.** The first non-owner browser to view a project's detail page (deduplicated via a `localStorage` array, not per-account) directly issues a client-side GraphQL mutation: `INSERT {project_id, views: 1}` if no analytics row exists yet, else `UPDATE views = views + 1`. No server-side/trigger-based creation exists. `docs/domain/relationships.md` and `docs/domain/entities.md` have been reconciled to state this as Confirmed. **New finding surfaced during this resolution**: `contactRequests` has no confirmed increment call site anywhere read so far — it may be effectively dead/unused in the frontend despite existing in the schema; flagged as a fresh, narrower open question (not yet its own entry — track if a future pass needs to confirm or refute this before the rewrite decides whether to keep a `contactRequests`-equivalent field at all).
+- Date resolved: 2026-09-18
+
+### Newsletter signup-checkbox path skips double opt-in
+
+- Status: Unknown (product-intent question, not a research gap)
+- Area: Domain / Newsletter / Authentication
+- Sources inspected: `web-nusszopf/projects/webapp/src/pages/api/newsletter.js`, `src/utils/functions/newsletter.function.js` (see the resolved "Lead (newsletter) creation route" entry above for full context).
+- Historical evidence: a `Lead` created via the public newsletter-signup form goes through true double opt-in (unconfirmed → confirmation email → click-through confirms). A `Lead` created via the "newsletter" checkbox at account signup is created **already confirmed**, with no confirmation email sent at all.
+- Conflicting evidence: none — the asymmetry is consistent and deliberate-looking (different code paths, not a shared function with a skipped step).
+- Possible interpretations: (a) intentional — the user already verified their email by completing Auth0 registration, so a second confirmation is redundant; (b) an inconsistency/oversight where the signup path was never brought in line with the public form's opt-in guarantee (relevant since double opt-in is often a legal/consent requirement, not just a UX nicety, given `leads.privacy`'s GDPR-consent-flavored column).
+- Recommended investigation: none further possible from source; this is a product/compliance-intent question.
+- Decision: pending human decision — do not silently pick (a) or (b). If Nusszopf 2 relies on double opt-in for consent-compliance reasons, interpretation (b) (fix: always require confirmation) is the safer default; record whichever is chosen in `docs/rewrite/intentional-changes.md` or here as Resolved.
+- Date: 2026-09-18
+
+### `ProjectAnalytics.contactRequests` — possibly dead/unused historically
+
 - Status: Unknown
 - Area: Domain / Project
-- Sources inspected: `be-nusszopf/hasura/migrations/1615727014588_feature_visitor_counter`, `tables.yaml`
-- Historical evidence: no trigger/default creates a `projects_analytics` row when a `Project` is created; the insert permission is open to both roles with no check, implying *something* client-side inserts a zeroed row (likely on first view of the project-detail page, mirroring the view-increment logic in `webapp/src/pages/projects/[id].js`, which does distinguish "no analytics row yet" (`_views === null`) from "row exists").
-- Conflicting evidence: none.
-- Possible interpretations: confirmed by re-reading `projects/[id].js`'s `updateViews` effect — it does branch on `_views === null || undefined` and calls `apolloAddProjectAnalytics` in that case. This is **actually Confirmed**, not Unknown — downgrade: the mechanism is "first viewer's browser lazily inserts the row." Kept here as a flag that this entry needs its status corrected in a follow-up documentation pass rather than left contradictory between `docs/domain/relationships.md` (still marked Unknown) and this finding.
-- Recommended investigation: none further needed — just reconcile the two docs.
-- Decision: reconcile `docs/domain/relationships.md`'s `ProjectAnalytics` section to Confirmed on next edit.
+- Sources inspected: `webapp/src/pages/projects/[id].js` (the file expected to contain a contact-counter increment call, alongside the confirmed `views` increment).
+- Historical evidence: no increment call site for `contactRequests` was found in any file read across either research pass, despite the column existing in the schema with the same permission shape as `views` (see BUG-001).
+- Conflicting evidence: the column's existence and its identical bounds/permissions to `views` strongly suggest it was intended to be used the same way.
+- Possible interpretations: (a) a call site exists elsewhere in `webapp/src/**` not yet read (most likely — e.g. inside `ContactDialog`'s submit handler); (b) the feature was built at the schema level and never wired up on the frontend.
+- Recommended investigation: grep `contactRequests`/`contact_requests`/`addProjectAnalytics` across all of `webapp/src/**` before the rewrite decides whether to keep an equivalent field.
+- Decision: pending investigation. Do not silently drop the field from Nusszopf 2's `ProjectAnalytics` model without confirming (a)/(b) — the historical *intent* (count contact actions) is clear from the column name and the contact dialog's existence, even if the wiring is unconfirmed.
+- Date: 2026-09-18
+
+### Does `/projects/{id}`'s SSR enforce `visibility`, or only existence?
+
+- Status: Unknown
+- Area: Security / Domain / Project
+- Sources inspected: `docs/domain/permissions.md` (Hasura `select_permissions` on `projects`, which deny a private project to any non-owner), `docs/design/screens.md` (confirms `getServerSideProps` returns `notFound: true` only when "the project id does not resolve", not specifically checked against a `visibility`-aware query in this pass).
+- Historical evidence: the Hasura permission layer is unambiguous — a private project is not selectable by anyone but its owner. Whether the `webapp`'s own server-side data-fetching code for `/projects/{id}` actually goes through that same permission-checked path (using the viewer's own role/token) or instead uses an elevated/admin credential server-side (which would bypass the visibility filter and only fail on true non-existence) was not confirmed in either archaeology pass.
+- Conflicting evidence: none directly, but an unverified note surfaced during the second pass speculated that "private" might mean "unlisted but reachable via direct link" — this would contradict the Hasura evidence above if true, so it must not be assumed either way.
+- Possible interpretations: (a) SSR uses the viewer's own token/role, so the Hasura filter applies normally and a private project 404s for non-owners (expected, consistent with all other evidence); (b) SSR uses an elevated credential and only checks existence, meaning private projects are actually viewable by anyone with the direct URL — a real, additional authorization gap beyond BUG-002, not yet recorded as such.
+- Recommended investigation: read `webapp/src/pages/projects/[id].js`'s `getServerSideProps` in full, specifically which GraphQL client/credential it uses for the initial fetch.
+- Decision: pending investigation. Do not implement Nusszopf 2's project-detail route without this being resolved — default to the safe interpretation (a) (enforce visibility, not just existence) unless investigation proves otherwise.
 - Date: 2026-09-18
 
 ### `NavHeader mode="external"` and `Footer variant="auth0"` actual usage sites
 
-- Status: Unknown
+- Status: **Resolved**
 - Area: Design / Navigation
-- Sources inspected: all of `webapp/src/pages/**` (no call site found passing either prop value)
-- Historical evidence: both code paths exist and are fully implemented in `ui-library`.
-- Conflicting evidence: none.
-- Possible interpretations: (a) used by `auth-login`/`auth-password`, which share the same `ui-library` package but weren't opened for this check; (b) dead code from an earlier iteration of the marketing/auth split.
-- Recommended investigation: grep `auth-login/src` and `auth-password/src` for `NavHeader`/`Footer` imports and prop values.
-- Decision: pending investigation — do not delete as "dead code" without checking (a).
-- Date: 2026-09-18
+- Sources inspected: `auth-login/src/containers/Page/Page.js`, `auth-password/src/containers/Page/Page.js`.
+- Resolution: interpretation (a) was correct — both auth apps' shared `Page.js` renders `<NavHeader mode="external" />` and `<Footer variant="auth0" .../>` unconditionally on every screen. Not dead code. Recorded in `docs/design/navigation.md`.
+- Date resolved: 2026-09-18
 
 ### Auth0 password policy authoritative configuration
 
@@ -124,15 +140,11 @@ Unresolved historical behavior, consolidated from the archaeology pass across `d
 
 ### Button `ButtonVariant` (clean/outline/filled) — was "filled" ever implemented?
 
-- Status: Unknown
+- Status: **Resolved**
 - Area: Design / Visual language
-- Sources inspected: `ui-library/stories/atoms/Button/Button.theme.js`, `Button.css`
-- Historical evidence: the theme file declares three variants, but `Button.css` defines only one visual treatment per color, and both `outline` and `filled` map to the identical class.
-- Conflicting evidence: none within these two files; not yet cross-checked against every `<Button variant="...">` call site across the whole frontend.
-- Possible interpretations: (a) "filled" was planned but never styled; (b) some call sites apply additional inline Tailwind utility classes on top to fake a filled look, making it a real (if inconsistently-implemented) visual state.
-- Recommended investigation: grep every `<Button ... variant="filled"` / `variant="outline"` call site in `webapp/src/**` and `ui-library/stories/**` and diff their surrounding `className` props.
-- Decision: pending investigation; do not silently implement a "filled" look in Nusszopf 2 without confirming it was ever real.
-- Date: 2026-09-18
+- Sources inspected: exhaustive grep of every `<Button variant="...">` call site across `webapp/src/**`, `ui-library/stories/**`, `auth-login/src/**`, `auth-password/src/**`.
+- Resolution: interpretation (b) was correct, refined — `variant="filled"` is never called anywhere (dead vocabulary); only `outline` and `clean` are real. A genuinely filled look exists at exactly two call sites via ad hoc inline Tailwind background classes layered on top of the shared component (`NewsletterForm.js`, `HowToSection.js`), not via the `filled` prop value. See `docs/rewrite/bugs.md` BUG-014 and `docs/design/visual-language.md`.
+- Date resolved: 2026-09-18
 
 ### Native `window.confirm()` for every destructive action — gap or deliberate simplicity?
 
@@ -184,23 +196,16 @@ Unresolved historical behavior, consolidated from the archaeology pass across `d
 
 ### Unexplained 2-second wait in the account-deletion E2E test
 
-- Status: Unknown
+- Status: **Resolved** (negative result — cause remains unexplained, but the candidate explanation is ruled out)
 - Area: Testing / Journeys
-- Sources inspected: `e2e/cypress/integration/_settings.spec.js`
-- Historical evidence: a hardcoded `cy.wait(2000)` immediately before clicking "Delete account," with no comment explaining why.
-- Conflicting evidence: none.
-- Possible interpretations: waiting for user/session data to finish loading before the delete button becomes interactive (a loading-state timing issue the test worked around rather than asserting on); or simple test flakiness mitigation.
-- Recommended investigation: check whether `/user/profile` has an observable loading state gating the delete button's interactivity (`docs/design/states.md` — profile page loading only covers the newsletter subsection, not explicitly the delete button, in what was read so far).
-- Decision: the Playwright rewrite should assert on an explicit loading-state signal rather than reproducing a fixed sleep, regardless of the answer.
-- Date: 2026-09-18
+- Sources inspected: `webapp/src/pages/user/profile.js`, re-read in full.
+- Resolution: **no loading-state gates the delete-account button's interactivity.** The button (`btn_delete-account_settings-page`) is only `disabled` while its own delete mutation is in flight (`disabled={loadingDeleteUser}`) — there is no page-load/user-data-load condition disabling it beforehand. The candidate explanation ("waiting for the button to become interactive") is therefore ruled out; the `cy.wait(2000)` remains genuinely unexplained (most likely plain flakiness mitigation). The Playwright rewrite should not reproduce a fixed sleep and has no loading-state to assert on instead for this specific button — just click it once the page has rendered.
+- Date resolved: 2026-09-18
 
 ### Landing-page `data-test` selectors not found in the read source
 
-- Status: Unknown
+- Status: **Resolved** (partially — one selector found, the other confirmed genuinely absent)
 - Area: Design / Journeys
-- Sources inspected: `webapp/src/pages/index.js`, `_landingpage.spec.js`
-- Historical evidence: the E2E spec drives `[data-test="route_search-page"]` and `[data-test="route_create-project-page"]`, neither of which appears in `pages/index.js` itself.
-- Conflicting evidence: none — likely just located inside a container/CMS-data path not opened in this pass (`HowToSection`, or a `Route` inside `assets/data/header.data.js`-driven markup).
-- Recommended investigation: grep `containers/home/**` and `assets/data/*.data.js` for these two literal strings before finalizing Journey 1 in `docs/journeys/README.md`.
-- Decision: pending investigation.
-- Date: 2026-09-18
+- Sources inspected: exhaustive grep of `route_search-page` / `route_create-project-page` across the entire `web-nusszopf` source tree, plus `HowToSection.js`/`StepCard.js`.
+- Resolution: `route_search-page` **Confirmed** to live in `HowToSection.js` (see `docs/design/screens.md`/`docs/journeys/README.md` Journey 1). `route_create-project-page` **does not exist anywhere in this checkout** — not CMS data, not an unopened container, genuinely absent from the source tree at the studied commit. This is now treated as a confirmed stale/dead E2E assertion (the test may have already been broken at this historical commit), not an evidence gap to keep investigating. See `docs/journeys/README.md` Journey 1 for the corrected treatment.
+- Date resolved: 2026-09-18

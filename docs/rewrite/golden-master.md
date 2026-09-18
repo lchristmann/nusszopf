@@ -33,12 +33,17 @@ A first complete pass across all three historical repositories is done. See `doc
 
 | Area | Document | Status |
 |---|---|---|
-| Screens, navigation, components, visual language, states, responsive behavior | `docs/design/*.md` | Populated, evidence-tagged |
-| Domain entities, relationships, permissions, invariants, workflows | `docs/domain/*.md` | Populated, evidence-tagged |
+| Screens, navigation, components, visual language, states, responsive behavior | `docs/design/*.md`, `docs/design/screen-specs.md` | Populated, evidence-tagged; screen-specs.md adds a per-screen implementation checklist |
+| Domain entities, relationships, permissions, invariants, workflows | `docs/domain/*.md` | Populated, evidence-tagged; several open questions resolved in the second pass (Lead creation route, location/period JSON shape, category labels, ProjectAnalytics auto-creation) |
 | Authentication | `docs/authentication/README.md` | Populated, evidence-tagged |
-| Search | `docs/search/README.md` | Populated, evidence-tagged |
+| Search | `docs/search/README.md` | Populated, evidence-tagged; visibility-filtering-at-query-time remains the highest-priority open question |
 | Email | `docs/email/README.md` | Populated, evidence-tagged |
-| Security-relevant historical properties | `docs/security/README.md` | Populated, evidence-tagged |
-| User journeys / E2E mapping | `docs/journeys/README.md` | Populated, transcribed from the actual Cypress suite |
+| Security-relevant historical properties + authorization matrix | `docs/security/README.md`, `docs/security/authorization-matrix.md` | Populated, evidence-tagged |
+| User journeys / E2E mapping | `docs/journeys/README.md` | Populated: Journeys 1–4 transcribed from the actual Cypress suite; Journeys 6–8 (newsletter, contact, avatar) added as Inferred specifications since no historical E2E coverage exists for them |
+| Historical bugs / defect register | `docs/rewrite/bugs.md` | Populated — every suspected defect classified (Fix/Preserve/Unknown/Replace) with an ID, severity, and required regression test |
+| Decision register | `docs/rewrite/decisions-register.md` | Populated — already-decided vs. requires-human-decision, concise index |
+| First vertical slice | `docs/rewrite/first-slice.md` | Three candidates proposed, one selected (not yet approved for implementation) |
 
-Remaining Unknowns (frontend-vs-backend cross-references not yet closed, exact CMS copy, a few unresolved selectors) are tracked individually in `docs/rewrite/open-questions.md` rather than guessed here. Suspected historical bugs are tracked as proposed corrections (not yet accepted) in `docs/rewrite/intentional-changes.md`. This pass did not implement anything; it is a specification baseline only.
+## Second pass (specification hardening, 2026-09-18)
+
+Following the archaeology pass above, a second pass critically reviewed the findings, resolved a targeted set of previously-Unknown items against additional historical source (see `docs/rewrite/open-questions.md` for each item's resolution and evidence), and produced the remaining Golden Master deliverables (authorization matrix, screen-by-screen checklist, consolidated bugs register, decision register, first-slice proposal). Remaining Unknowns (a few unresolved frontend-vs-backend cross-references, exact CMS copy, the Meilisearch visibility-filtering question, several product-intent questions that only a human can settle) are tracked individually in `docs/rewrite/open-questions.md` and `docs/rewrite/decisions-register.md` rather than guessed here. Suspected historical bugs are tracked as proposed corrections (not yet accepted) in `docs/rewrite/intentional-changes.md`, indexed by `docs/rewrite/bugs.md`. This pass did not implement anything; it is a specification and architecture baseline only.

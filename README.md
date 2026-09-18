@@ -47,6 +47,8 @@ See `docs/README.md`.
 
 Important specifications include design, domain, user journeys, search, authentication, email, and release process.
 
+Start with `docs/rewrite/decisions-register.md` (what's decided vs. what needs a human call), `docs/rewrite/bugs.md` (classified historical defects), and `docs/rewrite/first-slice.md` (the proposed first implementation slice) — nothing described in this repository has been implemented yet; this is a specification and architecture baseline for the rewrite.
+
 ## Self-hosting
 
 Nusszopf is intended to be operated by its users. The reference deployment uses Docker Compose.

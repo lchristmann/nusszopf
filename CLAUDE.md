@@ -55,6 +55,28 @@ Technical reference for Docker Compose, development/production separation, Docke
 
 Do not blindly copy it. Prefer the simplest architecture that satisfies Nusszopf's requirements.
 
+## Specification documents
+
+The specification produced by the archaeology and Golden Master phases lives under `docs/`. Before implementing anything, read (in this order):
+
+1. `docs/rewrite/decisions-register.md` — what's already decided vs. what still needs a human call. Do not re-litigate an "already decided" item; do not silently resolve a "requires human decision" item yourself.
+2. `docs/rewrite/bugs.md` — the historical-defect index. If the area you're touching has an entry here, its classification (Fix/Preserve/Unknown/Replace) governs what you build — see the bug-classification workflow below.
+3. The relevant `docs/domain/`, `docs/design/` (including `docs/design/screen-specs.md` for the per-screen checklist), `docs/authentication/`, `docs/search/`, `docs/email/`, `docs/security/` (including `docs/security/authorization-matrix.md`) topic file for the area you're touching.
+4. `docs/rewrite/open-questions.md` — if what you need is listed here as Unknown, do not invent an answer; either do the recommended investigation against `../historical/` yourself and update the entry, or escalate to the user.
+
+If implementation surfaces a fact that contradicts a "Confirmed" claim in any of these documents, stop and reconcile the document against the historical source before proceeding — do not silently code around the discrepancy.
+
+## Bug classification workflow
+
+Every suspected historical defect, before it is fixed (or preserved, or flagged as needing a decision), must be classified in `docs/rewrite/bugs.md` using the existing ID scheme (`BUG-NNN`). A classification is one of:
+
+- **Fix** — demonstrably defective; the corrected behavior, evidence, and required regression test are recorded in `docs/rewrite/intentional-changes.md` before the fix is implemented, not after.
+- **Preserve** — the historical behavior stands, including behavior that looks surprising but has no evidence of being unintended.
+- **Unknown** — cannot be classified without a human product decision; recorded in `docs/rewrite/open-questions.md`, and implementation must not proceed on a guess.
+- **Replace** — obsolete infrastructure only; product behavior is unchanged (see `docs/architecture/mapping.md`).
+
+Do not fix a suspected bug that has no entry in `docs/rewrite/bugs.md`/`docs/rewrite/intentional-changes.md` yet — add the entry first (as Proposed, per that document's format), then implement.
+
 ## Product fidelity rules
 
 Preserve historical behavior unless it is:
@@ -73,6 +95,7 @@ When correcting historical behavior:
 - document the corrected behavior
 - add a regression test
 - record the decision in `docs/rewrite/intentional-changes.md`
+- add or update the corresponding entry in `docs/rewrite/bugs.md`
 
 ## Visual fidelity rules
 
@@ -154,3 +177,6 @@ A feature is complete only when historical behavior is understood, domain rules 
 - copy LCxHolz business logic
 - copy Waffle Dashboard business logic
 - treat a passing happy-path test as sufficient
+- resolve a documented Unknown (`docs/rewrite/open-questions.md`) by guessing instead of investigating or escalating
+- fix a suspected historical bug that has no entry in `docs/rewrite/bugs.md`/`docs/rewrite/intentional-changes.md`
+- leave `docs/` stale after a behavior or architecture change — update the relevant topic file in the same change, not as follow-up work

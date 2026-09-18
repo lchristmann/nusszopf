@@ -1,0 +1,311 @@
+# Historical Bugs and Incomplete Functionality
+
+Every meaningful suspected defect or incomplete feature found during archaeology, in one place,
+with a stable ID. This is the inventory; `docs/rewrite/intentional-changes.md` is where an ID
+graduates into a fully-specified, approved correction (historical behavior → why defective →
+corrected behavior → regression test → approval). An ID can exist here with **no** corresponding
+`intentional-changes.md` entry yet — that means it is classified but not yet spec'd for a fix, or
+classified as something other than Fix.
+
+Classification follows `CLAUDE.md`: **Preserve** (reproduce as-is), **Fix** (demonstrably defective,
+correct it deliberately), **Replace** (obsolete infrastructure, behavior preserved), **Unknown**
+(evidence insufficient — a human product decision is required, not an inference).
+
+| ID      | Area                                        | Severity | Classification                      | Status                                                                                  |
+|---------|---------------------------------------------|----------|-------------------------------------|-----------------------------------------------------------------------------------------|
+| BUG-001 | Authorization / Project analytics           | High     | Fix                                 | Spec'd — `intentional-changes.md`                                                       |
+| BUG-002 | Authorization / Request visibility          | High     | Fix                                 | Spec'd — `intentional-changes.md`                                                       |
+| BUG-003 | Auth / route protection                     | Medium   | Fix                                 | Spec'd — `intentional-changes.md`                                                       |
+| BUG-004 | Auth / avatar sync                          | Low      | Fix                                 | Spec'd — `intentional-changes.md`                                                       |
+| BUG-005 | Email / contact form                        | Medium   | Fix                                 | Spec'd — `intentional-changes.md`                                                       |
+| BUG-006 | Email / copy                                | Trivial  | Fix                                 | Spec'd — `intentional-changes.md`                                                       |
+| BUG-007 | Domain / `visibility` constraint            | Low      | Fix                                 | Spec'd — `intentional-changes.md`                                                       |
+| BUG-008 | Search / operations                         | Medium   | Fix                                 | Spec'd — `intentional-changes.md`                                                       |
+| BUG-009 | Background jobs / operations                | Medium   | Fix                                 | Spec'd — `intentional-changes.md`                                                       |
+| BUG-010 | Email / contact form validation             | Medium   | Fix                                 | Needs an `intentional-changes.md` entry                                                 |
+| BUG-011 | Newsletter / consent asymmetry              | Medium   | Unknown                             | Needs a human product decision                                                          |
+| BUG-012 | Auth / Apple social login                   | Low      | Replace (drop)                      | Decided — do not implement                                                              |
+| BUG-013 | Design / destructive-action confirmation    | Low      | Unknown                             | Needs a human product decision                                                          |
+| BUG-014 | Design / Button "filled" variant            | Trivial  | Unknown                             | Needs a human product decision (or default to "never implement it")                     |
+| BUG-015 | Navigation / `login` return destination     | Low      | Unknown                             | Needs a human product decision                                                          |
+| BUG-016 | Security / Meilisearch CORS configuration   | Medium   | Unknown                             | Needs more evidence or a fresh decision                                                 |
+| BUG-017 | Domain / `ProjectAnalytics.contactRequests` | Low      | Unknown                             | Needs more evidence                                                                     |
+| BUG-018 | Testing / historical search E2E coverage    | Medium   | Fix (close the gap)                 | Action item for the new Playwright suite                                                |
+| BUG-019 | Design / rich-text editor field-order bug   | Low      | N/A — tied to architecture decision | Moot once Slate is replaced; verify the new editor doesn't reintroduce an analogous bug |
+
+---
+
+### BUG-001 — `ProjectAnalytics` counters are world-writable
+
+- Affected area: Authorization, `Project` view/contact counters
+- Historical behavior: any caller, authenticated or not, can insert/update `views`/`contactRequests`
+  for any `project_id` — no ownership check, no filter, bounded only by a `CHECK (0–1,000,000)`.
+- Evidence: `docs/domain/permissions.md` (`ProjectAnalytics` table), `docs/domain/entities.md`.
+- Severity/impact: High — any visitor can corrupt any project's (including private projects')
+  engagement counters to an arbitrary value with a single GraphQL mutation.
+- Classification: **Fix**
+- Intended Nusszopf 2 behavior: counters are incremented exclusively by server-side controller
+  logic, never exposed as a client-writable field.
+- Implementation consequence: no `ProjectAnalyticsPolicy` "update" ability exists at all for end
+  users — there is nothing to authorize because there is no user-facing write path.
+- Regression test: a Feature test asserting an unauthenticated/unauthorized request cannot set an
+  arbitrary counter value via any route.
+- Full spec: `docs/rewrite/intentional-changes.md` → "`ProjectAnalytics` counters become
+  server-controlled only".
+
+### BUG-002 — `Request` visibility doesn't inherit from its parent `Project`
+
+- Affected area: Authorization, `Request`
+- Historical behavior: `requests.select_permissions.filter` is `{}` for both roles — a request
+  under a private project is still selectable by anyone who can reach it.
+- Evidence: `docs/domain/permissions.md`, `docs/domain/relationships.md`.
+- Severity/impact: High — a private project's requests are not actually private.
+- Classification: **Fix**
+- Intended Nusszopf 2 behavior: a `Request` is only visible when its parent `Project` is visible
+  to the caller (public, or owned by the caller).
+- Implementation consequence: `RequestPolicy::view()` and a `Request::visible()` query scope that
+  inherits `Project::visible()`, applied to every read path (not just `show`).
+- Regression test: a Feature test asserting a request under a private project is never returned by
+  any query/search result the request's owner didn't make.
+- Full spec: `docs/rewrite/intentional-changes.md` → "`Request` visibility inherits from its parent
+  `Project`".
+
+### BUG-003 — Client-side-only authentication gate (flash-then-redirect)
+
+- Affected area: Authentication, route protection
+- Historical behavior: `withAuth` enforces `isAuthRequired` after the page shell has already
+  mounted; an unauthenticated visitor briefly sees protected chrome before being redirected.
+- Evidence: `docs/authentication/README.md` §3.
+- Severity/impact: Medium — minor content leak (layout/chrome, not real data) and a real UX smell.
+- Classification: **Fix**
+- Full spec: `docs/rewrite/intentional-changes.md` → "Server-side authentication gate".
+
+### BUG-004 — Social-login avatar sync unconditionally overwrites a manual upload
+
+- Affected area: Authentication, `User.picture`
+- Historical behavior: every social login overwrites `users.picture` from the provider's avatar,
+  with no guard against an existing (including manually-uploaded) value.
+- Evidence: `docs/domain/workflows.md` ("Workflow: profile picture replacement").
+- Severity/impact: Low — annoying, not a security issue; destroys a user's own customization choice.
+- Classification: **Fix**
+- Full spec: `docs/rewrite/intentional-changes.md` → "Social-login avatar sync only fills an empty
+  picture, never overwrites".
+
+### BUG-005 — Contact-form email has no `Reply-To` header
+
+- Affected area: Email, contact-form
+- Historical behavior: the visitor's email is placed only in the body copy, not as `Reply-To`;
+  replying goes to `noreply@nusszopf.org`.
+- Evidence: `docs/email/README.md`, "Suspected historical issues" #2.
+- Severity/impact: Medium — the contact form's entire purpose (letting the recipient reply) is
+  undermined for anyone who hits "Reply" instead of copying the address out of the body.
+- Classification: **Fix**
+- Full spec: `docs/rewrite/intentional-changes.md` → "Contact-form email sets `Reply-To`".
+
+### BUG-006 — Newsletter email grammar ("Bestätigte" → "Bestätige")
+
+- Affected area: Email copy
+- Historical behavior: both newsletter templates open with the wrong verb form.
+- Evidence: `docs/email/README.md`, "Suspected historical issues" #1.
+- Severity/impact: Trivial — cosmetic, native-speaker-visible grammar error only.
+- Classification: **Fix**
+- Full spec: `docs/rewrite/intentional-changes.md` → "Newsletter email copy typo fix".
+
+### BUG-007 — `projects.visibility` has no CHECK constraint / enum
+
+- Affected area: Domain, data integrity
+- Historical behavior: `visibility` is unconstrained `text`; nothing prevents a third value.
+- Evidence: `docs/domain/invariants.md`.
+- Severity/impact: Low — zero observed real-world impact (only two values were ever used), pure
+  hardening.
+- Classification: **Fix**
+- Full spec: `docs/rewrite/intentional-changes.md` → "`projects.visibility` becomes a real
+  enum/CHECK constraint".
+
+### BUG-008 — Meilisearch index configured by hand, once, via Postman
+
+- Affected area: Search operations
+- Historical behavior: at least one index's settings were applied via a one-off manual API call,
+  documented in `be-nusszopf/docs/meilisearch/prod_setup.md`, not reproducible or code-reviewable.
+- Evidence: `docs/search/README.md`.
+- Severity/impact: Medium — operational risk (settings can't be reliably reproduced across
+  environments), not a product-behavior defect.
+- Classification: **Fix**
+- Full spec: `docs/rewrite/intentional-changes.md` → "Meilisearch index settings become versioned
+  application config".
+
+### BUG-009 — Sync webhooks retry 3 times then silently give up
+
+- Affected area: Background jobs / operations
+- Historical behavior: every Hasura event-trigger webhook (search sync, mailing-list sync, cleanup)
+  retries 3 times over ~30s, then gives up with no dead-letter queue or alerting.
+- Evidence: `docs/domain/entities.md`, `docs/domain/workflows.md`, `docs/search/README.md`.
+- Severity/impact: Medium — a permanently-lost sync is invisible (e.g. a project silently never
+  gets indexed).
+- Classification: **Fix**
+- Full spec: `docs/rewrite/intentional-changes.md` → "Queue-backed sync jobs with retry/dead-letter".
+
+### BUG-010 — Contact-form fields have no server-side validation or sanitization
+
+- Affected area: Email, contact-form input handling
+- Historical behavior: `contact.js` passes `req.body.email`, `title`, `request`, `msg` straight
+  into the SendGrid dynamic-template payload with only rate-limiting in front of it — no format
+  validation on `email`, no length limits, no confirmed HTML-escaping.
+- Evidence: `docs/email/README.md`, "Suspected historical issues" #3.
+- Severity/impact: Medium — malformed input reaches an email template unchecked; whether SendGrid's
+  dynamic-template engine escapes HTML by default is itself Unknown from this evidence, so this
+  should be treated as a real gap rather than assumed-safe.
+- Classification: **Fix**
+- Intended Nusszopf 2 behavior: standard Laravel Form Request validation (required, `email:rfc`,
+  max lengths) before the Mailable is even built; Blade's default escaping handles output safety.
+- Implementation consequence: a `ContactRequest` Form Request class; a Feature test asserting
+  invalid input is rejected with a 422/validation error, not silently forwarded.
+- Regression test: submit malformed/oversized input and assert rejection + no mail sent
+  (`Mail::fake()`).
+- Needs a matching `docs/rewrite/intentional-changes.md` entry before implementation.
+
+### BUG-011 — Newsletter opt-in has two different consent guarantees for the same intent
+
+- Affected area: Domain / Newsletter (`Lead`)
+- Historical behavior: opting into the newsletter via the **public home-page form** goes through
+  true double opt-in (a `Lead` row is created unconfirmed, a confirmation email is sent, the lead
+  only becomes `hasConfirmed = true` after the visitor clicks the emailed link). Opting in via the
+  **"newsletter" checkbox at registration** creates the `Lead` **already confirmed**, with **no
+  confirmation email sent at all** (`handleAuth0SyncHasura` calls `addLead(...)` immediately
+  followed by `updateLead(...)`, which unconditionally sets `hasConfirmed: true`).
+- Evidence: `web-nusszopf/projects/webapp/src/pages/api/newsletter.js`,
+  `src/utils/functions/newsletter.function.js`, `src/utils/hasura/mutations/leads.mutation.js`
+  (`UPDATE_LEAD` mutation body: `_set: { hasConfirmed: true }`, unconditional). Documented in
+  `docs/domain/entities.md`'s `Lead` entity and `docs/rewrite/open-questions.md`.
+- Severity/impact: Medium — if GDPR-style double opt-in was the actual compliance intent behind the
+  `privacy` consent field existing at all, the signup-checkbox path bypasses verification of email
+  ownership before marketing email starts (though arguably the registration flow itself already
+  verifies the email is reachable, e.g. via the historical `welcome` email, and the user has already
+  given explicit consent via the registration privacy checkbox — so this may be defensible, not a
+  bug).
+- Classification: **Unknown** — this is a genuine product-intent question, not resolvable from
+  code alone: is single-path-different-guarantees the deliberate design (registration consent is
+  "stronger" than a bare email address typed into a public form, so it doesn't need re-verification),
+  or an oversight (the signup path should also double-opt-in, or the public-form path is needlessly
+  stricter)? Do not silently pick an answer.
+- Recommended default if no decision is made before implementation: preserve both paths exactly as
+  historically observed (product-fidelity default), and record whichever answer is eventually given
+  in `docs/rewrite/intentional-changes.md`.
+
+### BUG-012 — Apple social login button present but never wired up
+
+- Affected area: Authentication, login screen
+- Historical behavior: an Apple login button is rendered but `disabled`, with a
+  `// todo: create auth0-apple connection` source comment — never functional.
+- Evidence: `docs/authentication/README.md` §3.
+- Severity/impact: Low — dead UI, not a security or data issue.
+- Classification: **Replace (drop)** — this was never a real historical capability; do not
+  reproduce a disabled Apple button, and do not build working Apple Sign In unless a fresh product
+  decision explicitly asks for it (would be new functionality, not a revival of existing behavior).
+- Decision: already effectively made in `docs/rewrite/intentional-changes.md`'s "Explicitly
+  deferred" section — recorded here for completeness of the bug inventory.
+
+### BUG-013 — Every destructive action uses the unstyled native `confirm()`, never the app's own `Dialog`
+
+- Affected area: Design, confirmation states
+- Historical behavior: delete account, delete project, delete request, unsubscribe, discard unsaved
+  changes — every single one uses `window.confirm()`, despite a fully custom, animated, on-brand
+  `Dialog` organism existing and being used for non-destructive flows.
+- Evidence: `docs/design/states.md`.
+- Severity/impact: Low — a visual/UX inconsistency, not a functional defect (the confirm still
+  works; it just looks like the browser, not the product).
+- Classification: **Unknown** — 100%-consistent patterns can be either "never got to it" or a
+  deliberate choice (native dialogs can't be visually spoofed by injected page content the way a
+  custom one theoretically could). Not recoverable from source; needs a human product decision.
+- Recommended default if undecided: preserve native `confirm()` exactly (product-fidelity default,
+  and it is testable via Playwright's own `page.on('dialog', ...)` the same way Cypress stubbed it).
+
+### BUG-014 — Button `variant="filled"` is declared but (mostly) unstyled
+
+- Affected area: Design, `Button` atom
+- Historical behavior: `Button.theme.js` declares `clean`/`outline`/`filled` variants, but
+  `Button.css` maps `outline` and `filled` to the identical CSS class — there is only one real
+  bordered-pill visual treatment. At least one confirmed call site (`NewsletterForm.js`'s submit
+  button, `className="mt-10 bg-blue-400 sm:mt-12"`) achieves a filled look via an ad hoc inline
+  Tailwind utility class layered on top of the shared `Button` component, not via the component's
+  own `variant` prop.
+- Evidence: `docs/design/visual-language.md`, `docs/rewrite/open-questions.md`.
+- Severity/impact: Trivial — a design-system naming/implementation inconsistency, not a functional
+  defect.
+- Classification: **Unknown** — whether other call sites do the same ad hoc override, and whether
+  a real "filled" design language was ever intended, needs a full call-site audit (see
+  `docs/rewrite/open-questions.md`) before Nusszopf 2's Blade component library decides whether to
+  implement a real filled variant or drop the unused name entirely.
+- Recommended default if undecided: implement only the one visual treatment that's actually real
+  (bordered pill), and do not add a "filled" component variant speculatively.
+
+### BUG-015 — Login always lands on `/user/projects`, never the referring page
+
+- Affected area: Authentication / navigation
+- Historical behavior: every login (`/api/login`) hardcodes `returnTo: '/user/projects'` regardless
+  of what triggered it.
+- Evidence: `docs/design/navigation.md`, `docs/rewrite/open-questions.md`.
+- Severity/impact: Low — a visitor who clicked "create project" while logged out loses that intent
+  after logging in and has to navigate again.
+- Classification: **Unknown** — could be deliberate simplicity (there is essentially one meaningful
+  authenticated landing screen in this product) or an unaddressed gap.
+- Recommended default if undecided: preserve as historically observed (product-fidelity default);
+  this is observable behavior, not an obvious defect, per `CLAUDE.md`.
+
+### BUG-016 — Meilisearch CORS proxy: wildcard origin + credentials
+
+- Affected area: Security, search infrastructure
+- Historical behavior: the nginx CORS proxy in front of Meilisearch answers every request (not just
+  preflight) with `Access-Control-Allow-Origin: *` and `Access-Control-Allow-Credentials: true`,
+  confirmed in both staging and production nginx configs, not just local dev.
+- Evidence: `docs/security/README.md`.
+- Severity/impact: Medium — a risky CORS pattern in general; actual exploitability depends on
+  whether the frontend ever called this API with `credentials: 'include'` and whether a
+  restricted (vs. master) Meilisearch API key was used in the browser — both Unknown from this
+  evidence.
+- Classification: **Unknown**, leaning **Replace**: Nusszopf 2's architecture already eliminates
+  the *need* for this pattern (Meilisearch is queried server-side via Scout, never directly from
+  the browser — see `docs/architecture/mapping.md`), so the question is moot for the rewrite
+  regardless of how it's classified historically. No further investigation needed unless a public
+  search API is ever added as a new product decision.
+
+### BUG-017 — `ProjectAnalytics.contactRequests` may have no real increment call site
+
+- Affected area: Domain, `ProjectAnalytics`
+- Historical behavior: the column exists, is covered by the same open-write permission as `views`,
+  but no confirmed call site incrementing it was found anywhere in the frontend files read across
+  this archaeology pass (unlike `views`, which has a fully traced increment path in
+  `pages/projects/[id].js`).
+- Evidence: `docs/domain/entities.md`, `docs/rewrite/open-questions.md`.
+- Severity/impact: Low — if genuinely unused, it's dead schema, not a functional gap; if it *is*
+  used somewhere not yet read (e.g. inside `ContactDialog.js`'s submit handler), that path needs
+  the same server-side-only fix as `views` (BUG-001).
+- Classification: **Unknown** — needs one more targeted read (`ContactDialog.js`'s submit handler)
+  before deciding whether Nusszopf 2 needs a `contactRequests`-equivalent field at all.
+
+### BUG-018 — Historical search E2E coverage was entirely stubbed out
+
+- Affected area: Testing
+- Historical behavior: `_search.spec.js` is wrapped in `xcontext` (never runs) with three
+  literal `expect(true).to.equal(true)` stub tests — querying, filtering, and contacting a project
+  owner from search results were never actually covered by the historical E2E suite.
+- Evidence: `docs/journeys/README.md`, Journey 5.
+- Severity/impact: Medium — not a product defect, but a real testing-debt flag: these three flows
+  must be specified from implementation evidence (`docs/design/screens.md`) rather than E2E
+  evidence, and the new Playwright suite must cover them from scratch.
+- Classification: **Fix** (close the gap; "no historical E2E" is not "no requirement to test").
+
+### BUG-019 — Slate rich-text editor field-interaction-order bug
+
+- Affected area: Design, project creation form
+- Historical behavior: a documented upstream `slate` bug (`ianstormtaylor/slate#3476`) required the
+  description field to be interacted with before other fields, or the form silently failed to
+  submit correctly — worked around with a specific field-interaction order in the historical E2E
+  test, not fixed in the product itself.
+- Evidence: `docs/design/screens.md`, `docs/rewrite/open-questions.md`.
+- Severity/impact: Low — becomes moot once Nusszopf 2 picks a different rich-text approach (see
+  `docs/rewrite/architecture-decisions.md`, "Rich-text editor replacement for Slate").
+- Classification: **N/A** — not something to fix or preserve, since it's tied to a library being
+  replaced entirely. The regression-test *symptom* (a form silently failing to submit under some
+  field-interaction order) should be explicitly tested against for whatever editor replaces Slate,
+  in case an analogous issue exists in the replacement.

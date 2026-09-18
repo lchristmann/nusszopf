@@ -204,13 +204,13 @@ Decisions about how Nusszopf 2 itself should work — as distinct from `docs/rew
 - Status: Undecided
 - Date: 2026-09-18
 - Context: historical `description`/`team` fields use `slate`/`slate-react`, with a known, documented upstream bug (`docs/rewrite/open-questions.md`).
-- Requirement: Livewire-compatible, per `CLAUDE.md`'s "smallest client-side solution" instruction; must still support whatever rich-text capability the historical editor actually offered (formatting, links — exact toolbar not yet fully catalogued, see `docs/design/components.md`'s `RichTextEditor` entry).
-- Historical evidence: `docs/design/screens.md`, `docs/design/components.md`.
+- Requirement: Livewire-compatible, per `CLAUDE.md`'s "smallest client-side solution" instruction; must still support whatever rich-text capability the historical editor actually offered.
+- Historical evidence: `docs/design/screens.md`, `docs/design/components.md`. **Toolbar capability now Confirmed** (`RichTextEditor.organism.js`): exactly six tools — `MarkButton`s for **bold**, *italic*, and underline (character-level marks); `BlockButton`s for unordered list and ordered list; one `LinkButton`. That is the complete toolbar — **no headings, no blockquote, no code block, no text alignment, no color, no tables, no image embedding**. This is a deliberately minimal rich-text capability, not a full word-processor-style editor, and the replacement should match this exact capability ceiling rather than either under- or over-shooting it (e.g. adding a heading tool would be new functionality beyond what the historical product offered, which needs its own approval, not a default "since we're replacing the editor anyway" upgrade).
 - Reference-project evidence: not yet checked — neither reference project's editor choice (if any) has been surveyed.
-- Decision: **not yet made** — blocked on a fuller read of `RichTextEditor.organism.js`'s actual toolbar (`BlockButton`, `MarkButton`, `LinkButton` components exist per the file listing but weren't opened) to know exactly what capability must be preserved before picking a replacement.
-- Alternatives: a Livewire-native rich-text package; a deliberately simpler Markdown-based editor (would be a product simplification requiring explicit approval, not a neutral technical swap, since it changes what content authors can express).
-- Consequences: n/a yet.
-- Revisit conditions: revisit once the toolbar capability is fully catalogued.
+- Decision: **not yet made** — the blocking unknown (toolbar capability) is now resolved; a human still needs to pick the concrete replacement package/approach.
+- Alternatives: a Livewire-native rich-text package supporting exactly bold/italic/underline/lists/link (avoids taking on unused capability); a deliberately simpler Markdown-based editor (would be a product simplification requiring explicit approval, not a neutral technical swap, since it changes what content authors can express — though notably a minimal Markdown toolbar could cover this exact feature set almost 1:1).
+- Consequences: because the required capability is so narrow, most modern Livewire-compatible rich-text packages will over-provide (a common risk: shipping a heavier toolbar than the product ever had, which is itself a drift from product fidelity) — whichever package is chosen should have its toolbar explicitly configured down to this six-tool set, not used with its own defaults.
+- Revisit conditions: none — ready for a human decision.
 
 ---
 

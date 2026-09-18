@@ -310,3 +310,13 @@ These four are triggered directly by `web-nusszopf`'s Next.js API routes calling
    for personalization ("Hallo {{username}}...") that this static `.mjml` source has simply
    drifted from. Flag as a source-of-truth conflict: SendGrid dashboard templates may differ
    from what's checked into this repo.
+5. **Newsletter double opt-in is only enforced on one of two creation paths.** A `Lead` created
+   via the public newsletter-signup form goes through true double opt-in (this subscribe email
+   is sent, confirmation required). A `Lead` created via the "newsletter" checkbox at account
+   signup is created **already confirmed**, with no confirmation email sent at all — this
+   `subscribe.mjml` template is never triggered for that path. Confirmed via
+   `web-nusszopf/projects/webapp/src/pages/api/newsletter.js` and
+   `src/utils/functions/newsletter.function.js`. This is a product-intent question, not a
+   research gap — see `docs/rewrite/open-questions.md` → "Newsletter signup-checkbox path
+   skips double opt-in" for the two competing interpretations and why this needs a human
+   decision before Nusszopf 2 implements either behavior.

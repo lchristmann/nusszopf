@@ -12,7 +12,9 @@ Source: `historical/web-nusszopf/projects/e2e/cypress/integration/*.spec.js` (Cy
 2. Click the element `[data-test="route_search-page"]` (last match on the page). **Expect:** browser location becomes exactly `https://web.dev.nusszopf.org/search`.
 3. (Fresh `/` visit again, `beforeEach`.) Click `[data-test="route_create-project-page"]`. **Expect:** browser location **contains** `https://auth.nusszopf.org/login` — i.e. an anonymous visitor trying to create a project is sent to the separate Auth0-hosted login app, not to an in-app login screen or a client-side redirect to `/api/login` first. **Confirmed** — this specific CTA on the landing page links directly to the external auth domain, bypassing the `webapp`'s own `/api/login` handler. Cross-reference `docs/authentication/README.md` for whether this is the same eventual destination as `/api/login` or a genuinely different entry point.
 
-Note: the `data-test` selectors `route_search-page` and `route_create-project-page` were **not** found during the frontend archaeology pass over `webapp/src/pages/index.js` (which uses CMS-driven `Link`/`Route` components without these exact test ids observed in the code read in this pass) — either they live inside CMS-driven markup not opened, or inside `HowToSection`/`CarouselSection` container internals not opened in this pass. Flag as **Unknown — needs a follow-up read of `assets/data/*.data.js` and `containers/home/**` before this journey can be fully re-verified against source.**
+**Resolved (partially):** `[data-test="route_search-page"]` is **Confirmed** to live in `webapp/src/containers/home/HowToSection/HowToSection.js` — the "how it works" section's own search CTA (a `Route` styled with an ad hoc `bg-yellow-400` override, see `docs/design/visual-language.md`), not inside `pages/index.js` itself or inside the (disabled) `CarouselSection`. Step 2 above is accurate as written.
+
+`[data-test="route_create-project-page"]`, however, **does not exist anywhere in the `web-nusszopf` source tree at the studied commit** (`b915940`, see `docs/rewrite/source-map.md`) — confirmed by an exhaustive grep across `webapp/src/**`, including `HowToSection`'s sibling `StepCard.js` (which renders three static, non-interactive informational cards with no links at all). This is a genuine, confirmed evidence gap, not an unopened file: **step 3 of this journey cannot be verified against source and may describe a CTA that had already been removed from the product by this commit** while the E2E spec was left unchanged (a stale/dead E2E assertion, not an unread implementation detail). Treat step 3's specific selector and destination as **Unconfirmed** for the rewrite — the *general* fact that creating a project while logged out routes through the login flow is still almost certainly true (consistent with `docs/design/navigation.md`'s hamburger-menu "Create project" behavior, which does the same thing), but do not reproduce a `route_create-project-page` `data-test` hook or assume it lives on the landing page specifically without new evidence.
 
 ## Journey 2 — Registration, logout, login (`_auth.spec.js`)
 
@@ -83,7 +85,44 @@ it('User can contact a project', () => { expect(true).to.equal(true) })
 
 Actual search behavior in the historical product is exercised **only incidentally**, as a side effect of the create/update/delete assertions inside `_projects.spec.js` (does a specific project's title appear/disappear from an otherwise-empty query). There is **no historical E2E coverage at all** for: searching by a real query term, filtering (`FilterPopover`), or contacting a project's owner from a search result. This is a genuine, confirmed gap in historical test coverage — record it in `docs/rewrite/open-questions.md` and treat these three flows as needing behavior confirmed from implementation (`docs/design/screens.md`'s Search section) rather than from E2E evidence, and ensure the new Playwright suite actually covers them (closing the historical gap, not reproducing it).
 
+## Journey 6 — Newsletter subscribe / confirm (Inferred — no E2E evidence)
+
+**Actors:** anonymous visitor (public form) or a newly-registering user (signup checkbox). **Source:** implementation only (`docs/domain/entities.md` `Lead`, `docs/domain/workflows.md`, `docs/email/README.md`) — no historical E2E coverage exists for either path.
+
+**Public-form path (true double opt-in):**
+1. Visitor fills the newsletter form (Home page `NewsletterSection`, or the profile-page newsletter subsection for an already-authenticated user without a confirmed `Lead`), providing email + required privacy-consent checkbox.
+2. `Lead` row created, `hasConfirmed = false`; subscribe-confirmation email sent (`docs/email/README.md` §6).
+3. Visitor clicks the emailed link → `/newsletter/subscribe/{token}` → server verifies the signed token → `hasConfirmed` flips to `true` → success screen shown.
+4. Side effect: `sync_leads_sendgrid`-equivalent list-sync job fires.
+
+**Signup-checkbox path (Confirmed asymmetry — see `docs/rewrite/open-questions.md` "Newsletter signup-checkbox path skips double opt-in"):**
+1. During registration, the visitor checks "newsletter."
+2. On success, a `Lead` is created **already confirmed**, with no confirmation email sent — this asymmetry needs a human decision before Nusszopf 2 implements it as-is (see the linked open question); do not silently pick either behavior.
+
+**Playwright coverage this journey should get:** a spec driving the public-form path end-to-end (submit → assert email queued/sent via `Mail::fake()` → simulate the token click → assert `hasConfirmed`), and a spec for the unsubscribe path (token-based and email-only, per `docs/design/screen-specs.md`'s newsletter screens). This closes a real historical E2E gap (BUG item for "no E2E coverage of newsletter flows" — add to `docs/rewrite/bugs.md` if not already tracked there), it does not reproduce one.
+
+## Journey 7 — Contact a project owner (Inferred — no E2E evidence)
+
+**Actors:** anonymous or authenticated visitor, project owner (as email recipient). **Source:** `docs/design/screens.md` (Project detail), `docs/email/README.md` §5.
+
+1. Visitor opens a project's detail page, clicks **Contact**.
+2. If the project's `contact` field routes through Nusszopf's own inbox: `ContactDialog` opens (message field, visitor's reply email); submitting sends the "project contact message" email to the owner's private email, with the visitor's message and reply address in the body (and, per BUG-005's fix, as a real `Reply-To` header in Nusszopf 2 — historically only in body copy).
+3. If the project's `contact` field is set to the owner's own address: **Contact** instead opens the visitor's mail client directly via `mailto:` — no in-app dialog, no server involvement.
+4. Optionally, the visitor picks a specific `Request` first (via `RequestDialog`), and the outgoing message's subject reflects "`<project title>` / `<request title>`" rather than just the project title.
+
+**Playwright coverage this journey should get:** both contact paths (in-app dialog vs. `mailto:`), asserted via `Mail::fake()` for the in-app path. This is new coverage, not a port — no historical E2E exercised this at all.
+
+## Journey 8 — Avatar upload / crop (Inferred — no E2E evidence)
+
+**Actors:** authenticated user. **Source:** `docs/design/components.md` (`AvatarDialog`, `Cropper`), `docs/domain/workflows.md` ("Workflow: profile picture replacement").
+
+1. From `/user/profile`, click the avatar's edit affordance → `AvatarDialog` opens.
+2. Select/upload an image; crop via `react-easy-crop`-equivalent; confirm.
+3. `users.picture` updates; the previous picture (if any) is queued for storage cleanup (per the historical `clean_up_users_digitalocean`-equivalent job, made durable per BUG-009's fix).
+
+This journey's *internals* (crop UI mechanics, exact upload endpoint) were never opened during archaeology — the four steps above are the structural shape only; exact validation (file size/type limits) is Unknown and must not be invented without either finding further historical evidence or making an explicit, documented product decision.
+
 ## Not covered by this pass
 
-- Any journey through `auth-login`/`auth-password` beyond what these specs drive externally (tab switch, field names) — full internal behavior belongs to the authentication archaeology.
-- Newsletter subscribe/unsubscribe journeys, avatar upload/crop, contact-a-project-owner dialog flow, image upload — no E2E evidence exists for these; they would need to be derived from implementation only (see `docs/design/screens.md`) and flagged as **Unknown/Inferred**, not asserted as tested historical behavior.
+- Any journey through `auth-login`/`auth-password` beyond what Journeys 1–4 drive externally (tab switch, field names) — full internal behavior belongs to the authentication archaeology (`docs/authentication/README.md`).
+- Journeys 6–8 above are Inferred/reconstructed from implementation evidence, not transcribed from historical E2E tests (none exist for these flows) — treat their step-by-step detail as a best-effort specification to validate during implementation, not as confirmed historical fact the way Journeys 1–4 are.

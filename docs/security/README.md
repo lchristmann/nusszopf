@@ -34,12 +34,17 @@ Evidence base for this pass: `../historical/be-nusszopf/hasura/metadata/tables.y
 
 ## Rate limiting
 
-- Confirmed absence: no rate limiting is configured anywhere in this repository (no Hasura rate-limit config, no nginx `limit_req`, no Auth0 rule implementing throttling). Hasura open-source (the version pinned here, `v1.3.3`) does not include rate limiting; if it existed at all, it would have been an Auth0-tenant-level or Heroku-add-on-level control, not visible here. This is Unknown, not Confirmed-absent at the whole-system level, but Confirmed-absent within this repository's evidence.
+- Confirmed absence **within `be-nusszopf` only**: no rate limiting is configured anywhere in that repository (no Hasura rate-limit config, no nginx `limit_req`, no Auth0 rule implementing throttling). Hasura open-source (the version pinned here, `v1.3.3`) does not include rate limiting; if it existed at all, it would have been an Auth0-tenant-level or Heroku-add-on-level control, not visible here.
+- **Correction from the frontend archaeology pass**: `web-nusszopf/projects/webapp/src/pages/api/newsletter.js` (and likely `api/contact.js`, per its own "rate-limiting middleware" note in `docs/email/README.md`) applies Next.js API-route rate-limiting middleware. So rate limiting **does** exist in the historical product, just at the `webapp` Next.js API layer rather than at the Hasura/backend layer this document originally scoped. Nusszopf 2 should apply Laravel's `throttle` middleware to the equivalent routes (newsletter subscribe/unsubscribe, contact form) as a preserved behavior, not just as a fresh robustness improvement — and still needs a fresh decision for auth-route throttling specifically, since Auth0's own Attack Protection (IP blocking) has no equivalent evidenced in either `webapp` or `be-nusszopf` (see `docs/rewrite/decisions-register.md` #12).
 
 ## Docker/runtime security
 
 - Confirmed: the Hasura Dockerfile explicitly drops root (`RUN adduser -D nzuser` / `USER nzuser`) before running the engine — a good practice worth preserving in the rewrite's own Docker images.
 - Confirmed: `HASURA_GRAPHQL_DEV_MODE: "true"` and `HASURA_GRAPHQL_ENABLE_CONSOLE: "true"` are set in the **local dev** compose file only (`hasura/docker-compose.yml`); no evidence in this repository shows whether production disabled these (the Heroku env vars are not committed) — flagged as Unknown, must not be assumed either way, and the rewrite must independently ensure its own production configuration disables debug/console surfaces regardless of what historical production did.
+
+## Authorization matrix
+
+The full action-by-action authorization ruleset (who can view/create/update/delete every resource, and how each historical defect is fixed rather than ported) lives in `docs/security/authorization-matrix.md`. This document covers backend-visible security *properties* (secrets, CORS, rate limiting, data exposure); the matrix covers *authorization decisions* per action. Read both together.
 
 ## Summary of items requiring a decision (see `docs/rewrite/open-questions.md`)
 
