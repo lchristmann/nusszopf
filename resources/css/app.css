@@ -205,3 +205,13 @@
         @apply hover:ring-moss-800/25 focus:ring-moss-800/25;
     }
 }
+
+/* Route/action loading bar (docs/design/visual-language.md, "LoadingIndicator"). */
+@keyframes nz-rainbow {
+    from {
+        background-position: 0% 0;
+    }
+    to {
+        background-position: 200% 0;
+    }
+}

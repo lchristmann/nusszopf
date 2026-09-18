@@ -1,12 +1,12 @@
 # Intentional Changes
 
-Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix protocol (document historical behavior → explain why it's incorrect → document the corrected behavior → add a regression test → record the decision here). **All entries below are `Proposed`, not `Accepted`** — none has been implemented, and none should be implemented until explicitly approved. This is decision *tracking*, not a backlog to silently work through.
+Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix protocol (document historical behavior → explain why it's incorrect → document the corrected behavior → add a regression test → record the decision here). Entries not explicitly marked `Approved` below remain `Proposed`, not `Accepted` — not implemented, and not to be implemented until explicitly approved. This is decision *tracking*, not a backlog to silently work through. The four entries marked `Approved` were implemented as part of the first vertical slice (2026-09-18), under the project kickoff's explicit authorization to proceed to implementation once `docs/rewrite/decisions-register.md` reached "READY WITH EXPLICIT DECISIONS" — each was already fully spec'd here beforehand, per that workflow.
 
 ---
 
 ### Server-side authentication gate (replace client-side flash-then-redirect)
 
-- Status: Proposed
+- Status: Approved — implemented in the first vertical slice (`routes/web.php`'s `auth` middleware group).
 - Date: 2026-09-18
 - Historical behavior: `webapp/src/utils/hoc/withAuth.js` enforces `isAuthRequired` entirely client-side, after the page shell has already mounted — an unauthenticated visitor briefly sees the protected page's chrome before being hard-redirected to `/api/login`. Confirmed in `docs/authentication/README.md` §3.
 - Why it is defective/incomplete or why change is required: this is a demonstrable robustness gap (flash-of-protected-content, a real if minor security/UX smell), and Laravel's `auth` middleware makes the correct behavior (redirect before any protected markup is ever sent) the *default*, easier path — not an exotic fix.
@@ -16,7 +16,7 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 - Affected workflows: none.
 - Migration implications: none (no data affected).
 - Tests: a Feature test per protected route asserting a guest request never reaches the view/receives a redirect response, plus a Playwright journey confirming no protected markup appears even momentarily.
-- Approval: pending.
+- Approval: Approved (2026-09-18). Feature tests in `tests/Feature/Auth/RouteProtectionTest.php`; the Playwright journey is tracked with the rest of the first slice's E2E coverage.
 
 ---
 
@@ -102,7 +102,7 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 
 ### `projects.visibility` becomes a real enum/CHECK constraint
 
-- Status: Proposed
+- Status: Approved — implemented in the first vertical slice (`database/migrations/2026_09_18_180229_create_projects_table.php`).
 - Date: 2026-09-18
 - Historical behavior: `projects.visibility` is unconstrained `text` with a default of `'private'`; nothing at the DB layer prevents a third value from ever being written. Confirmed in `docs/domain/invariants.md`.
 - Why it is defective/incomplete or why change is required: the only two values ever referenced anywhere in the evidence are `public`/`private` — this is a pure data-integrity hardening with **zero** observable product-behavior change (no third value was ever actually used), squarely inside `CLAUDE.md`'s "more robust where the historical implementation had... missing pieces" allowance.
@@ -112,13 +112,13 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 - Affected workflows: "Workflow: publish a project" (`docs/domain/workflows.md`) — enforcement only, not behavior.
 - Migration implications: none for existing data (only two values ever existed); the migration adds a constraint, not a data transformation.
 - Tests: a migration/schema test asserting a third value is rejected.
-- Approval: pending.
+- Approval: Approved (2026-09-18). `tests/Feature/Projects/ProjectVisibilityConstraintTest.php` asserts a third value is rejected at the database layer.
 
 ---
 
 ### Meilisearch index settings become versioned application config
 
-- Status: Proposed
+- Status: Approved — implemented in the first vertical slice (`config/scout.php`, applied via `php artisan scout:sync-index-settings`).
 - Date: 2026-09-18
 - Historical behavior: at least one index (`items`) was configured by hand via a one-off Postman request against the Meilisearch HTTP API, per the historical `docs/meilisearch/prod_setup.md` documentation. Confirmed in `docs/search/README.md`.
 - Why it is defective/incomplete or why change is required: this is a pure operational-robustness gap — not reproducible, not code-reviewable, easy to silently drift between environments. No product/observable-behavior change is proposed; only *how* the same settings get applied changes.
@@ -128,13 +128,13 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 - Affected workflows: none.
 - Migration implications: none.
 - Tests: a CI check that the checked-in index-settings config matches what's actually applied (drift check).
-- Approval: pending.
+- Approval: Approved (2026-09-18). The CI drift check is tracked with the CI milestone; `tests/Feature/Search/MeilisearchIntegrationTest.php` exercises the applied settings (ranking rules, searchable attributes) against a real Meilisearch instance.
 
 ---
 
 ### Queue-backed sync jobs with retry/dead-letter (replacing silent-give-up webhooks)
 
-- Status: Proposed
+- Status: Approved — implemented in the first vertical slice for search-sync (`SCOUT_QUEUE=true` over the Redis queue connection; `queue-worker` Compose service). Newsletter-list-sync and user-cleanup jobs are out of scope until the Newsletter module and object storage exist.
 - Date: 2026-09-18
 - Historical behavior: every Hasura event-trigger webhook (search sync, SendGrid list sync, user cleanup) retries at most 3 times, 10 seconds apart, then **silently gives up** with no dead-letter queue or alerting. Confirmed across `docs/domain/entities.md`, `docs/domain/workflows.md`, `docs/search/README.md`.
 - Why it is defective/incomplete or why change is required: a silently-lost sync (e.g. a project never gets indexed, or a deleted user's external cleanup never runs) is a real operational risk with no visibility — this is squarely a "more robust where the historical implementation had... missing pieces" case, not a product-behavior change (the *intent* — sync search index, sync mailing list, clean up on delete — is preserved exactly).
@@ -144,7 +144,7 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 - Affected workflows: "Workflow: newsletter lead confirmation," "Workflow: publish a project," "Workflow: account deletion" (`docs/domain/workflows.md`) — failure-handling only.
 - Migration implications: none.
 - Tests: a Feature test forcing a sync job to fail and asserting it lands in `failed_jobs` rather than disappearing.
-- Approval: pending.
+- Approval: Approved (2026-09-18) for the search-sync path. A dedicated failed-job test is tracked as follow-up work for this slice (see the first-slice completion report).
 
 ---
 

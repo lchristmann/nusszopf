@@ -13,15 +13,15 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 
 | ID      | Area                                        | Severity | Classification                      | Status                                                                                  |
 |---------|---------------------------------------------|----------|-------------------------------------|-----------------------------------------------------------------------------------------|
-| BUG-001 | Authorization / Project analytics           | High     | Fix                                 | Spec'd — `intentional-changes.md`                                                       |
-| BUG-002 | Authorization / Request visibility          | High     | Fix                                 | Spec'd — `intentional-changes.md`                                                       |
-| BUG-003 | Auth / route protection                     | Medium   | Fix                                 | Spec'd — `intentional-changes.md`                                                       |
+| BUG-001 | Authorization / Project analytics           | High     | Fix                                 | Spec'd — deferred to the slice that builds `ProjectAnalytics`/view counting (not required by the first slice's acceptance criteria) |
+| BUG-002 | Authorization / Request visibility          | High     | Fix                                 | Spec'd — deferred to the slice that adds the `Request`/`ProjectRequest` model (not present in the first slice) |
+| BUG-003 | Auth / route protection                     | Medium   | Fix                                 | Implemented — first vertical slice (2026-09-18)                                         |
 | BUG-004 | Auth / avatar sync                          | Low      | Fix                                 | Spec'd — `intentional-changes.md`                                                       |
 | BUG-005 | Email / contact form                        | Medium   | Fix                                 | Spec'd — `intentional-changes.md`                                                       |
 | BUG-006 | Email / copy                                | Trivial  | Fix                                 | Spec'd — `intentional-changes.md`                                                       |
-| BUG-007 | Domain / `visibility` constraint            | Low      | Fix                                 | Spec'd — `intentional-changes.md`                                                       |
-| BUG-008 | Search / operations                         | Medium   | Fix                                 | Spec'd — `intentional-changes.md`                                                       |
-| BUG-009 | Background jobs / operations                | Medium   | Fix                                 | Spec'd — `intentional-changes.md`                                                       |
+| BUG-007 | Domain / `visibility` constraint            | Low      | Fix                                 | Implemented — first vertical slice (2026-09-18)                                         |
+| BUG-008 | Search / operations                         | Medium   | Fix                                 | Implemented — first vertical slice (2026-09-18)                                         |
+| BUG-009 | Background jobs / operations                | Medium   | Fix                                 | Implemented (search-sync path) — first vertical slice (2026-09-18)                      |
 | BUG-010 | Email / contact form validation             | Medium   | Fix                                 | Needs an `intentional-changes.md` entry                                                 |
 | BUG-011 | Newsletter / consent asymmetry              | Medium   | Unknown                             | Needs a human product decision                                                          |
 | BUG-012 | Auth / Apple social login                   | Low      | Replace (drop)                      | Decided — do not implement                                                              |
