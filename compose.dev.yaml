@@ -10,9 +10,7 @@ x-app-build: &app-build
 x-app-environment: &app-environment
   env_file:
     - .env
-  environment:
-    UID: ${UID:-1000}
-    GID: ${GID:-1000}
+  user: "${UID:-1000}:${GID:-1000}"
 
 x-app-volumes: &app-volumes
   - .:/var/www:cached

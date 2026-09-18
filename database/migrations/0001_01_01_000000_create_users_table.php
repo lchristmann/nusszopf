@@ -12,11 +12,20 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
+            // `name` is the historical `users.name` column, publicly shown as the
+            // account's "username" — it is set once at registration and, per the
+            // confirmed historical permission model (docs/domain/permissions.md),
+            // was never editable afterward by any role. Nusszopf 2 preserves that:
+            // no update path for it exists anywhere in this slice.
             $table->string('name');
             $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            // Local-disk avatar path (docs/rewrite/architecture-decisions.md,
+            // "Object storage: required for v1 or deferred" — local disk in v1).
+            // Historically populated only via social login; unset in this slice
+            // since Socialite is deferred (docs/authentication/README.md §3).
+            $table->string('picture')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
@@ -29,7 +38,7 @@ return new class extends Migration
 
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->foreignId('user_id')->nullable()->index();
+            $table->foreignUuid('user_id')->nullable()->index();
             $table->string('ip_address', 45)->nullable();
             $table->text('user_agent')->nullable();
             $table->longText('payload');
