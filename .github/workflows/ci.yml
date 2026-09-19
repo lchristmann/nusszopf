@@ -34,6 +34,12 @@ jobs:
   test:
     name: Tests (Pest)
     runs-on: ubuntu-latest
+    # phpunit.xml pins DB_HOST to the Docker Compose hostname ("postgres").
+    # PHPUnit never overrides variables already present in the process
+    # environment, so the CI service hosts must be set here, not in .env.
+    env:
+      DB_HOST: 127.0.0.1
+      REDIS_HOST: 127.0.0.1
     services:
       postgres:
         image: postgres:16-alpine
@@ -79,9 +85,7 @@ jobs:
         run: |
           php artisan config:clear
           {
-            echo "DB_HOST=127.0.0.1"
             echo "DB_DATABASE=nusszopf_testing"
-            echo "REDIS_HOST=127.0.0.1"
             echo "MEILISEARCH_HOST=http://127.0.0.1:7700"
             echo "MEILISEARCH_KEY=nusszopf-ci-master-key"
             echo "SCOUT_DRIVER=meilisearch"
