@@ -4,7 +4,8 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Livewire\Auth\LoginRegister;
 use App\Livewire\Projects\MyProjects;
 use App\Livewire\Projects\ProjectDetail;
-use App\Livewire\Projects\ProjectForm;
+use App\Livewire\Projects\ProjectEdit;
+use App\Livewire\Projects\ProjectWizard;
 use App\Livewire\Search\Search;
 use Illuminate\Support\Facades\Route;
 
@@ -36,6 +37,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', LogoutController::class)->name('logout');
 
     Route::get('/user/projects', MyProjects::class)->name('projects.mine');
-    Route::get('/user/project/create', ProjectForm::class)->name('projects.create');
-    Route::get('/user/project/{project}/edit', ProjectForm::class)->name('projects.edit');
+    Route::get('/user/project/create', ProjectWizard::class)->name('projects.create');
+    Route::get('/user/project/{project}/edit', ProjectEdit::class)->name('projects.edit');
 });
