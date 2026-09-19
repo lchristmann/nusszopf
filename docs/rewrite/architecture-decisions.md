@@ -214,6 +214,35 @@ Decisions about how Nusszopf 2 itself should work — as distinct from `docs/rew
 
 ---
 
+**Implementation (second slice, 2026-09-19): TipTap.** `@tiptap/core` with the individually listed
+extensions for bold, italic, underline, bullet list, ordered list, list item and link (plus the
+document/paragraph/text/history/placeholder base), `resources/js/rich-text-editor.js`. Every other
+extension is absent, package-default hotkeys and markdown input/paste rules are stripped (Slate had
+none), list items cannot nest. The stored representation is TipTap/ProseMirror JSON in
+`description_template`/`team_template`, re-normalized to the whitelist server-side
+(`App\Support\RichText`) and rendered server-side — the client is not trusted. A Markdown editor
+remains rejected. Full behavior: `docs/rewrite/second-slice.md`.
+
+---
+
+### Project-location autocomplete: server-side LocationIQ call
+
+- Status: **Adopted** (second slice, 2026-09-19 — Category B: an implementation detail with no product-visible difference)
+- Context: the historical client called LocationIQ directly with an API key embedded in the browser bundle (`location.service.js`, `LOCATIONIQ_KEY`).
+- Decision: the same LocationIQ `autocomplete` request (same parameters, same result mapping) is made by the application server (`App\Services\LocationSearch`), so the key stays private and a self-hoster configures one environment variable. Development/CI use a bundled stub service instead of the live API.
+- Alternatives: browser-side call (rejected: exposes the operator's key); a different provider or self-hosted Nominatim (rejected for this slice: a different result set/shape is a product-visible change needing its own decision — *Unknown* whether the maintainers want one).
+- Consequences: without `LOCATIONIQ_KEY` a fixed location cannot be chosen; documented in `docs/deployment/README.md`.
+
+---
+
+### Icons and logo marks: inline SVG files behind one Blade component
+
+- Status: **Adopted** (second slice, 2026-09-19 — this is the "icon-asset strategy" the first-slice golden-master review asked for)
+- Decision: `resources/icons/*.svg` (Feather icons, MIT — licence copied next to them — one lucide glyph, and the two custom marks `nuss` and `nusszopf-header-logo` transcribed from `ui-library/assets/icons`) rendered by `<x-icon name size stroke-width>`. Only icons a screen actually uses are added.
+- Alternatives: an icon font or a JS icon package (rejected: a runtime dependency for a dozen glyphs).
+
+---
+
 ### `Request` model naming (avoid clashing with `Illuminate\Http\Request`)
 
 - Status: **Adopted** (Category B — Claude decision, pre-implementation review pass 2026-09-18; see `docs/rewrite/decisions-register.md`)

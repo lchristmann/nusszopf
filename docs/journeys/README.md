@@ -126,3 +126,17 @@ This journey's *internals* (crop UI mechanics, exact upload endpoint) were never
 
 - Any journey through `auth-login`/`auth-password` beyond what Journeys 1–4 drive externally (tab switch, field names) — full internal behavior belongs to the authentication archaeology (`docs/authentication/README.md`).
 - Journeys 6–8 above are Inferred/reconstructed from implementation evidence, not transcribed from historical E2E tests (none exist for these flows) — treat their step-by-step detail as a best-effort specification to validate during implementation, not as confirmed historical fact the way Journeys 1–4 are.
+
+## Second slice — the browser journeys that implement Journey 3's create/update/delete
+
+`tests/E2E/specs/user/project-journey.spec.ts` follows Journey 3 through the real stack:
+register → My Projects → create (all four steps, with the step gating, `?step=N`, back with state
+kept, the rich-text toolbar, the place search, a fixed period) → detail (location link, period,
+formatted description, team, motto, contact, owner banner) → edit (values loaded, whole-form
+validation, modify, save, discard-confirm) → settings (private → 404 for others, public → visible and
+searchable) → delete (native confirm). Differences from the historical Cypress spec, all deliberate:
+the Requests step/tab is scaffolding (no request dialog yet — the ProjectRequest slice), a real
+location and period are exercised rather than remote/flexible only, and no fixed `cy.wait(2000)` —
+the search assertion retries until the (queued) index has caught up.
+`tests/E2E/specs/user/project-wizard.spec.ts` adds the mechanics Cypress never covered (deep links,
+refresh, history, Enter, blur timing, toolbar ceiling, place-search keyboard, access, phone layout).

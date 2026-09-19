@@ -53,3 +53,21 @@ Interpretation (a) is confirmed correct: **the indexing webhook itself filters a
 4. The real value sets for `Project` fields like `descriptionTemplate`/`location`/`period` as they appear in search results — **Partially resolved** by this pass: `search.function.js`'s `_parseProjectToDocument` confirms the indexed (not necessarily rendered) shape — `pro_location_text` is `location.searchTerm` (empty string if remote), `pro_period_from`/`pro_period_to` are Unix-ms timestamps derived from `period.from`/`period.to` (empty string if flexible), `pro_location_geo` is the raw `location.data.geo` object (empty object if remote). Exact search-result-card rendering of these fields is still Unknown pending frontend `HitCard` internals (not opened in this pass).
 
 Do not resolve any of the above by invention; escalate as open questions if the frontend archaeology also cannot resolve them.
+
+## Second slice — what Nusszopf 2 indexes for a project
+
+`Project::toSearchableArray()` now carries the historical `_parseProjectToDocument` field set
+(`search.function.js`, **Confirmed**): `title`, `goal`, `description` (plain text), `team` (plain
+text), `motto`, `author` (the owner's name), `location_text` (the place text, empty when remote),
+`location_remote`, `location_geo` (`{lat, lon}`, empty when remote), `period_flexible`,
+`period_from`/`period_to` (Unix timestamps, null when flexible) and `updated_at`. Field names are
+unprefixed (the `pro_` prefix existed to share an index with requests). The searchable attributes
+are `title, goal, description, location_text, team, motto, author`
+(`config/scout.php`; run `php artisan scout:sync-index-settings` after upgrading).
+
+Synchronization stays the model-save path of the first slice: every wizard/edit write is an Eloquent
+save observed by Scout (queued via `SCOUT_QUEUE`), so a changed searchable field re-indexes, a
+private → public save indexes, a public → private save removes, and deleting a project from the edit
+screen's settings view removes it. The historical "only reindex when a watched column changed"
+optimisation is not reproduced (an unchanged form saves nothing, so no spurious reindex happens
+from the edit screen); regression tests are in `tests/Feature/Search/ProjectSearchSyncTest.php`.

@@ -2,7 +2,7 @@
 
 This is an engineering-sequencing decision, not a product-redesign decision — nothing here changes
 what Nusszopf 2 is; it only decides what gets built first so the architecture gets validated with
-the least throwaway work. Nothing in this document has been implemented.
+the least throwaway work. The first slice is implemented; the second slice (the wizard, `docs/rewrite/second-slice.md`) is implemented.
 
 ## Candidate 1 — Public read-only surface (Landing → Search → Project detail)
 
@@ -137,9 +137,7 @@ slice's wizard implementation must match, not a design still to be invented.
 - **Step navigation is a URL query parameter** (`?step=N`), driven by `useStepper`'s `goForward`/
   `goBack`, which both call `router.push({ pathname: '/user/project/create', query: { step } })`.
   The step is deep-linkable and browser-back/forward-navigable, not just component-internal state.
-- **Per-step validation gates forward navigation**, not backward navigation — `getNextStep` only
-  advances past a step whose `requiredSchema` (if any) validates against the current values; a step
-  with no `requiredSchema` (the Requests step) can always be passed through, confirming zero
+- **Per-step validation gates forward navigation**, not backward navigation. *(Corrected in the second slice: the gate is Formik's `validationSchema` for the current step, not `getNextStep`'s `requiredSchema` — no step ever receives that prop — see `docs/rewrite/second-slice.md`.)* A step with no schema (the Requests step) can always be passed through, confirming zero
   requests is a fully valid, unremarkable path, not an edge case to special-case. `goBack` has no
   validation at all — the wizard never blocks moving backward.
 - **Defensive re-validation at final submit**: `handleSubmit` re-runs `step1ValidationSchema`/
@@ -170,7 +168,7 @@ picking this document up cold.
 | Project creation UI | 4-step wizard, exact mechanics above, built once the rich-text-editor and `ProjectRequest`-naming decisions are in place (both now Adopted — see `docs/rewrite/decisions-register.md` — so nothing blocks starting the wizard in the *second* slice) | A single-page form covering only `title`, `goal`, `description`, `visibility` — no steps, no requests, no team/motto/contact fields. This exists purely to prove the Livewire form → Policy → Eloquent → Scout path once, end to end, with the least code. It is explicitly not the four-step wizard, not a simplified *permanent* creation flow, and not evidence that Nusszopf 2 "doesn't really need" the wizard. |
 | Requests (child resource) | Every project can have zero or more `Request`s, added via a dialog during creation (step 3) or from the edit screen's "Gesuche" tab | Out of scope entirely for the first slice — no `Request` model/table touched yet. Added in the second slice alongside the wizard. |
 | Authentication | Full registration/login/logout/password-reset/social-login(Google)/avatar-upload surface, per `docs/authentication/README.md` in full | Only email/username/password registration and session login/logout. No password reset, no Google Socialite, no avatar. This is a sequencing cut, not a scope cut — `docs/authentication/README.md` remains the full authoritative spec for what ships in a later slice, unchanged by what the first slice implements. |
-| Visibility default | `private` at creation, matching history (`docs/domain/entities.md`) | Same — the first slice does not change this default; it publishes explicitly as its own step (see acceptance criteria below), not automatically. |
+| Visibility default | `private` at creation, matching history (`docs/domain/entities.md`) — *the second slice found that the wizard's own initial value is `public` (`create.js` `initialValues`); the DB default is `private`* | Same — the first slice does not change this default; it publishes explicitly as its own step (see acceptance criteria below), not automatically. |
 | Draft/autosave | None — matches history exactly (see above) | None — this happens to be identical between final and temporary behavior, so there is nothing to reconcile later. |
 
 No temporary shortcut in the row above is a silent product decision. If a future implementation

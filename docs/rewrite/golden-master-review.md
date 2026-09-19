@@ -141,3 +141,77 @@ table above:
 - `resources/views/livewire/search/search.blade.php`, `app/Livewire/Search/Search.php` — applied the
   visual-comparison pass's flagged-but-deferred "Search screen width/color" fix (`size="large"`,
   `text-moss-800`, capped results width instead of `fluid`).
+
+---
+
+# Second-slice verification pass (2026-09-19)
+
+Scope: the project creation wizard, the project edit screen, the rich-text editor, the project detail
+content those fields drive, and the shared chrome/controls those screens use. Source of truth:
+`../historical/web-nusszopf/projects/{webapp,ui-library}/src/**` (read in full for the files listed in
+`docs/rewrite/second-slice.md`). Method: every historical component's class string and structure was
+compared with the Blade equivalent, then the rendered result was inspected in Chromium at 1280 px and
+375 px (wizard steps 1, 3 and 4, project detail, edit "Beschreibung" and "Einstellungen"). *No
+historical screenshots or a runnable historical app are available*, so "Match" below means "the
+historical structure, classes, copy and states are reproduced", not a pixel diff — the same standard
+the first-slice review used.
+
+## Behavioral comparison
+
+| Area | Historical reference | Implementation | Discrepancy | Classification | Action |
+|---|---|---|---|---|---|
+| Step count, order, labels | `create.js`, `CreateProjectSteps/*`, `create-project.data.js` | `ProjectWizard` | None | Match | None |
+| Fields per step and column | `DescriptionStep1/2`, `SettingsStep` | `project-wizard.blade.php` | None | Match | None |
+| Forward gating / backward free | Formik `validationSchema` per step | `ProjectWizard::next()/back()` | None (the mechanism differs from what `first-slice.md` said — corrected) | Match | Doc corrected |
+| `?step=N`, entry at step 0, invalid values | `useStepper.js` | `mount()` redirect + `updatedStep()` | None | Match | None |
+| No draft | `create.js` | properties only | None | Match | None |
+| Error display timing | Formik touched + errors | `blurred()` + failed `next()` | Validation runs on blur (Livewire round trip) rather than on every keystroke after touch | Match (equivalent display) | None |
+| Final defensive re-validation + toast | `handleSubmit` | `ProjectWizard::create()` | None | Match | None |
+| Creation payload | `serializeProject*` | `descriptionAttributes()`/`settingsAttributes()` | Plain-text projection separates blocks by a space (history joined list items with commas) | Match (search text only) | None |
+| Title/goal 40/150, motto 200, team/description 6000, all messages | `*Field.js`, `project-form.data.js` | `ManagesProjectFields::fieldRules()` | Whitespace-only title/goal rejected | Historical bug fix | BUG-026 |
+| Period rules and copy | `PeriodField.js` | `PeriodDateRule` | Ordering test not applied while flexible; strict 2/4-digit years | Historical bug fix / Historical unknown | BUG-022; year edge recorded in `second-slice.md` |
+| Period storage and display | `parseDateISOString`, `[id].js` | `ProjectDate` | Display no longer time-zone dependent | Historical bug fix | BUG-023 |
+| Location shape, provider, params, UX | `LocationField.js`, `location.service.js`, `Combobox` | `LocationSearch`, `project-form/location` | Provider call moved server-side (key private) | Match (Replace: infrastructure) | Documented |
+| Rich-text toolbar, marks, lists, link prompt | `RichTextEditor.organism.js` | TipTap config | List-button aria-labels corrected; package replaced | Historical bug fix / Replace | BUG-024 |
+| Rich-text rendering | `serializeJSX` | `RichText::toHtml` | None (https forcing, classes reproduced) | Match | None |
+| Edit: views, per-view save, dirty/confirm, delete | `edit.js`, `EditProjectViews/*` | `ProjectEdit` | None | Match | None |
+| Edit: owner-only, 404 | BUG-021 | `ProjectEdit::mount()` | (already a fix) | Historical bug fix | BUG-021 |
+| Detail: header, body sections, requests column, avatar, banner | `[id].js`, `Banner.js`, `Avatar` | `project-detail.blade.php` | See scaffolding table | Match / Intentional scaffolding | None |
+| Copy typos | `project-form.data.js`, `edit-projects-views.data.js` | — | "Peronen", "gepeichert" corrected | Historical bug fix | BUG-025 |
+| Requests step/view, request cards, request dialog | `RequestsStep.js`, `RequestsView.js` | inert button + empty state | Whole feature out of scope | Intentional scaffolding | ProjectRequest slice |
+| ContactDialog (contact via Nusszopf) | `ContactDialog.js` | `mailto:mail@nusszopf.org` | Out of scope (server e-mail) | Intentional scaffolding | E-mail slice |
+| VisitorCounter, "Projekt melden" | `[id].js` | absent | Out of scope | Intentional scaffolding | Later slice |
+
+## Visual comparison
+
+| Area | Historical reference | Implementation | Discrepancy | Classification | Action |
+|---|---|---|---|---|---|
+| `FramedGridCard` header/body coloring (`bg-lilac-300 lg:bg-steel-100`, `bg-white lg:bg-steel-100`, `lg:mb-20 lg:mt-12`) | `FramedGridCard.template.js`, `create.js` | wizard/edit/detail markup; `Page` props on the layout | The first slice put the header/body colors on the outer `Frame` at every breakpoint | Implementation discrepancy | **Fixed** for the three Slice 2 screens (My Projects/Search keep their first-slice markup, already reviewed) |
+| `FramedGridCard.Header`/`Body` (`rounded-t-lg`/`rounded-b-lg`, className on both header layers) | same | `framed-grid-card/{header,body}` | Missing rounding classes | Implementation discrepancy | **Fixed** |
+| `Page` `main` (`flex flex-col flex-1` + className), footer color | `Page.js` | `layout.blade.php` (`mainClass`, `footerBg`) | Missing | Implementation discrepancy | **Fixed** |
+| NavHeader icon-only top bar, logo mark, chevron, menu icons | `NavHeader.organism.js`, `Nuss.icon.js`, `NusszopfHeaderLogo.icon.js` | `nav-header.blade.php` + `<x-icon>` | Was text labels / Unicode glyphs / text wordmark | Implementation discrepancy | **Fixed** (first-slice follow-up #1) |
+| Checkbox glyph (`Square`/`CheckSquare`) | `Checkbox.atom.js` | `checkbox.blade.php` | Was a bordered native box | Implementation discrepancy | **Fixed** (first-slice follow-up; used by the registration screen) |
+| Radiobox | `Radiobox.atom.js` | `radiobox.blade.php` | None | Match | None |
+| Progressbar | `Progressbar.molecule.js` | `progressbar.blade.php` | None | Match | None |
+| FieldTitle + Popover | `FieldTitle.js`, `Popover.organism.js` | `field-title.blade.php` | Was an always-visible caption (an unread-component simplification) | Implementation discrepancy | **Fixed** |
+| Input / Goal & Motto textareas, Select, InfoCard | `Input.atom.js`, `Select.*`, `InfoCard.molecule.js` | `input`, `select`, `info-card` | None | Match | None |
+| Button: disabled dimming/cursor, `outline-none`, `iconLeft` | `Button.atom.js` | `button.blade.php` | Missing | Implementation discrepancy | **Fixed** |
+| Rich-text editor chrome (border/ring, toolbar row, button spacing, min height, placeholder) | `RichTextEditor.organism.js` | `rich-text-editor.blade.php`, `app.css` | TipTap's DOM instead of Slate's; styled to the same classes | Match | None |
+| Combobox (search/X icon, popover, hover/selected option) | `Combobox.organism.js` | `project-form/location.blade.php` | None | Match | None |
+| Project detail header (title, goal, MapPin/Calendar rows, Kontaktieren/Teilen `small` buttons, responsive stacking) | `[id].js` | `project-detail.blade.php` | None | Match | None |
+| Project detail body (section titles `textLg`, `text-lg` rich text, requests column, `row-start-1` mobile ordering) | `[id].js` | same | None | Match | None |
+| Author block | `Avatar.molecule.js` (`project`) | initial-on-grey circle | External image service dropped | Intentional scaffolding | Avatar slice |
+| Banner close icon | `Banner.js` (`X`, aria "Information ausblenden") | `<x-icon name="x">` | Was a Unicode ×, aria "Banner schließen" | Implementation discrepancy | **Fixed** |
+| Toast stacking (`opacity-50` on older toasts) and enter animation | `Toasts.service.js` | `app.js`, `app.css` | Was missing (first-slice follow-up #3) | Implementation discrepancy | **Fixed** |
+| Toast "loading" then result | `Toasts.service.js` | `nzToast` | None — nothing replaces a toast historically; all close after 3 s | Match | Doc corrected (`states.md`) |
+| Footer (sponsor badges) | `Footer.organism.js` | one-line footer | Documented minimal scaffolding | Intentional scaffolding | Unchanged |
+| Scroll shadow on the sticky nav | `NavHeader.organism.js` | absent | Low-priority micro-interaction | Implementation discrepancy | Not fixed — not on a Slice 2 screen's critical path |
+| Search scroll-to-top button, login password reveal | first-slice review | absent | Not Slice 2 screens | Implementation discrepancy | Not fixed — outside this slice |
+
+## Follow-ups closed from the first-slice review
+
+Icon-asset strategy (#1) — implemented as `<x-icon>` + `resources/icons/`; checkbox glyph; logo mark;
+NavHeader icons; toast stacking/animation (#3). Still open: the search page's scroll-to-top button and
+the login screen's password reveal (both need only `chevron-up`/`eye` icons now that the pipeline
+exists, but belong to those screens' slices), the sticky-nav scroll shadow.
+

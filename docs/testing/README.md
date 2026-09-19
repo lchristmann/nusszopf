@@ -22,6 +22,19 @@ A small number of important user journeys through the real UI, per role/actor, t
 - A `global-setup` step that resets and seeds the database once per run, plus one-time sign-in per role with persisted `storageState`, so individual specs don't each repeat login.
 - Run against every browser engine Playwright supports in CI as separate parallel jobs (mirroring LCxHolz's per-engine matrix), not one job looping serially over engines.
 
+### Second-slice conventions
+
+- Radios and checkboxes are visually hidden native inputs inside a `<label>`, as historically; specs
+  click the visible label (`ProjectWizardPage.pick`), never `check({ force: true })` on the hidden
+  input (its hit-target is not where the glyph is).
+- After a Livewire round trip that swaps a view (the edit screen's view selector), specs wait for the
+  server-rendered view's marker (`ProjectEditPage.expectView`), not just the select's value.
+- The stack contains a `locationiq-stub` service (dev/CI only) answering the LocationIQ autocomplete
+  endpoint with a fixed result; the place search is therefore exercised end to end without a key or
+  network. Feature tests use `Http::fake()` against `LocationSearch` instead.
+- `tests/Feature/Search/ProjectSearchSyncTest.php` mixes fast document-shape tests with a few
+  `@group meilisearch` tests against the real engine (edit re-indexing, publish/hide, delete).
+
 ## Visual parity
 
 Because visual fidelity is a hard requirement (`CLAUDE.md`, `.claude/rules/02-visual-fidelity.md`), Nusszopf needs a way to verify screens actually match the historical design, not just that they render without error. Where practical, use Playwright screenshot comparison against reference captures of the historical `web-nusszopf` UI for key screens/states. This is an open tooling decision (exact screenshot-diff mechanism, baseline management, acceptable pixel/threshold tolerance) to record in `docs/rewrite/architecture-decisions.md` once made — do not invent a mechanism silently.

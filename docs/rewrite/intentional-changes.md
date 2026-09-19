@@ -206,6 +206,76 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 
 ---
 
+### Period validation ignores a flexible period's stale dates (BUG-022)
+
+- Status: Approved (implemented in the second slice, 2026-09-19)
+- Date: 2026-09-19
+- Historical behavior: with "Flexibel" chosen, previously typed start/end dates that are in the wrong order still fail validation ("Enddatum vor Startdatum"), blocking the step/save (`PeriodField.js`).
+- Why it is defective/incomplete or why change is required: a flexible period has no dates — they are discarded when saved — so validating them blocks the visitor for an invisible, disabled value.
+- New behavior: while the period is flexible, none of the period rules run. A fixed period keeps the historical order and copy: required, `dd.mm.yyyy` format, then "Enddatum vor Startdatum".
+- Affected screens: Project creation wizard step 1; project edit "Beschreibung".
+- Affected domain: `Project.period`.
+- Affected workflows: create, edit.
+- Migration implications: none.
+- Tests: `tests/Feature/Projects/ProjectWizardTest.php` "does not apply period rules while the period is flexible, not even the ordering rule (BUG-022)"; `tests/Feature/Projects/ProjectEditTest.php` "does not let a stale end date block the save of a flexible period (BUG-022)"; `tests/E2E/specs/user/project-wizard.spec.ts` "validates the period fields with the historical copy".
+- Approval: Approved (second-slice implementation task).
+
+---
+
+### Stored period dates display as the stored calendar date (BUG-023)
+
+- Status: Approved (implemented in the second slice, 2026-09-19)
+- Date: 2026-09-19
+- Historical behavior: dates are stored as ISO-8601 date-times at the author's local midnight and displayed with `toLocaleDateString('de-DE')` in the viewer's time zone, shifting the shown day for viewers west of the author.
+- Why it is defective/incomplete or why change is required: the value an author chose is a calendar date; showing a different day to some viewers is wrong.
+- New behavior: the stored format is unchanged (ISO-8601 date-time at midnight, `App\Support\ProjectDate::toStored`); the detail and edit screens render the calendar date contained in the stored string as `j.n.Y` (the shape `de-DE` produced), independent of any time zone.
+- Affected screens: Project detail; project edit.
+- Affected domain: `Project.period`.
+- Affected workflows: create, edit, view.
+- Migration implications: none — existing historical data uses the same format.
+- Tests: `tests/Feature/Support/ProjectDateTest.php` "displays the stored calendar date as j.n.Y regardless of the offset or viewer time zone (BUG-023)"; `tests/Feature/Projects/ProjectDetailContentTest.php` "shows the period exactly as stored, whatever the offset it was stored with (BUG-023)".
+- Approval: Approved (second-slice implementation task).
+
+---
+
+### Rich-text list buttons are labelled correctly (BUG-024)
+
+- Status: Approved (implemented in the second slice, 2026-09-19)
+- Date: 2026-09-19
+- Historical behavior: the bullet-list button is announced "Liste geordnet" and the numbered-list button "Liste ungeordnet" (swapped labels).
+- Why it is defective/incomplete or why change is required: assistive technology announces the opposite of what the control does.
+- New behavior: bullet list = "Liste ungeordnet", numbered list = "Liste geordnet". The other four labels ("Schrift dick", "Schrift kursiv", "Schrift unterstrich", "Verlinkung") are unchanged.
+- Affected screens: Project creation wizard steps 1 and 2; project edit "Beschreibung".
+- Affected domain: none.
+- Tests: `tests/E2E/specs/user/project-wizard.spec.ts` "offers exactly the six-tool toolbar…" and the journey spec, which address the buttons by these names.
+- Approval: Approved (second-slice implementation task).
+
+---
+
+### Two copy typos corrected (BUG-025)
+
+- Status: Approved (implemented in the second slice, 2026-09-19)
+- Date: 2026-09-19
+- Historical behavior: "Peronen" (visibility info text), "gepeichert" (edit save-error toast).
+- New behavior: "Personen", "gespeichert".
+- Affected screens: Project creation wizard step 4 / project edit "Einstellungen"; project edit save-error toast.
+- Tests: `tests/Feature/Projects/ProjectEditTest.php` "rejects a tampered visibility value instead of hitting the database constraint" (asserts the toast copy); the visibility info text is exercised by the wizard step-4 tests.
+- Approval: Approved (second-slice implementation task); precedent BUG-006.
+
+---
+
+### A whitespace-only title or goal is rejected (BUG-026)
+
+- Status: Approved (implemented in the second slice, 2026-09-19)
+- Date: 2026-09-19
+- Historical behavior: `string().required()` accepts `"   "`.
+- New behavior: a title or goal consisting only of whitespace fails with the historical "Gib einen Titel ein" / "Gib ein Ziel ein".
+- Affected screens: Project creation wizard step 1; project edit "Beschreibung".
+- Tests: `tests/Feature/Projects/ProjectWizardTest.php` "rejects a whitespace-only title or goal (BUG-026)".
+- Approval: Approved (second-slice implementation task).
+
+---
+
 ## Explicitly deferred (not proposed here, need a product decision first — see `docs/rewrite/open-questions.md` / `docs/rewrite/architecture-decisions.md`)
 
 The following were identified during archaeology as *possible* candidates for change but are deliberately **not** proposed above, because reasonable product intent could explain the historical behavior as-is:

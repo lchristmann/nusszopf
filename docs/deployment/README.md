@@ -89,9 +89,22 @@ MEILISEARCH_KEY=
 SCOUT_DRIVER=meilisearch
 SCOUT_QUEUE=true          # closes BUG-009 — search sync is queued, not fire-and-forget
 
+LOCATIONIQ_KEY=           # project-location autocomplete (second slice) — see "Location search" below
+
 MAIL_MAILER=smtp          # any Laravel-supported driver; see docs/email/README.md
 FILESYSTEM_DISK=local     # avatars on local disk in v1, S3-compatible storage a documented upgrade
 ```
+
+### Location search (`LOCATIONIQ_KEY`)
+
+Choosing a fixed location for a project (the wizard's and edit screen's "Ortsgebunden") uses the
+[LocationIQ](https://locationiq.com) autocomplete API, as the historical product did (German
+cities, towns and villages only). LocationIQ has a free tier; create a key and set
+`LOCATIONIQ_KEY`. The request is made by the server, so the key is never sent to visitors' browsers.
+Without a key the place search shows no suggestions and a project cannot be given a fixed
+location — "Ortsunabhängig" projects are unaffected. `LOCATIONIQ_URL` (default the LocationIQ
+endpoint) exists only to point at a compatible service; the development/CI Compose stack points it at
+its bundled `locationiq-stub`.
 
 This is the first slice's real, verified list — it will grow (not shrink) as mail/newsletter/object-storage land in later slices.
 

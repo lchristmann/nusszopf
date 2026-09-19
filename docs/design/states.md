@@ -13,7 +13,7 @@ Source: cross-referenced from `webapp/src/pages/**`, `webapp/src/containers/**`,
 | User's projects list | `ProjectsSkeleton` while `loadingProjects || loadingUser`. |
 | Project edit page (any tab) | `SkeletonView` while `loadingProject || loadingUser || !projectData`, shown in place of the entire tab body but the header/tab-selector chrome still renders. |
 | Profile newsletter section | Three stacked `Skeleton` bars (`bg-steel-400`, decreasing widths, last one half-width) while `loading`. |
-| Any async mutation (subscribe, unsubscribe, delete account, add/update/delete project or request, etc.) | A `loading`-type `Toast` notification is fired immediately on submit (`notify({ type: 'loading', message: ... })`), replaced by a `success` or `error` toast on completion — this is the **standard, universal pattern** for all mutation feedback across the app, not case-by-case. See "Toast/notification states" below. |
+| Any async mutation (subscribe, unsubscribe, delete account, add/update/delete project or request, etc.) | A `loading`-type `Toast` notification is fired immediately on submit (`notify({ type: 'loading', message: ... })`), followed by a `success` or `error` toast on completion (**Confirmed, second slice**: `Toasts.service.js` never replaces a toast — each `notify` appends, every toast closes itself after 3 s, and all but the newest are `opacity-50`) — this is the **standard, universal pattern** for all mutation feedback across the app, not case-by-case. See "Toast/notification states" below. |
 | Login/logout | Same loading-toast pattern, fired the instant the nav-menu action is clicked, *before* the actual redirect/auth call completes. |
 
 ## Empty states — Confirmed

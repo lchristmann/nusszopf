@@ -173,7 +173,7 @@ Unresolved historical behavior, consolidated from the archaeology pass across `d
 - Conflicting evidence: none.
 - Possible interpretations: irrelevant once Nusszopf 2 picks a different rich-text approach (see `docs/architecture/mapping.md`), but the underlying *symptom* (a form silently failing to submit under some field-interaction order) should be explicitly tested against in the replacement's regression suite, in case a different-but-analogous issue exists.
 - Recommended investigation: none until the rich-text-editor replacement is chosen.
-- Decision: pending rich-text-editor architecture decision.
+- Decision: **Resolved (second slice, 2026-09-19).** The replacement is TipTap; the editor's state is one Livewire property written on every change, so there is no field-interaction-order coupling, and the wizard/edit E2E specs deliberately fill the fields in the opposite order (title first, description after) — see BUG-019 and `docs/rewrite/second-slice.md`.
 - Date: 2026-09-18
 
 ### Search E2E coverage gap

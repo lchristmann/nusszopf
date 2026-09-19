@@ -34,6 +34,11 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 | BUG-019 | Design / rich-text editor field-order bug   | Low      | N/A — tied to architecture decision | Moot once Slate is replaced; verify the new editor doesn't reintroduce an analogous bug |
 | BUG-020 | Security / SSR Apollo client shared state   | Low      | Replace (moot)                      | Resolved — pre-implementation review pass, 2026-09-18                                   |
 | BUG-021 | Authorization / Project edit screen access  | Low      | Fix                                 | Implemented — first-slice verification pass (2026-09-19)                                |
+| BUG-022 | Domain / Project period validation          | Low      | Fix                                 | Implemented — second slice (2026-09-19)                                                 |
+| BUG-023 | Domain / Project period display             | Low      | Fix                                 | Implemented — second slice (2026-09-19)                                                 |
+| BUG-024 | Accessibility / rich-text list buttons      | Trivial  | Fix                                 | Implemented — second slice (2026-09-19)                                                 |
+| BUG-025 | Design / copy typos                         | Trivial  | Fix                                 | Implemented — second slice (2026-09-19)                                                 |
+| BUG-026 | Domain / whitespace-only title and goal     | Trivial  | Fix                                 | Implemented — second slice (2026-09-19)                                                 |
 
 ---
 
@@ -410,3 +415,76 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
   another users project," updated to assert `404`, not `403`.
 - Full spec: `docs/rewrite/intentional-changes.md` → "Project edit screen denies non-owners with a
   404, not a 403".
+
+---
+
+## Second-slice findings (Project wizard / edit)
+
+Found while implementing the historical creation wizard and edit screen (2026-09-19), each read
+directly from `web-nusszopf/projects/webapp/src/containers/user/ProjectForm/*` and
+`ui-library/stories/**`. Fixes are specified in `docs/rewrite/intentional-changes.md`.
+
+### BUG-022 — The period's "end before start" test still fires while the period is flexible
+
+- Affected area: Domain, `PeriodField.js` validation (create wizard step 1, edit "Beschreibung")
+- Historical behavior: `PeriodFieldValidationSchema` gates the `required` and `dd.MM.yyyy` tests on
+  `flexible === false`, but the `period_to_isDesc` ("Enddatum vor Startdatum") test is attached to
+  `to` through a separate `.when(['from'], …)` that ignores `flexible`. If a visitor types a start
+  and an earlier end date and *then* switches to "Flexibel", the inputs are disabled (and their
+  labels dimmed) but the ordering test still fails, so `Weiter`/`Speichern` is blocked by an error
+  attached to a control the visitor can no longer edit, without changing the radio back.
+- Evidence: `PeriodField.js:14-34` (Confirmed, read in full).
+- Severity/impact: Low — a dead end reachable only through a specific sequence, with a way out.
+- Classification: **Fix** — a flexible period has no dates by definition (`serializeProjectDescription`
+  discards them), so validating them is defective, not a feature.
+
+### BUG-023 — A stored period date is displayed in the *viewer's* time zone
+
+- Affected area: Domain, project detail and edit screens
+- Historical behavior: the form's `dd.MM.yyyy` strings are persisted as `formatISO(date)` — an
+  ISO-8601 date-time at *local midnight with the author's UTC offset* — and the detail page
+  renders them with `new Date(iso).toLocaleDateString('de-DE')`, i.e. in the *viewer's* zone. A
+  project authored in Germany (`2027-03-01T00:00:00+01:00`) is shown as 28.2.2027 to a viewer west
+  of UTC.
+- Evidence: `utils/helper.js` (`parseDateISOString`), `projects.service.js:serializeProjectDescription`,
+  `pages/projects/[id].js:period`.
+- Severity/impact: Low — off-by-one-day display for some viewers.
+- Classification: **Fix** — the intended value is the calendar date the author typed. The stored
+  representation is kept exactly (ISO-8601 date-time, not `dd.MM.yyyy` — see the correction to
+  `docs/domain/entities.md`); only the *display* now reads the stored calendar date instead of
+  converting it.
+
+### BUG-024 — The rich-text list buttons carry each other's accessible names
+
+- Affected area: Accessibility, `RichTextEditor` toolbar
+- Historical behavior: `rich-text-editor.data.js` defines `ordered: 'Liste ungeordnet'` and
+  `unordered: 'Liste geordnet'` — swapped — and `RichTextEditor.organism.js` uses `cms.aria.unordered`
+  for the bullet-list button and `cms.aria.ordered` for the numbered-list button. A screen reader
+  announces the bullet list as "Liste geordnet" (ordered list) and vice versa.
+- Evidence: `ui-library/assets/data/rich-text-editor.data.js`, `RichTextEditor.organism.js:57-73`.
+- Severity/impact: Trivial (accessibility only).
+- Classification: **Fix** — the labels are unambiguously wrong for the icons they name. This is
+  also the "verify the new editor doesn't reintroduce an analogous bug" check BUG-019 asked for.
+
+### BUG-025 — Two typos in user-facing copy
+
+- Affected area: Design/copy
+- Historical behavior: the visibility field's info text reads "…nur für bestimmte **Peronen** sichtbar…"
+  (`project-form.data.js`), and the edit screen's save-error toast reads "…konnten nicht
+  **gepeichert** werden." (`edit-projects-views.data.js`).
+- Severity/impact: Trivial.
+- Classification: **Fix** — precedent: BUG-006 (a grammar fix in an email). Corrected to "Personen" and
+  "gespeichert". Every other string is reproduced verbatim (including the double spaces in the
+  contact-field info text, which HTML collapses anyway).
+
+### BUG-026 — A whitespace-only title or goal passes the historical validation
+
+- Affected area: Domain, `TitleField.js` / `GoalField.js`
+- Historical behavior: `string().max(40).required()` (Yup) treats `"   "` as a value, so a project
+  can be created whose title (or goal) is only spaces — it then renders as an empty heading. Laravel's
+  `required` rule rejects whitespace-only strings, so the new implementation would have differed
+  from history in this corner either way.
+- Severity/impact: Trivial.
+- Classification: **Fix** — the intended rule is "Gib einen Titel ein"/"Gib ein Ziel ein"; a heading
+  of spaces is not a title. Recorded rather than silently adopted as Laravel's default.
+

@@ -59,7 +59,7 @@ Composer/Artisan commands in the table run inside `workspace` — prefix with
 ## Services (`compose.dev.yaml`)
 
 `web` (nginx) · `php-fpm` · `workspace` (contributor shell) · `queue-worker` · `scheduler` ·
-`postgres` · `redis` · `meilisearch` · `playwright` (Debian-based, dev/CI-only — the app's own
+`postgres` · `redis` · `meilisearch` · `locationiq-stub` (dev/CI stand-in for the project-location autocomplete API; set `LOCATIONIQ_KEY`/`LOCATIONIQ_URL` in `.env` to use the real one) · `playwright` (Debian-based, dev/CI-only — the app's own
 Alpine-based images can't run Playwright's bundled browsers reliably).
 
 ## Testing
