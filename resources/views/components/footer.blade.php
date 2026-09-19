@@ -7,7 +7,9 @@
     to routes that don't exist. This is deliberately minimal scaffolding.
 --}}
 
-<x-frame as="footer" class="bg-steel-200 py-8">
+@props(['bg' => 'bg-steel-200'])
+
+<x-frame as="footer" class="{{ $bg }} py-8">
     <x-text as="p" variant="textXs" class="text-center text-steel-600">
         &copy; {{ now()->year }} Nusszopf
     </x-text>

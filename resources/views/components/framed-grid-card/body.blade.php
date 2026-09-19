@@ -8,6 +8,6 @@
     };
 @endphp
 
-<div {{ $attributes->class(['grid grid-cols-12 py-12 md:py-16', $gapClass]) }}>
+<div {{ $attributes->class(['grid grid-cols-12 py-12 md:py-16 rounded-b-lg', $gapClass]) }}>
     {{ $slot }}
 </div>

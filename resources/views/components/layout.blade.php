@@ -2,6 +2,11 @@
     'title' => 'Nusszopf',
     'hideNavHeader' => false,
     'goBackUri' => null,
+    // Historical `Page` props: `className` on <main> and `footer.className`
+    // (docs/design/screen-specs.md); the project screens pass
+    // `bg-white text-lilac-800 lg:bg-steel-100` / `bg-steel-100`.
+    'mainClass' => '',
+    'footerBg' => 'bg-steel-200',
 ])
 
 <!DOCTYPE html>
@@ -14,7 +19,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
-<body class="antialiased bg-white text-steel-800 font-sans">
+<body class="flex flex-col min-h-screen antialiased bg-white text-steel-800 font-sans">
     {{--
         Route-change loading bar (docs/design/visual-language.md,
         "Animation & motion") — a fixed 2px rainbow gradient bar, shown only
@@ -31,11 +36,11 @@
         <x-nav-header :go-back-uri="$goBackUri" />
     @endunless
 
-    <main>
+    <main class="flex flex-col flex-1 {{ $mainClass }}">
         {{ $slot }}
     </main>
 
-    <x-footer />
+    <x-footer :bg="$footerBg" />
 
     <x-toast-container />
 

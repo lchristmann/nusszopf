@@ -38,8 +38,19 @@
     };
 @endphp
 
+@php
+    // Button.atom.js: `outline-none focus:outline-none`, dimmed and
+    // default-cursor while disabled, pointer otherwise; an `iconLeft`
+    // wraps the label in a `flex items-center justify-center` row.
+    $disabled = $attributes->has('disabled');
+    $classes = ['inline-flex items-center justify-center outline-none focus:outline-none', $sizeClass, $colorClass, 'opacity-50 cursor-default' => $disabled, 'cursor-pointer' => ! $disabled];
+    $content = isset($iconLeft)
+        ? new \Illuminate\Support\HtmlString('<div class="flex items-center justify-center">'.$iconLeft.'<span class="'.($size === 'large' ? 'ml-1' : '').'">'.$slot.'</span></div>')
+        : $slot;
+@endphp
+
 @if ($as === 'a')
-    <a {{ $attributes->class(['inline-flex items-center justify-center', $sizeClass, $colorClass]) }}>{{ $slot }}</a>
+    <a {{ $attributes->class($classes) }}>{{ $content }}</a>
 @else
-    <button type="{{ $type }}" {{ $attributes->class(['inline-flex items-center justify-center', $sizeClass, $colorClass]) }}>{{ $slot }}</button>
+    <button type="{{ $type }}" {{ $attributes->class($classes) }}>{{ $content }}</button>
 @endif
