@@ -10,6 +10,12 @@ x-app-build: &app-build
 x-app-environment: &app-environment
   env_file:
     - .env
+  # Development/CI resolve the project-location autocomplete against the
+  # bundled `locationiq-stub` service. Set LOCATIONIQ_URL/LOCATIONIQ_KEY in
+  # `.env` to use the real LocationIQ API instead.
+  environment:
+    LOCATIONIQ_URL: ${LOCATIONIQ_URL:-http://locationiq-stub/v1/autocomplete.php}
+    LOCATIONIQ_KEY: ${LOCATIONIQ_KEY:-nusszopf-dev-stub-key}
   user: "${UID:-1000}:${GID:-1000}"
 
 x-app-volumes: &app-volumes
@@ -48,6 +54,8 @@ services:
         condition: service_healthy
       meilisearch:
         condition: service_healthy
+      locationiq-stub:
+        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "SCRIPT_NAME=/ping SCRIPT_FILENAME=/ping REQUEST_METHOD=GET cgi-fcgi -bind -connect 127.0.0.1:9000"]
       interval: 10s
@@ -110,6 +118,12 @@ services:
     depends_on:
       web:
         condition: service_healthy
+
+  locationiq-stub:
+    image: nginx:alpine
+    restart: unless-stopped
+    volumes:
+      - ./docker/stubs/locationiq.conf:/etc/nginx/conf.d/default.conf:ro
 
   postgres:
     image: postgres:16-alpine

@@ -1,3 +1,5 @@
+import './rich-text-editor';
+
 /**
  * Toast notifications — the app-wide async-feedback mechanism
  * (docs/design/states.md). Reproduces Toast.molecule.js's markup/classes
@@ -25,15 +27,25 @@ window.nzToast = function nzToast(type, message) {
         </div>
         <span class="flex-shrink-0 ml-5" aria-hidden="true">&times;</span>
     `;
-    el.className += ' mb-2';
-    el.addEventListener('click', () => el.remove());
+    el.className += ' mb-2 nz-toast-in';
+    const dimOlder = () => {
+        // Toasts.service.js: every toast but the newest is `opacity-50`.
+        const toasts = [...container.children];
+        toasts.forEach((toast, index) => toast.classList.toggle('opacity-50', index !== toasts.length - 1));
+    };
+    const dismiss = () => {
+        el.remove();
+        dimOlder();
+    };
+    el.addEventListener('click', dismiss);
     container.appendChild(el);
+    dimOlder();
 
     // Toasts.service.js's AUTO_CLOSE_MS = 3000, applied unconditionally to
     // every toast including `loading` — preserved exactly, not "fixed" into
     // excluding loading toasts, per this project's preserve-unless-
     // demonstrably-broken default.
-    setTimeout(() => el.remove(), 3000);
+    setTimeout(dismiss, 3000);
 
     return el;
 };
@@ -41,3 +53,38 @@ window.nzToast = function nzToast(type, message) {
 document.addEventListener('livewire:init', () => {
     Livewire.on('toast', ({ type, message }) => window.nzToast(type, message));
 });
+
+/**
+ * Project-detail "Teilen" (`handleShare` in pages/projects/[id].js): the native
+ * share sheet where the browser has one; otherwise (or if sharing fails for
+ * any reason but the user dismissing it) the page URL is copied and a success
+ * toast confirms it.
+ */
+window.nzShare = async function nzShare(title) {
+    const url = window.location.href;
+
+    const copy = async () => {
+        try {
+            await navigator.clipboard.writeText(url);
+        } catch {
+            const dummy = document.createElement('input');
+            document.body.appendChild(dummy);
+            dummy.value = url;
+            dummy.select();
+            document.execCommand('copy');
+            document.body.removeChild(dummy);
+        }
+        window.nzToast('success', 'Link zum Teilen kopiert!');
+    };
+
+    if (typeof navigator.share === 'function') {
+        try {
+            await navigator.share({ title, url });
+        } catch (error) {
+            if (error.name === 'AbortError') return;
+            await copy();
+        }
+    } else {
+        await copy();
+    }
+};

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Database\Factories\ProjectFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,11 +13,46 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Scout\Searchable;
 
-#[Fillable(['title', 'goal', 'description', 'visibility'])]
+/**
+ * The JSON-cast columns follow the shapes in docs/domain/entities.md:
+ * `location` = { remote, searchTerm, data }, `period` = { flexible, from, to },
+ * `*_template` = a ProseMirror document (App\Support\RichText). All are null
+ * for a project created by the first slice's single form.
+ *
+ * @property string $description
+ * @property array<string, mixed>|null $description_template
+ * @property array<string, mixed>|null $location
+ * @property array<string, mixed>|null $period
+ * @property string|null $team
+ * @property array<string, mixed>|null $team_template
+ * @property string|null $motto
+ * @property string $visibility
+ * @property string $contact
+ */
+#[Fillable([
+    'title',
+    'goal',
+    'description',
+    'description_template',
+    'location',
+    'period',
+    'team',
+    'team_template',
+    'motto',
+    'visibility',
+    'contact',
+])]
 class Project extends Model
 {
     /** @use HasFactory<ProjectFactory> */
     use HasFactory, HasUuids, Searchable;
+
+    /**
+     * The `contact` value meaning "first contact runs through Nusszopf"
+     * (`NZ_EMAIL` in the historical `enums.js`); any other value is the
+     * owner's own, publicly shown e-mail address.
+     */
+    public const NUSSZOPF_CONTACT = 'mail@nusszopf.org';
 
     /**
      * @return array<string, string>
@@ -91,11 +127,42 @@ class Project extends Model
      */
     public function toSearchableArray(): array
     {
+        $remote = (bool) ($this->location['remote'] ?? true);
+        $flexible = (bool) ($this->period['flexible'] ?? true);
+
+        // The historical `_parseProjectToDocument` field set
+        // (search.function.js): title, goal, description, team, motto, author,
+        // location text/remote/geo and the period as timestamps.
         return [
             'title' => $this->title,
             'goal' => $this->goal,
             'description' => $this->description,
+            'team' => $this->team,
+            'motto' => $this->motto,
+            'author' => $this->user?->name,
+            'location_text' => $remote ? '' : ($this->location['searchTerm'] ?? ''),
+            'location_remote' => $remote,
+            'location_geo' => $remote ? new \stdClass : ($this->location['data']['geo'] ?? new \stdClass),
+            'period_flexible' => $flexible,
+            'period_from' => $flexible ? null : $this->periodTimestamp('from'),
+            'period_to' => $flexible ? null : $this->periodTimestamp('to'),
             'updated_at' => $this->updated_at?->timestamp,
         ];
+    }
+
+    private function periodTimestamp(string $edge): ?int
+    {
+        $stored = $this->period[$edge] ?? '';
+
+        return $stored === '' ? null : CarbonImmutable::parse($stored)->getTimestamp();
+    }
+
+    /**
+     * Whether the owner's own e-mail address is the public contact
+     * (`contact = true` in the wizard's form state).
+     */
+    public function hasPersonalContact(): bool
+    {
+        return $this->contact !== self::NUSSZOPF_CONTACT;
     }
 }

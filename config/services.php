@@ -14,6 +14,13 @@ return [
     |
     */
 
+    // Project-location autocomplete (app/Services/LocationSearch.php). Only the
+    // key is required; `url` exists to point at a compatible endpoint.
+    'locationiq' => [
+        'key' => env('LOCATIONIQ_KEY'),
+        'url' => env('LOCATIONIQ_URL', 'https://api.locationiq.com/v1/autocomplete.php'),
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],
