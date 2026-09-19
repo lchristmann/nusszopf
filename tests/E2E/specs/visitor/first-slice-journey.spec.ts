@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { LoginPage } from '../../pages/LoginPage';
-import { ProjectFormPage } from '../../pages/ProjectFormPage';
+import { ProjectWizardPage } from '../../pages/ProjectWizardPage';
+import { ProjectEditPage } from '../../pages/ProjectEditPage';
 import { MyProjectsPage } from '../../pages/MyProjectsPage';
 import { SearchPage } from '../../pages/SearchPage';
 import { uniqueSuffix, testUsername, testEmail, TEST_PASSWORD } from '../../support/env';
@@ -20,7 +21,8 @@ test('register, create, publish, view, and find a project in search', async ({ p
     const projectTitle = `E2E Testprojekt ${suffix}`;
 
     const login = new LoginPage(page);
-    const projectForm = new ProjectFormPage(page);
+    const wizard = new ProjectWizardPage(page);
+    const editPage = new ProjectEditPage(page);
     const myProjects = new MyProjectsPage(page);
 
     // 1. Register -> logged in immediately, no email-verification gate.
@@ -28,14 +30,19 @@ test('register, create, publish, view, and find a project in search', async ({ p
     await login.register(username, email, TEST_PASSWORD);
     await expect(page).toHaveURL(/\/user\/projects$/);
 
-    // 2. Create exactly one project, defaulting to private.
-    await projectForm.gotoCreate();
-    await projectForm.fill(
+    // 2. Create exactly one project, through the historical wizard. The
+    //    wizard defaults to public; this journey starts private, so it picks it.
+    await wizard.goto();
+    await wizard.fillStepOne(
         projectTitle,
         'Ein Ziel für das End-to-End-Testprojekt.',
         'Eine ausführliche Beschreibung des End-to-End-Testprojekts.',
     );
-    await projectForm.save();
+    await wizard.advanceTo(1);
+    await wizard.advanceTo(2);
+    await wizard.advanceTo(3);
+    await wizard.choosePrivate();
+    await wizard.clickNext();
     await expect(page).toHaveURL(/\/user\/projects$/);
     await expect(page.getByText(projectTitle)).toBeVisible();
     await expect(page.getByText('Privat').first()).toBeVisible();
@@ -60,8 +67,10 @@ test('register, create, publish, view, and find a project in search', async ({ p
     // 5. Publish: toggle visibility to public through the same edit form.
     await myProjects.goto();
     await myProjects.editFirstProject();
-    await projectForm.choosePublic();
-    await projectForm.save();
+    await editPage.selectView('Einstellungen');
+    await wizard.choosePublic();
+    await editPage.saveSettings();
+    await expect(page.getByText('Projekt wurde aktualisiert.')).toBeVisible();
 
     // 6. Once public, an anonymous visitor can view it.
     const publicContext = await browser.newContext();
