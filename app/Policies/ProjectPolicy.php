@@ -19,14 +19,20 @@ class ProjectPolicy
      *
      * `?User` (nullable) so Laravel's Gate still invokes this for guests,
      * matching the historical "anonymous can view public projects" rule.
+     *
+     * Delegates to `Project::scopeVisible()` — the exact same query scope the
+     * search path applies as defense-in-depth (`Search::render()`) — rather
+     * than re-stating the "public OR owner" rule a second time in PHP-object
+     * space. First-slice acceptance criterion #8 requires this to be one
+     * enforcement point, not two independently-maintained checks that could
+     * drift apart. Passing `$user?->id` explicitly (not relying on the
+     * scope's `Auth::id()` fallback) keeps this correct even when the Gate
+     * is evaluating a *different* user than the current session's, e.g.
+     * `Gate::forUser($otherUser)->allows(...)`.
      */
     public function view(?User $user, Project $project): bool
     {
-        if ($project->visibility === 'public') {
-            return true;
-        }
-
-        return $user !== null && $user->is($project->user);
+        return Project::visible($user?->id)->whereKey($project->id)->exists();
     }
 
     /**

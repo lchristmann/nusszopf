@@ -2,7 +2,10 @@
     'as' => 'button',
     'variant' => 'outline',
     'size' => 'base',
-    'color' => 'lilac',
+    // 'steel', matching Button.atom.js's own default (`color = 'steel'`) —
+    // every call site that needs a different color already passes one
+    // explicitly (docs/rewrite/golden-master-review.md).
+    'color' => 'steel',
     'type' => 'button',
 ])
 

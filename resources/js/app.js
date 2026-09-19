@@ -25,12 +25,15 @@ window.nzToast = function nzToast(type, message) {
         </div>
         <span class="flex-shrink-0 ml-5" aria-hidden="true">&times;</span>
     `;
+    el.className += ' mb-2';
     el.addEventListener('click', () => el.remove());
     container.appendChild(el);
 
-    if (type !== 'loading') {
-        setTimeout(() => el.remove(), 5000);
-    }
+    // Toasts.service.js's AUTO_CLOSE_MS = 3000, applied unconditionally to
+    // every toast including `loading` — preserved exactly, not "fixed" into
+    // excluding loading toasts, per this project's preserve-unless-
+    // demonstrably-broken default.
+    setTimeout(() => el.remove(), 3000);
 
     return el;
 };

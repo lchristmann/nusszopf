@@ -1,5 +1,6 @@
 <x-framed-grid-card>
-    <x-frame class="bg-lilac-300 rounded-t-lg">
+    {{-- pages/user/projects.js: headerColor="bg-steel-200 lg:bg-steel-100", not lilac. --}}
+    <x-frame class="bg-steel-200 rounded-t-lg">
         <x-framed-grid-card.header>
             <div class="flex items-center justify-between">
                 <x-text as="h1" variant="titleMd">Meine Projekte</x-text>
@@ -9,7 +10,7 @@
     </x-frame>
 
     <x-frame class="bg-white rounded-b-lg">
-        <x-framed-grid-card.body>
+        <x-framed-grid-card.body gap="medium">
             <x-framed-grid-card.body-col variant="oneCol">
                 @if ($projects->isEmpty())
                     <div class="bg-lilac-100 rounded-lg p-8 text-center">

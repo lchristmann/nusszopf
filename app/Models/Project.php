@@ -41,18 +41,30 @@ class Project extends Model
 
     /**
      * The single enforcement point for "who may see this project" — applied
-     * to every read path (direct show, listings, the search index sync),
-     * not re-implemented per call site. Closes BUG-002's core mechanism
-     * (docs/security/authorization-matrix.md, "Search" row) from the first
-     * commit: a project is visible to the public only once published, and
-     * always visible to its own owner regardless of visibility.
+     * to every read path (direct show via `ProjectPolicy::view()`, which
+     * delegates here rather than re-stating the rule; search's query-time
+     * defense-in-depth via `Search::render()`), not re-implemented per call
+     * site. Closes BUG-002's core mechanism (docs/security/authorization-matrix.md,
+     * "Search" row) from the first commit: a project is visible to the
+     * public only once published, and always visible to its own owner
+     * regardless of visibility.
+     *
+     * `$viewerId` defaults to the currently authenticated user so ordinary
+     * call sites (`Project::visible()`) need no argument, but accepts an
+     * explicit override so `ProjectPolicy::view($user, ...)` can evaluate
+     * the rule for whatever `$user` the Gate was resolved for — which is
+     * not always `Auth::id()` (e.g. `Gate::forUser($otherUser)`).
      *
      * @param  Builder<Project>  $query
      * @return Builder<Project>
      */
-    public function scopeVisible(Builder $query): Builder
+    public function scopeVisible(Builder $query, ?string $viewerId = null): Builder
     {
-        $viewer = Auth::id();
+        // No argument at all (the ordinary `Project::visible()` call site) means
+        // "use the current session's user"; an explicit `null` means "guest" —
+        // distinct cases, since a Policy check for a guest must not silently
+        // fall back to whoever happens to be logged into the current session.
+        $viewer = func_num_args() > 1 ? $viewerId : Auth::id();
 
         return $query->where(function (Builder $query) use ($viewer): void {
             $query->where('visibility', 'public');

@@ -1,7 +1,10 @@
 @props([
     'as' => 'input',
     'size' => 'base',
-    'color' => 'lilac',
+    // 'steel', matching Input.atom.js's own default (`color = 'steel'`) —
+    // every call site that needs a different color already passes one
+    // explicitly (docs/rewrite/golden-master-review.md).
+    'color' => 'steel',
     'type' => 'text',
 ])
 
@@ -18,8 +21,16 @@
     };
 @endphp
 
+@php
+    // Input.atom.js's exact base classes (docs/design/visual-language.md) —
+    // `rounded-md`, not squared corners, and `placeholder-current` so
+    // placeholder text takes the same color as the input's own text color
+    // rather than Tailwind's default gray.
+    $baseClass = 'inline-block w-full text-current border-current bg-transparent rounded-md appearance-none placeholder-current ring-2 ring-transparent transition-shadow duration-200 ease-out focus:outline-none focus:placeholder-transparent disabled:opacity-50 disabled:pointer-events-none';
+@endphp
+
 @if ($as === 'textarea')
-    <textarea {{ $attributes->class(['w-full text-current border-current bg-transparent rounded-none ring-2 ring-transparent transition-shadow duration-200 ease-out', $sizeClass, $colorClass]) }}>{{ $slot }}</textarea>
+    <textarea {{ $attributes->class([$baseClass, $sizeClass, $colorClass]) }}>{{ $slot }}</textarea>
 @else
-    <input type="{{ $type }}" {{ $attributes->class(['w-full text-current border-current bg-transparent rounded-none ring-2 ring-transparent transition-shadow duration-200 ease-out', $sizeClass, $colorClass]) }} />
+    <input type="{{ $type }}" {{ $attributes->class([$baseClass, $sizeClass, $colorClass]) }} />
 @endif

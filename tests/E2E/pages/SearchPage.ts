@@ -8,9 +8,11 @@ export class SearchPage {
     }
 
     async search(query: string): Promise<void> {
+        // Explicit-submit search (matches the historical SearchInput.js
+        // mechanism: Enter/blur or the search-icon click, never
+        // live-as-you-type) — fill, then press Enter to submit the form.
         await this.page.getByTestId('input_search').fill(query);
-        // wire:model.live.debounce.500ms
-        await this.page.waitForTimeout(600);
+        await this.page.getByTestId('input_search').press('Enter');
     }
 
     resultLink(title: string): Locator {

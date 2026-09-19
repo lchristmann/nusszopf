@@ -82,7 +82,12 @@ class LoginRegister extends Component
     public function register(): void
     {
         $this->validate([
+            // 'bail': the historical Yup schema shows only the first
+            // failing rule at a time (verified against SignUpForm.js in
+            // this pass) — without it, a username failing multiple rules
+            // at once would show every message simultaneously.
             'username' => [
+                'bail',
                 'required',
                 'string',
                 'max:15',

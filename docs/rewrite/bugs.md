@@ -33,6 +33,7 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 | BUG-018 | Testing / historical search E2E coverage    | Medium   | Fix (close the gap)                 | Action item for the new Playwright suite                                                |
 | BUG-019 | Design / rich-text editor field-order bug   | Low      | N/A — tied to architecture decision | Moot once Slate is replaced; verify the new editor doesn't reintroduce an analogous bug |
 | BUG-020 | Security / SSR Apollo client shared state   | Low      | Replace (moot)                      | Resolved — pre-implementation review pass, 2026-09-18                                   |
+| BUG-021 | Authorization / Project edit screen access  | Low      | Fix                                 | Implemented — first-slice verification pass (2026-09-19)                                |
 
 ---
 
@@ -364,3 +365,48 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
   bug. Recorded here only so a future contributor porting SSR-adjacent patterns doesn't
   reintroduce an analogous shared-mutable-state hazard (e.g. a static/singleton HTTP client
   carrying per-request auth state in a queue worker or long-running process).
+
+### BUG-021 — Project edit screen's data-fetch is visibility-scoped, not ownership-scoped
+
+- Affected area: Authorization, Project edit screen (`/user/project/[id]/edit`)
+- Historical behavior: `pages/user/project/[id]/edit.js` fetches its data via `apollo.useGetProject(id)`
+  — confirmed, by reading `apollo.service.js`, to be the exact same hook/query
+  (`GET_PROJECT`) the **public** `pages/projects/[id].js` detail page uses. Hasura's
+  `select_permissions` on `projects_by_pk` is therefore the same `visibility = public OR
+  user_id = caller` rule for both screens, not an owner-only rule for edit specifically. The
+  practical effect: a non-owner who navigates directly to a **public** project's edit URL gets
+  a `200` with the project's (public) data rendered into the edit UI — the `useEffect`-driven
+  `router.push('/404')` only fires when `projectData` comes back `null`, which happens only for a
+  **private** project the caller doesn't own (the same condition the detail page's SSR 404 uses).
+  Separately, the `update`/`insert` **mutation** permissions remain owner-only regardless, so a
+  non-owner who reached this screen could never actually save a change — only view a read-only
+  copy of a project they could already see on its public detail page.
+- Evidence: `web-nusszopf/projects/webapp/src/pages/user/project/[id]/edit.js` (the `useEffect`
+  redirect condition), `web-nusszopf/projects/webapp/src/utils/services/apollo.service.js:66`
+  (`useGetProject` calls the same `GET_PROJECT` query for both screens) — both read in full during
+  this verification pass, 2026-09-19.
+- Severity/impact: Low. No private data is exposed (only already-public project fields), and no
+  write capability is gained (mutations stay owner-gated) — this is a confusing/incomplete UX
+  artifact of query reuse, not a data-confidentiality defect. `docs/design/screen-specs.md`'s
+  existing "Project edit" row states "Owner only... any other caller... must not reach this
+  screen's data," which is accurate for a *private* project but overstates the historical
+  guarantee for a *public* one — corrected in this pass to record the nuance rather than leave an
+  inaccurate "Confirmed" claim standing (`CLAUDE.md`: reconcile the document against the
+  historical source when implementation surfaces a contradiction).
+- Classification: **Fix** — reproducing the exact historical leniency (rendering a non-mutable
+  edit-styled UI to a non-owner for a public project) has no product value, was never a considered
+  feature (it is a side effect of the historical frontend reusing one query for two screens, not a
+  deliberate capability), and the already-adopted target in `docs/security/authorization-matrix.md`
+  and `docs/design/screen-specs.md` is owner-only access to this screen's data. Tightening Nusszopf
+  2's edit screen to be strictly owner-only (as it was already built) is keeping the existing,
+  already-approved specification, not inventing a new one.
+- Intended Nusszopf 2 behavior: `ProjectPolicy::update()` denial on the edit screen must produce a
+  hard `404`, not a `403` — matching `ProjectDetail`'s existing no-existence-leak treatment
+  (`docs/rewrite/open-questions.md`, "Does `/projects/{id}`'s SSR enforce `visibility`, or only
+  existence?") and the historical redirect target itself (`router.push('/404')`), rather than a
+  `403` that would distinguish "exists but isn't yours" from "doesn't exist" through a different
+  status code than every other unauthorized-access path in the app uses.
+- Regression test: `tests/Feature/Projects/ProjectFormTest.php`, "denies a non-owner from editing
+  another users project," updated to assert `404`, not `403`.
+- Full spec: `docs/rewrite/intentional-changes.md` → "Project edit screen denies non-owners with a
+  404, not a 403".

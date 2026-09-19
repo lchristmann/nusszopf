@@ -75,3 +75,19 @@ it('denies a non-owner from deleting a project', function () {
 
     expect($stranger->can('delete', $project))->toBeFalse();
 });
+
+it('evaluates view for the Gate-resolved user, not the current session user, so Policy and scope cannot drift apart', function () {
+    // ProjectPolicy::view() delegates to Project::scopeVisible() with an
+    // explicit viewer id specifically so this holds even when the current
+    // session's authenticated user differs from the user the Gate is being
+    // asked about (e.g. Gate::forUser($x) while a different user is logged
+    // in) — a naive Auth::id()-only implementation would get this wrong.
+    $sessionUser = User::factory()->create();
+    $this->actingAs($sessionUser);
+
+    $owner = User::factory()->create();
+    $privateProject = Project::factory()->private()->for($owner)->create();
+
+    expect(Gate::forUser($owner)->allows('view', $privateProject))->toBeTrue()
+        ->and(Gate::forUser($sessionUser)->allows('view', $privateProject))->toBeFalse();
+});

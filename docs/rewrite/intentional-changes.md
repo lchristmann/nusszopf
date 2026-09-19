@@ -174,6 +174,38 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 
 ---
 
+### Project edit screen denies non-owners with a 404, not a 403
+
+- Status: Approved — implemented in the first-slice verification pass (2026-09-19).
+- Date: 2026-09-19
+- Historical behavior: the historical edit screen's data-fetch is visibility-scoped (the same
+  `GET_PROJECT` query the public detail page uses), not ownership-scoped — see `docs/rewrite/bugs.md`
+  BUG-021 for full evidence. A private project's non-owner gets Hasura's `null` and a client-side
+  `router.push('/404')`; a public project's non-owner gets the (already-public) data rendered, with
+  the save mutation separately denied by ownership-scoped `update_permissions` if they ever tried it.
+- Why it is defective/incomplete or why change is required: reproducing the historical
+  read-then-fail-to-save leniency for public projects has no product value and was never a
+  deliberate capability — it is a side effect of query reuse between two screens, not a considered
+  feature. `docs/security/authorization-matrix.md` and `docs/design/screen-specs.md` already specify
+  this screen as owner-only; the only correction needed is the *status code* used to enforce that:
+  a `403` (Laravel's `Gate::authorize()` default) reveals "this project exists and isn't yours"
+  through a different channel than every other unauthorized-access path in the app, which
+  consistently 404s instead (`ProjectDetail`, per the resolved `/projects/{id}` SSR open question).
+- New behavior: `ProjectForm::mount()` denies a non-owner editing an existing project with a hard
+  `404` (`abort_if(Gate::denies(...), 404)`), not a `403` — bringing it in line with `ProjectDetail`
+  and with the historical redirect's actual target (`/404`).
+- Affected screens: Project edit (`/user/project/{id}/edit`).
+- Affected domain: none (the underlying authorization rule — owner only — is unchanged; only the
+  HTTP status code for a denial changes).
+- Affected workflows: none.
+- Migration implications: none.
+- Tests: `tests/Feature/Projects/ProjectFormTest.php`, "denies a non-owner from editing another users
+  project" — updated to assert `404` instead of `403`.
+- Approval: Approved (2026-09-19). Implemented in this verification pass; see `docs/rewrite/bugs.md`
+  BUG-021.
+
+---
+
 ## Explicitly deferred (not proposed here, need a product decision first — see `docs/rewrite/open-questions.md` / `docs/rewrite/architecture-decisions.md`)
 
 The following were identified during archaeology as *possible* candidates for change but are deliberately **not** proposed above, because reasonable product intent could explain the historical behavior as-is:

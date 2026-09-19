@@ -41,7 +41,12 @@ class ProjectForm extends Component
     public function mount(?Project $project = null): void
     {
         if ($project !== null) {
-            Gate::authorize('update', $project);
+            // 404, not 403 (BUG-021, docs/rewrite/bugs.md): a non-owner must
+            // never be able to distinguish "this project isn't yours" from
+            // "this project doesn't exist" via the HTTP status code, matching
+            // ProjectDetail's existing no-existence-leak treatment and the
+            // historical edit screen's own redirect target (/404).
+            abort_if(Gate::denies('update', $project), 404);
 
             $this->project = $project;
             $this->title = $project->title;

@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Project;
+use App\Models\User;
 use Illuminate\Support\Facades\Config;
 
 /**
@@ -77,4 +78,43 @@ it('removes a project from the index the moment it is switched from public to pr
     }
 
     expect($found->pluck('id'))->not->toContain($project->id);
+})->group('meilisearch');
+
+it('excludes a private project from search results even if it were force-indexed, via the query-time defense-in-depth scope', function () {
+    // The indexing-time gate (shouldBeSearchable()) is the primary
+    // enforcement, but docs/search/README.md explicitly calls for a
+    // second, query-time backstop (Search::render()'s ->query(fn ($q) =>
+    // $q->visible())) precisely because Scout/Livewire call sites are
+    // easier to invoke without the gate than the historical bespoke
+    // webhook was. Simulate a leaked/stale index document by calling
+    // ->searchable() directly, which deliberately bypasses
+    // shouldBeSearchable() (Scout's documented behavior for explicit
+    // calls) — the query-time scope must still keep it out of results.
+    Config::set('scout.driver', 'meilisearch');
+    Config::set('scout.queue', false);
+
+    $owner = User::factory()->create();
+    $private = Project::factory()->private()->for($owner)->create([
+        'title' => 'Heimlich indiziertes Testprojekt Loeffelstiel',
+    ]);
+
+    $private->searchable();
+
+    $found = collect();
+    for ($attempt = 0; $attempt < 20; $attempt++) {
+        usleep(100_000);
+        $found = Project::search('Loeffelstiel')->get();
+        if ($found->pluck('id')->contains($private->id)) {
+            break;
+        }
+    }
+    // Sanity check: the document really did land in the raw index (proving
+    // this test would catch a regression, not just an indexing delay).
+    expect($found->pluck('id'))->toContain($private->id);
+
+    $visibleResults = Project::search('Loeffelstiel')->query(fn ($query) => $query->visible())->get();
+
+    expect($visibleResults->pluck('id'))->not->toContain($private->id);
+
+    $private->unsearchable();
 })->group('meilisearch');

@@ -85,13 +85,16 @@ it('lets the owner toggle visibility to public through the edit form', function 
     expect($project->fresh()->visibility)->toBe('public');
 });
 
-it('denies a non-owner from editing another users project', function () {
+it('404s a non-owner editing another users project, not a 403', function () {
+    // BUG-021 (docs/rewrite/bugs.md): must never distinguish "not yours"
+    // from "doesn't exist" via a different status code than ProjectDetail
+    // already uses for the same principle.
     $project = Project::factory()->create();
     $stranger = User::factory()->create();
 
     Livewire::actingAs($stranger)
         ->test(ProjectForm::class, ['project' => $project])
-        ->assertForbidden();
+        ->assertNotFound();
 });
 
 it('denies a guest from creating a project at all', function () {

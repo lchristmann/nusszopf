@@ -1,19 +1,37 @@
 <div>
-    <x-frame class="bg-moss-300 py-8">
-        <x-text as="h1" variant="titleMd">Suche</x-text>
-        <div class="mt-4">
-            <x-input
-                wire:model.live.debounce.500ms="query"
-                name="query"
-                data-test="input_search"
-                color="moss"
-                aria-label="Projekte durchsuchen"
-                placeholder="Projekte durchsuchen"
-            />
+    {{--
+        pages/search.js: <Frame size="large" className="... bg-moss-300
+        text-moss-800">, not the default frame size/no text color
+        (docs/rewrite/golden-master-review.md, "Search screen structure").
+    --}}
+    <x-frame size="large" class="bg-moss-300 text-moss-800 py-8">
+        <div class="max-w-3xl mx-auto">
+            <x-text as="h1" variant="titleMd">Suche</x-text>
+            {{--
+                Historical mechanism (verified against SearchInput.js in this
+                verification pass): search fires on explicit submit (Enter,
+                or the search-icon click), never live-as-you-type — corrected
+                from an earlier wire:model.live.debounce implementation that
+                queried on every keystroke instead.
+            --}}
+            <form wire:submit="search" class="mt-4 flex gap-2">
+                <x-input
+                    wire:model="query"
+                    name="query"
+                    data-test="input_search"
+                    color="moss"
+                    aria-label="Projekte durchsuchen"
+                    placeholder="Projekte durchsuchen"
+                />
+                <x-button type="submit" color="moss" data-test="btn_search" aria-label="Suchen">
+                    &#128269;
+                </x-button>
+            </form>
         </div>
     </x-frame>
 
-    <x-frame class="py-10" fluid>
+    {{-- pages/search.js:28 — <Frame className="flex-1 h-full my-8 break-all" size="large">, capped width, not full-bleed. --}}
+    <x-frame size="large" class="flex-1 h-full my-8 break-all">
         @if ($hits->isEmpty())
             <div class="bg-livid-300 rounded-lg p-8 max-w-xl mx-auto text-center">
                 <x-text as="p" variant="textMd">Keine Ergebnisse gefunden.</x-text>
