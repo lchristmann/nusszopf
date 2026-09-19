@@ -91,6 +91,13 @@ jobs:
             echo "SCOUT_DRIVER=meilisearch"
           } >> .env
       - run: php artisan scout:sync-index-settings
+      # Feature tests render pages that use @vite, which needs the manifest.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
       - run: composer test
 
   build-assets:
