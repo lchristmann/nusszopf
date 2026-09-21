@@ -102,6 +102,18 @@ class ProjectRequest extends Model
     }
 
     /**
+     * A bulk import (`search:reindex`) builds every document from the request's
+     * project and its author; load them in one query each instead of per request.
+     *
+     * @param  Builder<ProjectRequest>  $query
+     * @return Builder<ProjectRequest>
+     */
+    protected function makeAllSearchableUsing(Builder $query): Builder
+    {
+        return $query->with('project.user');
+    }
+
+    /**
      * Only a public project's requests are indexed — the historical indexer's
      * gate, independent of the request's own permissions.
      */
