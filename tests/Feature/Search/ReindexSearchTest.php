@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Laravel\Scout\EngineManager;
 use Meilisearch\Client;
+use Meilisearch\Exceptions\ApiException;
 
 /**
  * The recovery path (docs/deployment/operations.md): the index is derived from the
@@ -90,11 +91,26 @@ it('removes documents that no longer belong to anything', function () {
 it('applies the index settings even to an index that does not exist yet', function () {
     $client = new Client(config('scout.meilisearch.host'), config('scout.meilisearch.key'));
     $client->deleteIndex(Project::searchIndexName());
-    awaitIndex(fn () => collect($client->getIndexes()->getResults())->doesntContain(fn ($index) => $index->getUid() === Project::searchIndexName()));
+    expect(awaitIndex(function () use ($client) {
+        try {
+            $client->getIndex(Project::searchIndexName());
+
+            return false;
+        } catch (ApiException) {
+            return true;
+        }
+    }))->toBeTrue();
 
     expect(Artisan::call('search:reindex'))->toBe(0);
 
-    expect(awaitIndex(fn () => in_array('req_type', $client->index(Project::searchIndexName())->getFilterableAttributes(), true)))->toBeTrue();
+    // The index is created by a task of its own, so it may not be there yet when the command returns.
+    expect(awaitIndex(function () use ($client) {
+        try {
+            return in_array('req_type', $client->index(Project::searchIndexName())->getFilterableAttributes(), true);
+        } catch (ApiException) {
+            return false;
+        }
+    }))->toBeTrue();
 })->group('meilisearch');
 
 it('fails visibly, and says so, when the engine cannot be reached', function () {

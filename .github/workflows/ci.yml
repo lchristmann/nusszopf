@@ -131,6 +131,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: cp .env.example .env
+      - name: Let the search page run out of results quickly
+        run: echo "SEARCH_PAGE_SIZE=5" >> .env
       - name: Start the real dev stack
         run: docker compose -f compose.dev.yaml up -d --build web php-fpm queue-worker postgres redis meilisearch
       - name: Wait for the app to be healthy
@@ -140,7 +142,7 @@ jobs:
         run: |
           docker compose -f compose.dev.yaml exec -T php-fpm php artisan key:generate
           docker compose -f compose.dev.yaml exec -T php-fpm php artisan migrate --force
-          docker compose -f compose.dev.yaml exec -T php-fpm php artisan scout:sync-index-settings
+          docker compose -f compose.dev.yaml exec -T php-fpm php artisan search:reindex
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -150,6 +152,11 @@ jobs:
       - run: npx playwright test --project=${{ matrix.project }}
         env:
           PLAYWRIGHT_BASE_URL: http://localhost:8080
+          # The search specs that need the stack's page size, a way to wipe the index and the recovery command.
+          E2E_SEARCH_PAGE_SIZE: 5
+          E2E_MEILISEARCH_URL: http://localhost:7700
+          E2E_MEILISEARCH_KEY: nusszopf-dev-master-key-change-me
+          E2E_REINDEX_COMMAND: docker compose -f compose.dev.yaml exec -T php-fpm php artisan search:reindex
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
