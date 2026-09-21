@@ -41,7 +41,7 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 | BUG-026 | Domain / whitespace-only title and goal     | Trivial  | Fix                                 | Implemented — second slice (2026-09-19); extended to request titles in the third slice   |
 | BUG-027 | Domain / project creation is not atomic     | Low      | Fix                                 | Implemented — third slice (2026-09-21)                                                  |
 | BUG-028 | Domain / request title length               | Trivial  | Preserve                            | Decided — third slice (2026-09-21): the field caps at 30, validation allows 40           |
-| BUG-029 | Security / search hit rendering             | Medium   | Fix                                 | Implemented — fourth slice (2026-09-21); proposed and implemented together, awaits the maintainer's ratification |
+| BUG-029 | Security / search hit rendering             | Medium   | Fix                                 | Implemented — fourth slice (2026-09-21); ratified by the maintainer as an intentional Fix (2026-09-22) |
 
 ---
 

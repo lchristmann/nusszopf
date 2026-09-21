@@ -323,7 +323,7 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 
 ### Search hits are escaped, only the highlight is markup (BUG-029)
 
-- Status: Proposed — implemented in the fourth slice; awaits the maintainer's ratification
+- Status: Approved — implemented in the fourth slice; ratified by the maintainer as an intentional Fix on 2026-09-22
 - Date: 2026-09-21
 - Historical behavior: hit cards rendered Meilisearch's highlighted strings as raw HTML (`dangerouslySetInnerHTML`
   in `HitCard.js` and `HitRequestCard.js`), so markup in a project's or request's own text executed for every visitor.
@@ -337,7 +337,7 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 - Migration implications: none.
 - Tests: `tests/Feature/Search/SearchHighlightTest.php`, `ProjectSearchTest.php` ("escapes the stored text and highlights only
   what the engine marked"), `SearchEngineTest.php` ("highlights the matches and escapes everything else").
-- Approval: pending.
+- Approval: Approved (maintainer, 2026-09-22).
 
 ---
 
