@@ -1,9 +1,14 @@
 <?php
 
+use App\Livewire\Projects\ProjectDetail;
+use App\Livewire\Projects\ProjectEdit;
+use App\Livewire\Projects\ProjectWizard;
 use App\Models\Project;
 use App\Models\ProjectRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Route;
+use Livewire\Livewire;
 
 /**
  * docs/security/authorization-matrix.md, "Request" rows, and BUG-002: a
@@ -101,3 +106,41 @@ it('lets only the project owner update or delete a request, whatever the visibil
         ->and(User::factory()->create()->can($ability, $request))->toBeFalse()
         ->and(Gate::forUser(null)->allows($ability, $request))->toBeFalse();
 })->with(['public', 'private'])->with(['update', 'delete']);
+
+// --- Every read path (BUG-002 audit, third-slice closure) ------------------------------
+
+it('exposes no route that addresses a request on its own', function () {
+    $routes = collect(Route::getRoutes()->getRoutes())->map(fn ($route) => $route->uri());
+
+    expect($routes->filter(fn (string $uri) => str_contains(strtolower($uri), 'request')))->toBeEmpty();
+});
+
+it('stops listing a public project\'s requests in an already open detail page once the project turns private', function () {
+    $project = Project::factory()->public()->create();
+    ProjectRequest::factory()->for($project)->create(['title' => 'Nur solange öffentlich']);
+
+    $component = Livewire::test(ProjectDetail::class, ['project' => $project])->assertSee('Nur solange öffentlich');
+
+    $project->update(['visibility' => 'private']);
+
+    $component->call('$refresh')->assertDontSee('Nur solange öffentlich');
+});
+
+it('does not let the owner\'s edit screen reach a request of another public project either', function () {
+    $project = Project::factory()->create();
+    $foreign = ProjectRequest::factory()->for(Project::factory()->public())->create(['title' => 'Öffentliches Fremdes']);
+
+    Livewire::actingAs($project->user)->test(ProjectEdit::class, ['project' => $project])->call('selectView', 'Gesuche')
+        ->call('editRequest', $foreign->id)->assertSet('requestDialogOpen', false)->assertDontSee('Öffentliches Fremdes')
+        ->call('deleteRequest', $foreign->id)->assertNotFound();
+
+    expect($foreign->fresh())->not->toBeNull();
+});
+
+it('never lets the wizard read a request of any project: its list is form state only', function () {
+    $foreign = ProjectRequest::factory()->create(['title' => 'Nicht im Wizard']);
+
+    Livewire::actingAs(User::factory()->create())->withQueryParams(['step' => 0])->test(ProjectWizard::class)
+        ->call('editRequest', $foreign->id)->call('editRequest', '0')
+        ->assertSet('requestDialogOpen', false)->assertDontSee('Nicht im Wizard');
+});

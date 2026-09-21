@@ -48,6 +48,8 @@ unprefixed tags; it stays in `0.x` until the rewrite reaches parity with the his
 
 ### Fixed
 
+- Building the production image from a working copy no longer copies the host's `.env`, `vendor` and cached
+  framework files into it (`.dockerignore`).
 - Creating a project together with its requests is atomic: if a request cannot be written, no project is
   left behind (BUG-027).
 - Period validation no longer blocks a flexible period because of stale dates (BUG-022).

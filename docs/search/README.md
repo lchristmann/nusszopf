@@ -105,5 +105,12 @@ requests takes several of them until that slice's paging exists.
 
 **Upgrade**: `php artisan scout:sync-index-settings`, then re-import both models —
 `php artisan scout:import "App\Models\Project"` and `php artisan scout:import "App\Models\ProjectRequest"`
-(the previous `projects` index is no longer used and can be deleted). Test data left behind in a shared
+(the previous `projects` index is no longer used and can be deleted). `scout:import` takes one model
+per call, and importing is an upsert by primary key, so it can be repeated safely; it does not remove documents
+that no longer belong (delete the old index instead). **Verified from a clean state** (2026-09-21, throwaway
+PostgreSQL/Meilisearch, a pre-slice-3 schema): after `migrate`, `scout:sync-index-settings` and the two imports the
+`items` index holds exactly one document for a public project without requests and one per request of a public
+project, none for the public project that has requests and none for anything private; primary key `id`; the
+ranking rules end in `updated_at:desc`. Not configured yet, on purpose: `req_type` is not a filterable attribute
+— the search-completion slice adds it with the category filter. Test data left behind in a shared
 development index is why the real-Meilisearch tests use a per-run search word.

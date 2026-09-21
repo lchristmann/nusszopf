@@ -292,6 +292,20 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 
 ---
 
+### Request `category` becomes a constrained column; request dates use the application's time zone
+
+- Status: Approved (implemented in the third slice, 2026-09-21; recorded here in the third-slice closure pass)
+- Date: 2026-09-21
+- Historical behavior: `requests.category` is free text (only the form limits it to five values); a request's "Erstellt am" is `toLocaleDateString('de-DE')` in the viewer's browser time zone.
+- Why it changes: the first is pure data-integrity hardening in the same spirit as BUG-007 (`visibility`); the value set is unchanged. The second is an architecture replacement: pages are rendered on the server, which does not know the viewer's zone, so the date is formatted `j.n.Y` (the shape `de-DE` produced) in the application's time zone.
+- New behavior: a `CHECK` on `companions | rooms | materials | financials | others`; dates in the application time zone.
+- Affected screens: request cards and dialogs (wizard, edit screen, detail).
+- Migration implications: none for new installs; historical rows with another category value would violate the constraint (none are known to exist — the form offered five values).
+- Tests: `tests/Feature/Projects/ProjectRequestModelTest.php` "rejects a category outside the five real ones at the database layer", `ProjectRequestDetailTest.php` (dates on cards and in the dialog).
+- Approval: Approved (roadmap-authorized Replace/hardening; see `third-slice.md`, decisions 6 and 7).
+
+---
+
 ### Author avatar fallback no longer calls ui-avatars.com
 
 - Status: Approved (implemented in the second slice; recorded here 2026-09-21 as a reconciliation)

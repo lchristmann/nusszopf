@@ -89,6 +89,12 @@ An untested restore procedure is not a backup — LCxHolz's own documentation ma
 
 ## Upgrades
 
+> **Upgrading to the release with project requests (Slice 3):** the schema migration runs with the entrypoint's
+> `migrate --force`, but the search index is renamed (`items`) and needs a one-time rebuild afterwards:
+> `php artisan scout:sync-index-settings`, then `php artisan scout:import "App\Models\Project"` and
+> `php artisan scout:import "App\Models\ProjectRequest"`; the old `projects` index can be deleted. Until then search
+> returns nothing. Details: `docs/search/README.md`, "Third slice".
+
 Confirmed pattern, identical across LCxHolz (`deploy.sh <tag>`) and Waffle Dashboard (manual `docker-compose.yaml` edit): bump the image tag, `docker compose down && docker compose up -d` (or `pull` + `up -d`), rely on the entrypoint's unconditional `php artisan migrate --force` to bring the schema up to date. Named volumes are untouched by this, so user data persists across the version bump.
 
 ```bash

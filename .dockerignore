@@ -1,0 +1,18 @@
+# Keep a working copy's local state out of the image build context (`COPY . .` in docker/php/Dockerfile):
+# a host `vendor`/`node_modules` would replace the production (--no-dev) install, a host `.env` would ship
+# secrets inside the image, and cached framework files list dev-only packages.
+.git
+.env
+.env.*
+!.env.example
+vendor
+node_modules
+public/build
+public/hot
+bootstrap/cache/*.php
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+test-results
+playwright-report

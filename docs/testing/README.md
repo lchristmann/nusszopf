@@ -56,8 +56,11 @@ Inside the Compose containers the development `.env` is the process environment,
 queue worker for the browser suite that followed. `phpunit.xml` now forces its values (all but the database host, port and credentials, which CI points at its
 service containers through the process environment) and `tests/bootstrap.php` copies them over `$_SERVER`, so the suite always uses `nusszopf_testing`, the `sync`
 queue and the `null` Scout driver; the `meilisearch`-group tests still switch to the real engine explicitly.
-The real index is shared with development, so those tests use per-run search words (documents of earlier runs
-stay in it) and assert on their own ids.
+The `meilisearch`-group tests do use the real engine, but with `SCOUT_PREFIX=testing_` — an index of their own
+(`testing_items`, created on first write, without the ranking settings) — so they cannot touch development search
+data. Documents of earlier runs stay in it, so those tests use per-run search words and assert on their own ids.
+`tests/Feature/TestEnvironmentIsolationTest.php` fails if the suite ever points at the development database,
+queue, cache, session or index again.
 
 ## Test data
 
