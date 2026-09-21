@@ -139,6 +139,11 @@ jobs:
         run: echo "SEARCH_PAGE_SIZE=5" >> .env
       # Before the stack starts: Compose hands `.env` to the containers as environment, and an empty APP_KEY
       # there would win over a key generated into the file afterwards.
+      # The containers run as UID/GID from `.env` (default 1000); the runner's user owns the checkout.
+      - name: Run the containers as the runner's user
+        run: |
+          echo "UID=$(id -u)" >> .env
+          echo "GID=$(id -g)" >> .env
       - name: Generate the application key
         run: sed -i "s|^APP_KEY=.*|APP_KEY=base64:$(openssl rand -base64 32)|" .env
       - name: Start the real dev stack
@@ -148,12 +153,13 @@ jobs:
           timeout 120 sh -c 'until docker compose -f compose.dev.yaml ps php-fpm | grep -q healthy; do sleep 2; done'
       # The dev stack bind-mounts the checkout and keeps vendor/ and node_modules/ in named volumes, which
       # start empty on a CI runner: install the dependencies and build the assets through the workspace
-      # service (the volumes are shared with php-fpm and the queue worker) before any artisan command.
+      # service (the volumes are shared with php-fpm and the queue worker) before any artisan command. Run as
+      # root: a fresh named volume is root-owned, and the installers must be able to write into it.
       - name: Install dependencies and build the assets
         run: |
-          docker compose -f compose.dev.yaml exec -T workspace composer install --no-interaction --prefer-dist
-          docker compose -f compose.dev.yaml exec -T workspace npm ci
-          docker compose -f compose.dev.yaml exec -T workspace npm run build
+          docker compose -f compose.dev.yaml exec -T -u root workspace composer install --no-interaction --prefer-dist
+          docker compose -f compose.dev.yaml exec -T -u root workspace npm ci
+          docker compose -f compose.dev.yaml exec -T -u root workspace npm run build
       - name: Initialize the application
         run: |
           docker compose -f compose.dev.yaml exec -T php-fpm php artisan migrate --force
