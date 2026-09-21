@@ -38,7 +38,7 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 
 ### `Request` visibility inherits from its parent `Project`
 
-- Status: Proposed
+- Status: Approved (implemented in the third slice, 2026-09-21)
 - Date: 2026-09-18
 - Historical behavior: `requests.select_permissions.filter` is `{}` for both roles — a request under a **private** project is still selectable if reachable by any query, independent of the parent project's `visibility`. Confirmed in `docs/domain/permissions.md`, `docs/domain/relationships.md`.
 - Why it is defective/incomplete or why change is required: this is inconsistent with `Project`'s own, clearly-intentional visibility model (private projects are hidden from everyone but the owner) — there is no plausible product reason for a private project's requests to leak independently of the project itself; it reads as an oversight in the permission rules, not a considered design.
@@ -47,8 +47,8 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 - Affected domain: `Request` (`docs/domain/entities.md`, `docs/domain/permissions.md`, `docs/domain/relationships.md`).
 - Affected workflows: none change in intent, only enforcement.
 - Migration implications: none.
-- Tests: Feature test asserting a `Request` under a private project is not returned by any query/search result the request's owner didn't make.
-- Approval: pending.
+- Tests: `tests/Feature/Projects/ProjectRequestAuthorizationTest.php` (an allow and a deny case per `authorization-matrix.md` "Request" row; the `visible()` scope agrees with the policy for a guest, a stranger and the owner, and follows the project turning private/public), `ProjectRequestDetailTest.php` ("404s a private project with requests…", "does not show the requests of a project once it turns private"), `ProjectRequestEditTest.php` (a request of another project is never reached through the dialog, its id being client-supplied), `tests/Feature/Search/ProjectRequestSearchTest.php` (never indexed for a private project; a stale document of a private project never reaches the search page); `tests/E2E/specs/user/project-requests.spec.ts` (a visitor gets a 404 for the private project and never sees its request).
+- Approval: Approved (the maintainer's approval of the master roadmap, 2026-09-21, which schedules it as slice 3).
 
 ---
 
@@ -269,10 +269,26 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 - Status: Approved (implemented in the second slice, 2026-09-19)
 - Date: 2026-09-19
 - Historical behavior: `string().required()` accepts `"   "`.
-- New behavior: a title or goal consisting only of whitespace fails with the historical "Gib einen Titel ein" / "Gib ein Ziel ein".
+- New behavior: a title or goal consisting only of whitespace fails with the historical "Gib einen Titel ein" / "Gib ein Ziel ein"; the same holds for a request's title (`RequestForm/TitleField.js` has the identical schema).
 - Affected screens: Project creation wizard step 1; project edit "Beschreibung".
-- Tests: `tests/Feature/Projects/ProjectWizardTest.php` "rejects a whitespace-only title or goal (BUG-026)".
+- Tests: `tests/Feature/Projects/ProjectWizardTest.php` "rejects a whitespace-only title or goal (BUG-026)"; for the request title (third slice) `tests/Feature/Projects/ProjectRequestWizardTest.php` "validates a title of more than 40 characters, and a whitespace-only one is empty".
 - Approval: Approved (second-slice implementation task).
+
+---
+
+### A project and its requests are created together (BUG-027)
+
+- Status: Approved (implemented in the third slice, 2026-09-21)
+- Date: 2026-09-21
+- Historical behavior: the creation wizard inserts the project and then, in a second call, its requests; a failure of the second call reports "Sorry, das Projekt konnte nicht erstellt werden." although the project was created.
+- Why it is defective/incomplete or why change is required: the message and the stored state disagree, and repeating the action duplicates the project.
+- New behavior: the project and the requests created with it are written in one database transaction; if any write fails nothing is created and the same historical error toast is shown. Success shows the historical "Projekt wurde erstellt." (there is no separate request toast in the wizard).
+- Affected screens: Project creation wizard (last step).
+- Affected domain: `Project`, `ProjectRequest`.
+- Affected workflows: create project.
+- Migration implications: none.
+- Tests: `tests/Feature/Projects/ProjectRequestWizardTest.php` "creates neither the project nor any request when a write fails midway (BUG-027)" and "creates nothing when a request in the form was tampered into an invalid one (BUG-027)".
+- Approval: Approved (third-slice implementation, within the roadmap's authorization to fix classified defects).
 
 ---
 

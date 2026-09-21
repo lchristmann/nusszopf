@@ -14,7 +14,7 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 | ID      | Area                                        | Severity | Classification                      | Status                                                                                  |
 |---------|---------------------------------------------|----------|-------------------------------------|-----------------------------------------------------------------------------------------|
 | BUG-001 | Authorization / Project analytics           | High     | Fix                                 | Spec'd — deferred to the slice that builds `ProjectAnalytics`/view counting (not required by the first slice's acceptance criteria) |
-| BUG-002 | Authorization / Request visibility          | High     | Fix                                 | Spec'd — deferred to the slice that adds the `Request`/`ProjectRequest` model (not present in the first slice) |
+| BUG-002 | Authorization / Request visibility          | High     | Fix                                 | Implemented — third slice (2026-09-21)                                                  |
 | BUG-003 | Auth / route protection                     | Medium   | Fix                                 | Implemented — first vertical slice (2026-09-18)                                         |
 | BUG-004 | Auth / avatar sync                          | Low      | Fix                                 | Spec'd — `intentional-changes.md`                                                       |
 | BUG-005 | Email / contact form                        | Medium   | Fix                                 | Spec'd — `intentional-changes.md`                                                       |
@@ -38,7 +38,9 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 | BUG-023 | Domain / Project period display             | Low      | Fix                                 | Implemented — second slice (2026-09-19)                                                 |
 | BUG-024 | Accessibility / rich-text list buttons      | Trivial  | Fix                                 | Implemented — second slice (2026-09-19)                                                 |
 | BUG-025 | Design / copy typos                         | Trivial  | Fix                                 | Implemented — second slice (2026-09-19)                                                 |
-| BUG-026 | Domain / whitespace-only title and goal     | Trivial  | Fix                                 | Implemented — second slice (2026-09-19)                                                 |
+| BUG-026 | Domain / whitespace-only title and goal     | Trivial  | Fix                                 | Implemented — second slice (2026-09-19); extended to request titles in the third slice   |
+| BUG-027 | Domain / project creation is not atomic     | Low      | Fix                                 | Implemented — third slice (2026-09-21)                                                  |
+| BUG-028 | Domain / request title length               | Trivial  | Preserve                            | Decided — third slice (2026-09-21): the field caps at 30, validation allows 40           |
 
 ---
 
@@ -89,6 +91,12 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
   exposure, not closing a *demonstrated* historical leak.
 - Full spec: `docs/rewrite/intentional-changes.md` → "`Request` visibility inherits from its parent
   `Project`".
+- **Implemented (third slice, 2026-09-21)**: `ProjectRequestPolicy::view()` and
+  `ProjectRequest::scopeVisible()` both delegate to `Project::scopeVisible()`; every read path
+  (project detail, the edit screen's "Gesuche" list) goes through the scope, the request write paths
+  resolve a request only *through its own project* and authorize against it, and requests are indexed
+  only while their project is public. Tests: `ProjectRequestAuthorizationTest`,
+  `ProjectRequestDetailTest`, `ProjectRequestEditTest`, `ProjectRequestSearchTest`.
 
 ### BUG-003 — Client-side-only authentication gate (flash-then-redirect)
 
@@ -491,4 +499,34 @@ directly from `web-nusszopf/projects/webapp/src/containers/user/ProjectForm/*` a
 - Severity/impact: Trivial.
 - Classification: **Fix** — the intended rule is "Gib einen Titel ein"/"Gib ein Ziel ein"; a heading
   of spaces is not a title. Recorded rather than silently adopted as Laravel's default.
+- Extended in the third slice to the **request title** (`RequestForm/TitleField.js` has the same
+  `string().max(40).required()` schema): a whitespace-only request title fails with "Gib einen Titel ein".
+
+### BUG-027 — Creating a project with requests is not atomic
+
+- Affected area: Domain, project creation (`projects.service.js`, `addProject`)
+- Historical behavior: the wizard inserts the project, *then* inserts its requests in a second call.
+  If the second call fails, the user is told "Sorry, das Projekt konnte nicht erstellt werden." while
+  the project exists (without its requests); creating again then produces a duplicate.
+- Evidence: `containers/../utils/services/projects.service.js` `addProject` (`apolloAddProject`, then
+  `apolloAddRequests` inside the same `try`).
+- Severity/impact: Low — needs a failing second write, but the message and the state disagree.
+- Classification: **Fix** — a project and the requests created with it are one unit: either the
+  project exists with all its requests, or nothing was created and the error toast is true.
+- Full spec: `docs/rewrite/intentional-changes.md` → "A project and its requests are created together (BUG-027)".
+
+### BUG-028 — The request title field caps at 30 characters, the schema at 40
+
+- Affected area: Domain, `RequestForm/TitleField.js`
+- Historical behavior: the input has `maxLength={30}` while the Yup schema is `max(40, 'Maximal 40
+  Zeichen')`. Through the UI a title can therefore never exceed 30 characters and the "Maximal 40
+  Zeichen" message can never appear; the two limits disagree.
+- Evidence: `TitleField.js` (read in full). Nothing else states an intended limit.
+- Severity/impact: Trivial — no user can observe the disagreement.
+- Classification: **Preserve** — both numbers are kept exactly where history put them: the input's
+  `maxlength` is 30 and the server-side rule (which is what a hand-crafted request meets) is 40 with
+  the historical copy; the column is 40 characters. Choosing one number would be inventing a rule.
+  Recorded so a later product decision can align them deliberately.
+- Regression test: `ProjectRequestWizardTest` ("validates a title of more than 40 characters"),
+  `tests/E2E/specs/user/project-requests.spec.ts` (the 30-character cap).
 
