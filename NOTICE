@@ -1,0 +1,18 @@
+Nusszopf
+Copyright (C) Nusszopf contributors
+Licensed under the GNU General Public License v3.0 or later (see LICENSE).
+
+Nusszopf 2 is a reimplementation of the historical Nusszopf (web-nusszopf, be-nusszopf,
+emails-nusszopf, all GPL v3.0). Copyright in the historical material remains with its authors.
+
+Third-party components bundled in the source or the built application (all GPL-3.0-compatible):
+
+- Laravel, Livewire, Laravel Scout and the other Composer packages: see composer.lock (MIT, BSD-3-Clause,
+  Apache-2.0; nette/* used under BSD-3-Clause).
+- Tailwind CSS, TipTap and the other npm packages: see package-lock.json (mostly MIT).
+- Barlow typeface (@fontsource/barlow): SIL Open Font License 1.1.
+- Feather icons: MIT, Copyright (c) 2013-2023 Cole Bemis (resources/icons/LICENSE-feather.txt);
+  one glyph from Lucide (ISC).
+
+Not covered by this license: third-party names and logos (for example Auth0, Vercel, LocationIQ),
+which belong to their owners and are not distributed in this repository.

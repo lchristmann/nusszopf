@@ -10,7 +10,7 @@ services:
       context: .
       dockerfile: docker/php/Dockerfile
       target: nginx
-    image: ghcr.io/nusszopf/nusszopf-web:${NUSSZOPF_VERSION:-dev}
+    image: ghcr.io/lchristmann/nusszopf-web:${NUSSZOPF_VERSION:-dev}
     restart: unless-stopped
     ports:
       - "${APP_PORT:-8080}:80"
@@ -23,7 +23,7 @@ services:
       context: .
       dockerfile: docker/php/Dockerfile
       target: php-fpm
-    image: ghcr.io/nusszopf/nusszopf-php-fpm:${NUSSZOPF_VERSION:-dev}
+    image: ghcr.io/lchristmann/nusszopf-php-fpm:${NUSSZOPF_VERSION:-dev}
     restart: unless-stopped
     <<: *app-environment
     volumes:
@@ -37,7 +37,7 @@ services:
         condition: service_healthy
 
   queue-worker:
-    image: ghcr.io/nusszopf/nusszopf-php-fpm:${NUSSZOPF_VERSION:-dev}
+    image: ghcr.io/lchristmann/nusszopf-php-fpm:${NUSSZOPF_VERSION:-dev}
     restart: unless-stopped
     <<: *app-environment
     volumes:
@@ -50,7 +50,7 @@ services:
         condition: service_healthy
 
   scheduler:
-    image: ghcr.io/nusszopf/nusszopf-php-fpm:${NUSSZOPF_VERSION:-dev}
+    image: ghcr.io/lchristmann/nusszopf-php-fpm:${NUSSZOPF_VERSION:-dev}
     restart: unless-stopped
     <<: *app-environment
     volumes:

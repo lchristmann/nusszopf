@@ -23,11 +23,11 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 | BUG-008 | Search / operations                         | Medium   | Fix                                 | Implemented — first vertical slice (2026-09-18)                                         |
 | BUG-009 | Background jobs / operations                | Medium   | Fix                                 | Implemented (search-sync path) — first vertical slice (2026-09-18)                      |
 | BUG-010 | Email / contact form validation             | Medium   | Fix                                 | Needs an `intentional-changes.md` entry                                                 |
-| BUG-011 | Newsletter / consent asymmetry              | Medium   | Unknown                             | Needs a human product decision                                                          |
+| BUG-011 | Newsletter / consent asymmetry              | Medium   | Fix                                 | Decided 2026-09-21 (GDPR): double opt-in on every path — needs an `intentional-changes.md` entry before slice 9 |
 | BUG-012 | Auth / Apple social login                   | Low      | Replace (drop)                      | Decided — do not implement                                                              |
-| BUG-013 | Design / destructive-action confirmation    | Low      | Unknown                             | Needs a human product decision                                                          |
-| BUG-014 | Design / Button "filled" variant            | Trivial  | Unknown                             | Needs a human product decision (or default to "never implement it")                     |
-| BUG-015 | Navigation / `login` return destination     | Low      | Unknown                             | Needs a human product decision                                                          |
+| BUG-013 | Design / destructive-action confirmation    | Low      | Preserve                            | Decided — register B10 (native `confirm()`), reconciled 2026-09-21                      |
+| BUG-014 | Design / Button "filled" variant            | Trivial  | Preserve (dead vocabulary)          | Decided 2026-09-21 — the never-used `filled` variant is not implemented; the two ad hoc filled looks stay as they are |
+| BUG-015 | Navigation / `login` return destination     | Low      | Preserve                            | Decided — register B11 (always `/user/projects`), reconciled 2026-09-21                 |
 | BUG-016 | Security / Meilisearch CORS configuration   | Medium   | Unknown                             | Needs more evidence or a fresh decision                                                 |
 | BUG-017 | Domain / `ProjectAnalytics.contactRequests` | Low      | Unknown                             | Needs more evidence                                                                     |
 | BUG-018 | Testing / historical search E2E coverage    | Medium   | Fix (close the gap)                 | Action item for the new Playwright suite                                                |
@@ -203,7 +203,11 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
   verifies the email is reachable, e.g. via the historical `welcome` email, and the user has already
   given explicit consent via the registration privacy checkbox — so this may be defensible, not a
   bug).
-- Classification: **Unknown** — this is a genuine product-intent question, not resolvable from
+- **Update 2026-09-21**: reclassified **Fix** by the maintainer's GDPR requirement (see
+  `decisions-register.md`). There are three historical paths, not two: the **profile page** also skips
+  the confirmation email (`profile.js` `handleSubscribe` inserts the lead and sets `hasConfirmed` from the
+  browser). The historical privacy policy itself states verification of the address is necessary.
+- Original classification: **Unknown** — this is a genuine product-intent question, not resolvable from
   code alone: is single-path-different-guarantees the deliberate design (registration consent is
   "stronger" than a bare email address typed into a public form, so it doesn't need re-verification),
   or an oversight (the signup path should also double-opt-in, or the public-form path is needlessly

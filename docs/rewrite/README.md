@@ -17,6 +17,8 @@ Reach the engineering discipline demonstrated by LCxHolz: testing, automation, C
 ### Operator experience
 Make installation, configuration, operation, upgrades, backups, and recovery straightforward.
 
+The plan for finishing the rewrite (remaining slices, non-feature phases, open decisions, and the finish line) is `docs/rewrite/master-roadmap.md` (proposal, awaiting approval).
+
 ## Phases
 
 1. Archaeology — done, see `docs/rewrite/golden-master.md`

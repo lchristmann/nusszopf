@@ -59,4 +59,11 @@ Released versions, changelogs, upgrade instructions, and Docker images are docum
 
 ## License
 
-See the repository license file.
+Nusszopf is free software, licensed under the **GNU General Public License v3.0 or later**
+(`GPL-3.0-or-later`); see [`LICENSE`](LICENSE). Third-party components and their licenses are listed
+in [`NOTICE`](NOTICE).
+
+Nusszopf 2 is a reimplementation of the historical Nusszopf (`web-nusszopf`, `be-nusszopf`,
+`emails-nusszopf`), which is also licensed under the GPL v3.0. Its design, copy and email templates
+are reproduced here as derivative works under the same license; the original authors retain their
+copyright in that material.

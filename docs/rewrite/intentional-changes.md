@@ -276,6 +276,21 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 
 ---
 
+### Author avatar fallback no longer calls ui-avatars.com
+
+- Status: Approved (implemented in the second slice; recorded here 2026-09-21 as a reconciliation)
+- Date: 2026-09-21
+- Historical behavior: a user without a picture gets an image from the third-party service ui-avatars.com.
+- Why it changes: an external service the self-hosted app should not depend on (and which would receive a
+  visitor's browser request for every avatar); category "dependency dropped" in the fidelity rules.
+- New behavior: an initial-on-grey circle rendered by the app in the same colors, until the avatar slice
+  (slice 8) adds uploaded pictures.
+- Affected screens: project detail (author), My Projects.
+- Tests: `tests/Feature/Projects/ProjectDetailContentTest.php` (author).
+- Approval: Approved (second-slice implementation; ratified by the maintainer's approval of the roadmap, 2026-09-21).
+
+---
+
 ## Explicitly deferred (not proposed here, need a product decision first — see `docs/rewrite/open-questions.md` / `docs/rewrite/architecture-decisions.md`)
 
 The following were identified during archaeology as *possible* candidates for change but are deliberately **not** proposed above, because reasonable product intent could explain the historical behavior as-is:

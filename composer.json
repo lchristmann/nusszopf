@@ -4,9 +4,9 @@
     "type": "project",
     "description": "Nusszopf: a network for joint idea and project processes.",
     "keywords": ["nusszopf", "laravel"],
-    "license": "MIT",
+    "license": "GPL-3.0-or-later",
     "require": {
-        "php": "^8.3",
+        "php": "^8.5",
         "laravel/framework": "^13.17",
         "laravel/scout": "^10.0",
         "laravel/tinker": "^3.0",
