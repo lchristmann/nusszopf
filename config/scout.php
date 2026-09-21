@@ -155,7 +155,11 @@ return [
         'index-settings' => [
             Project::class => [
                 'searchableAttributes' => ['title', 'goal', 'description', 'location_text', 'team', 'motto', 'author', 'req_title', 'req_description'],
-                'filterableAttributes' => ['updated_at'],
+                // `req_type` is the category filter's attribute (search.service.js `_mapFilterQuery`).
+                'filterableAttributes' => ['updated_at', 'req_type'],
+                // Meilisearch caps reachable hits at 1000 by default, which would silently end
+                // "Mehr laden" there; the historical Meilisearch (v0.19) had no cap.
+                'pagination' => ['maxTotalHits' => 100000],
                 'sortableAttributes' => ['updated_at'],
                 'rankingRules' => [
                     'words',
