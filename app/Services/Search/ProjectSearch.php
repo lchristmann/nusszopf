@@ -21,18 +21,21 @@ use Throwable;
  */
 class ProjectSearch
 {
-    /** `OFFSET` in search.service.js: documents (not projects) per page. */
-    public const PAGE_SIZE = 50;
-
     /** The filter's options — the request categories and "no requests" (`FilterPopover.js`). */
     public const CATEGORIES = [...ProjectRequest::CATEGORIES, 'none'];
 
     /** `MEILI_CONFIG.attributesToHighlight` */
     private const HIGHLIGHTED = ['title', 'goal', 'description', 'team', 'motto', 'location_text', 'author', 'req_title', 'req_description'];
 
+    /** `OFFSET` in search.service.js (50): documents, not projects, per page. */
+    public static function pageSize(): int
+    {
+        return max(1, (int) config('search.page_size'));
+    }
+
     /**
      * @param  list<string>  $categories  the checked filter options; none or all checked filters nothing
-     * @param  int  $pages  how many pages of {@see self::PAGE_SIZE} documents to show ("Mehr laden" adds one)
+     * @param  int  $pages  how many pages of {@see self::pageSize()} documents to show ("Mehr laden" adds one)
      */
     public function search(string $query, array $categories = [], int $pages = 1): SearchResults
     {
@@ -73,7 +76,7 @@ class ProjectSearch
         $filter = self::filterExpression($categories);
 
         return Project::search($query, function (Indexes $index, string $query, array $options) use ($filter, $pages) {
-            $options['limit'] = self::PAGE_SIZE * max(1, $pages);
+            $options['limit'] = self::pageSize() * max(1, $pages);
             $options['offset'] = 0;
             $options['attributesToHighlight'] = self::HIGHLIGHTED;
             $options['highlightPreTag'] = SearchHighlight::OPEN;

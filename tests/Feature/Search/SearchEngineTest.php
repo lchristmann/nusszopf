@@ -95,7 +95,7 @@ it('highlights the matches and escapes everything else', function () {
 
 it('pages through the results by the historical page size, and stops exactly at the end', function () {
     $word = w('Seitenwort');
-    $total = ProjectSearch::PAGE_SIZE * 2 + 30;
+    $total = ProjectSearch::pageSize() * 2 + 30;
     ProjectRequest::withoutSyncingToSearch(fn () => Project::withoutSyncingToSearch(
         fn () => Project::factory()->count($total)->public()->create(['title' => "Seiten {$word}"])
     ));

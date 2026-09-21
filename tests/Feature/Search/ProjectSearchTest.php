@@ -66,7 +66,7 @@ it('ignores values that are not filter options, so nothing reaches the engine\'s
 
 it('has the historical page size', function () {
     // `const OFFSET = 50` in search.service.js
-    expect(ProjectSearch::PAGE_SIZE)->toBe(50);
+    expect(ProjectSearch::pageSize())->toBe(50);
 });
 
 // --- Grouping ---------------------------------------------------------------------------

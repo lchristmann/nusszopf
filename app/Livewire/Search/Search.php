@@ -21,7 +21,7 @@ use Livewire\Component;
  *
  * The page opens on the skeleton and loads the first results right after
  * (`wire:init`), as the historical page did with its first, empty query.
- * "Mehr laden" asks for one more page of documents ({@see ProjectSearch::PAGE_SIZE});
+ * "Mehr laden" asks for one more page of documents ({@see ProjectSearch::pageSize()});
  * the whole result is re-fetched from the start, which keeps it free of
  * duplicates however the index changed in between.
  *
