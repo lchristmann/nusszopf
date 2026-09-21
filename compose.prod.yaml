@@ -1,113 +1,30 @@
-name: nusszopf-prod
-
-x-app-environment: &app-environment
-  env_file:
-    - .env
-
+# Builds the two production images from a working copy instead of pulling them — for contributors
+# and CI. It changes nothing else: the stack is docker-compose.yaml.
+#
+#     docker compose -f docker-compose.yaml -f compose.prod.yaml up -d --build
+#
+# NUSSZOPF_VERSION (from `.env`) becomes the tag of the images built and the version they report.
 services:
   web:
     build:
-      context: .
+      context: ${NUSSZOPF_BUILD_CONTEXT:-.}
       dockerfile: docker/php/Dockerfile
       target: nginx
-    image: ghcr.io/lchristmann/nusszopf-web:${NUSSZOPF_VERSION:-dev}
-    restart: unless-stopped
-    ports:
-      - "${APP_PORT:-8080}:80"
-    depends_on:
-      php-fpm:
-        condition: service_healthy
+      args:
+        NUSSZOPF_VERSION: ${NUSSZOPF_VERSION}
+    pull_policy: never
 
   php-fpm:
     build:
-      context: .
+      context: ${NUSSZOPF_BUILD_CONTEXT:-.}
       dockerfile: docker/php/Dockerfile
       target: php-fpm
-    image: ghcr.io/lchristmann/nusszopf-php-fpm:${NUSSZOPF_VERSION:-dev}
-    restart: unless-stopped
-    <<: *app-environment
-    volumes:
-      - laravel-storage:/var/www/storage/app
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      meilisearch:
-        condition: service_healthy
+      args:
+        NUSSZOPF_VERSION: ${NUSSZOPF_VERSION}
+    pull_policy: never
 
   queue-worker:
-    image: ghcr.io/lchristmann/nusszopf-php-fpm:${NUSSZOPF_VERSION:-dev}
-    restart: unless-stopped
-    <<: *app-environment
-    volumes:
-      - laravel-storage:/var/www/storage/app
-    command: ["php", "artisan", "queue:work", "--tries=3", "--max-time=3600"]
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+    pull_policy: never
 
   scheduler:
-    image: ghcr.io/lchristmann/nusszopf-php-fpm:${NUSSZOPF_VERSION:-dev}
-    restart: unless-stopped
-    <<: *app-environment
-    volumes:
-      - laravel-storage:/var/www/storage/app
-    command: ["php", "artisan", "schedule:work"]
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
-  postgres:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      POSTGRES_DB: ${DB_DATABASE}
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME}"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
-  redis:
-    image: redis:alpine
-    restart: unless-stopped
-    volumes:
-      - redis-data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
-  meilisearch:
-    image: getmeili/meilisearch:v1.11
-    restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      MEILI_ENV: production
-      MEILI_NO_ANALYTICS: "true"
-    volumes:
-      - meilisearch-data:/meili_data
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:7700/health"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
-volumes:
-  postgres-data:
-  redis-data:
-  meilisearch-data:
-  laravel-storage:
+    pull_policy: never

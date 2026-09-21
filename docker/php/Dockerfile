@@ -8,7 +8,8 @@
 #               (workspace, php-fpm, queue-worker, scheduler) via bind mounts.
 #   vendor    - production Composer install (no dev deps), source baked in.
 #   frontend  - Vite asset build, isolated from the PHP stages.
-#   php-fpm   - production runtime image: vendor + built assets, non-root.
+#   php-fpm   - production runtime image: vendor + built assets, non-root; its
+#               entrypoint migrates and caches before PHP-FPM starts.
 #   nginx     - production web image, built FROM the php-fpm stage's own
 #               /var/www/public so the two images can never drift out of sync
 #               (see docs/deployment/README.md, "Why a dedicated nginx image").
@@ -80,13 +81,27 @@ RUN npm run build
 # ---------------------------------------------------------------------------
 FROM base AS php-fpm
 
+# The release this image was built from (docs/rewrite/architecture-decisions.md, "Version exposure"):
+# the release workflow passes the Git tag; a local build reports "dev".
+ARG NUSSZOPF_VERSION=dev
+ENV NUSSZOPF_VERSION=${NUSSZOPF_VERSION}
+LABEL org.opencontainers.image.title="Nusszopf" \
+      org.opencontainers.image.description="Nusszopf application (PHP-FPM, queue worker and scheduler)" \
+      org.opencontainers.image.source="https://github.com/lchristmann/nusszopf" \
+      org.opencontainers.image.licenses="GPL-3.0-or-later" \
+      org.opencontainers.image.version="${NUSSZOPF_VERSION}"
+
 COPY --from=vendor --chown=nusszopf:nusszopf /var/www /var/www
 COPY --from=frontend --chown=nusszopf:nusszopf /var/www/public/build /var/www/public/build
 
 RUN mkdir -p storage/framework/{cache,sessions,testing,views} storage/logs bootstrap/cache \
     && chown -R nusszopf:nusszopf storage bootstrap/cache
 
+COPY --chmod=755 docker/php/entrypoint.sh /usr/local/bin/nusszopf-entrypoint
+
 USER nusszopf
+
+ENTRYPOINT ["nusszopf-entrypoint"]
 
 HEALTHCHECK --interval=10s --timeout=3s --start-period=20s --retries=5 \
     CMD SCRIPT_NAME=/ping SCRIPT_FILENAME=/ping REQUEST_METHOD=GET cgi-fcgi -bind -connect 127.0.0.1:9000 || exit 1
@@ -95,6 +110,13 @@ CMD ["php-fpm"]
 
 # ---------------------------------------------------------------------------
 FROM nginx:alpine AS nginx
+
+ARG NUSSZOPF_VERSION=dev
+LABEL org.opencontainers.image.title="Nusszopf web" \
+      org.opencontainers.image.description="Nusszopf web server (nginx, static assets, PHP-FPM proxy)" \
+      org.opencontainers.image.source="https://github.com/lchristmann/nusszopf" \
+      org.opencontainers.image.licenses="GPL-3.0-or-later" \
+      org.opencontainers.image.version="${NUSSZOPF_VERSION}"
 
 COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY --from=php-fpm /var/www/public /var/www/public
