@@ -1,5 +1,6 @@
 <?php
 
+use App\Health\HealthChecker;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Livewire\Auth\LoginRegister;
 use App\Livewire\Projects\MyProjects;
@@ -7,7 +8,11 @@ use App\Livewire\Projects\ProjectDetail;
 use App\Livewire\Projects\ProjectEdit;
 use App\Livewire\Projects\ProjectWizard;
 use App\Livewire\Search\Search;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
+use Illuminate\Http\Request;
+use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,6 +28,25 @@ use Illuminate\Support\Facades\Route;
 |
 */
 Route::redirect('/', '/search')->name('home');
+
+/*
+| Dependency health for operators and monitoring (docs/deployment/operations.md). `/up` is the
+| container liveness probe; this one is 503 while a dependency, the scheduler or the queue worker
+| is down. Details only for a caller holding HEALTH_TOKEN. It starts no session: with Redis down
+| (where sessions live) it must still answer, and say so.
+*/
+Route::get('/health', function (Request $request, HealthChecker $health) {
+    $checks = $health->run();
+    $healthy = $health->healthy($checks);
+    $token = config('nusszopf.health_token');
+    $body = ['status' => $healthy ? 'ok' : 'degraded'];
+
+    if ($token && hash_equals((string) $token, (string) $request->bearerToken())) {
+        $body += ['version' => config('nusszopf.version'), 'checks' => $checks];
+    }
+
+    return response()->json($body, $healthy ? 200 : 503);
+})->withoutMiddleware([StartSession::class, ShareErrorsFromSession::class, PreventRequestForgery::class])->name('health');
 
 Route::get('/search', Search::class)->name('search');
 Route::get('/projects/{project}', ProjectDetail::class)->name('projects.show');
