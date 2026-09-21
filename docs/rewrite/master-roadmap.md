@@ -191,7 +191,7 @@ Slice sizes: S = a few days of focused work, M = about a week, L = more than a w
   BUG-002 marked Implemented.
 - **Human approval before starting**: no.
 
-### Slice 4 — Search completion — **M**
+### Slice 4 — Search completion — **M** — ✅ implemented 2026-09-21 (`docs/rewrite/fourth-slice.md`)
 
 - **Covers**: 13–16 (+ BUG-018).
 - **Scope**: grouped hits with nested requests; category filter popover; load-more; scroll-to-top; skeleton and

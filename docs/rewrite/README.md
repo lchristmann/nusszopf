@@ -26,7 +26,7 @@ The plan for finishing the rewrite (remaining slices, non-feature phases, open d
 2.5. Pre-implementation adversarial review — done, see `docs/rewrite/specification-review.md` (full audit) and `docs/rewrite/implementation-contract.md` (the concise contract implementation agents must follow). Status: READY WITH EXPLICIT DECISIONS.
 3. Architecture — proposed, see `docs/architecture/README.md`; module boundaries settled, most infrastructure choices now have an adopted default (`docs/rewrite/decisions-register.md`)
 4. Infrastructure foundation — not started
-5. Vertical feature implementation — in progress: first slice (`docs/rewrite/first-slice.md`) and second slice — the project wizard and edit screen (`docs/rewrite/second-slice.md`) — and third slice — project requests/Gesuche (`docs/rewrite/third-slice.md`) — are implemented; newsletter, password reset, social login, avatars, account deletion and analytics are later slices
+5. Vertical feature implementation — in progress: first slice (`docs/rewrite/first-slice.md`) and second slice — the project wizard and edit screen (`docs/rewrite/second-slice.md`) — third slice — project requests/Gesuche (`docs/rewrite/third-slice.md`) — and fourth slice — the completed search screen (`docs/rewrite/fourth-slice.md`) — are implemented; newsletter, password reset, social login, avatars, account deletion and analytics are later slices
 6. Parity testing — not started
 7. Release preparation — not started
 8. FOSS release — not started

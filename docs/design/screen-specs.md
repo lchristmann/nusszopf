@@ -39,11 +39,11 @@ A consistent, checklist-format specification for every screen, intended as an im
 | Validation             | None (free-text query)                                                                                                                                                                                      |
 | Loading state          | Initial: `SkeletonHits`; load-more: spinner in button; input trailing icon cycles search/loading/refresh-needed                                                                                             |
 | Empty state            | `NoHitsSection` with a "create a project" CTA                                                                                                                                                               |
-| Error state            | Unknown — not directly evidenced; default to the standard toast/error pattern pending implementation-time confirmation                                                                                      |
+| Error state            | Confirmed (`search.service.js`): a failed query shows the no-hits section; a failed "Mehr laden" keeps the hits and shows the error toast "Sorry! Das hat gerade nicht geklappt."                                   |
 | Success state          | Results rendered                                                                                                                                                                                            |
 | Responsive behavior    | Masonry columns: 1 (≤639px) / 2 (640–1023px) / 3 (≥1024px), explicit breakpoints, not Tailwind defaults 1:1                                                                                                 |
 | Authorization behavior | Results scoped to public projects/requests only (BUG-002 fix applies here — private-project requests must never surface); no differential behavior for authenticated vs. anonymous visitors                 |
-| URL/query params       | Unknown exact shape (query string for search term/filters) — confirm at implementation time                                                                                                                 |
+| URL/query params       | Historically none (state in memory). Nusszopf 2: `?q=` (term) and `?f[]=` (applied filter options), so a result page can be shared and survives a reload — an addition (`docs/rewrite/fourth-slice.md`, decision 8) |
 | Side effects           | None (read-only)                                                                                                                                                                                            |
 
 ## Project detail (`/projects/{id}`)

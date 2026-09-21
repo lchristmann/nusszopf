@@ -96,21 +96,34 @@ requests; turning it public again restores them. Deleting the last request bring
 The historical open question "what happens to requests when a project turns private" is **Resolved,
 Confirmed** by `_upsertProject`'s second branch (they are removed) and reproduced.
 
-The search page now reads the index's `group_id`s and lists the *visible* projects in relevance order, once
-each — a project found only through a request's text appears, a stale document of a private or deleted
-project does not (`Project::visible()` on hydration, BUG-002 defence in depth). The grouped hit card with its
-matching requests, the category filter (`req_type` becomes filterable then) and paging are the
-search-completion slice's. A page is at most Meilisearch's default 20 *documents*, so a project with many
-requests takes several of them until that slice's paging exists.
+The search page lists the *visible* projects in relevance order, once each — a project found only through a
+request's text appears, a stale document of a private or deleted project does not (BUG-002 defence in depth).
+The grouped card, the category filter and paging came with the fourth slice (below).
 
-**Upgrade**: `php artisan scout:sync-index-settings`, then re-import both models —
-`php artisan scout:import "App\Models\Project"` and `php artisan scout:import "App\Models\ProjectRequest"`
-(the previous `projects` index is no longer used and can be deleted). `scout:import` takes one model
-per call, and importing is an upsert by primary key, so it can be repeated safely; it does not remove documents
-that no longer belong (delete the old index instead). **Verified from a clean state** (2026-09-21, throwaway
+**Upgrade**: `php artisan search:reindex` (the previous `projects` index is no longer used and can be deleted).
+The command is `scout:sync-index-settings`, `scout:flush` and `scout:import` for both models in one; a bare
+`scout:import` is an upsert and does not remove documents that no longer belong, which is why the command flushes first. **Verified from a clean state** (2026-09-21, throwaway
 PostgreSQL/Meilisearch, a pre-slice-3 schema): after `migrate`, `scout:sync-index-settings` and the two imports the
 `items` index holds exactly one document for a public project without requests and one per request of a public
 project, none for the public project that has requests and none for anything private; primary key `id`; the
-ranking rules end in `updated_at:desc`. Not configured yet, on purpose: `req_type` is not a filterable attribute
-— the search-completion slice adds it with the category filter. Test data left behind in a shared
+ranking rules end in `updated_at:desc`. Test data left behind in a shared
 development index is why the real-Meilisearch tests use a per-run search word.
+
+## Fourth slice — the search screen, completed
+
+Specification and evidence: `docs/rewrite/fourth-slice.md`. What matters for the search behavior:
+
+- **Page size 50 documents** (`OFFSET` in `search.service.js`, **Confirmed**); "Mehr laden" adds another 50 and is offered while the
+  index holds more documents than were fetched. Nusszopf 2 re-fetches `limit = 50 × pages` from offset 0 each time (no duplicates by
+  construction). Meilisearch 1.x reports `estimatedTotalHits` (capped at `pagination.maxTotalHits`, default 1000, raised to 100000
+  in `config/scout.php`; v0.19 had no cap).
+- **Category filter**: `req_type` is filterable; nothing or everything checked → no filter, otherwise `req_type = a OR req_type = b …`;
+  `none` ("Keine Gesuche") selects the projects without requests. Only the documents that pass the filter exist in the result, so a card
+  nests only the requests of the checked categories.
+- **Highlighting**: Meilisearch is asked to mark matches with two private-use characters and the text is escaped before they become
+  `<em>` (BUG-029; the historical cards injected the raw highlighted string).
+- **Visibility, again**: every project and request of a result is re-read from PostgreSQL through `Project::visible(null)` /
+  `ProjectRequest::visible(null)`; documents whose row is gone, private, or moved to another project are dropped, for owners too.
+- **Recovery**: `php artisan search:reindex` (settings → flush → import), idempotent, documented in `docs/deployment/operations.md`.
+- **Resolved Unknowns**: the pagination behavior exposed to the UI (load-more button, offset paging, merge by id) — see the table in
+  `fourth-slice.md`; the filterable attribute set (`req_type`, from `_mapFilterQuery`).

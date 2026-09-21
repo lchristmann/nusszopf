@@ -36,6 +36,26 @@ docker compose logs -f scheduler                                     # confirm s
 
 Nusszopf's actual queued/scheduled work (mail sending, search index reconciliation, any recurring cleanup) depends on domain archaeology not yet complete — Unknown which jobs exist until `docs/domain/workflows.md` and `docs/search/README.md` are populated.
 
+## Search index recovery
+
+The search index (Meilisearch, one shared `items` index) is **derived data**: everything in it comes from PostgreSQL, so it is
+never backed up, only rebuilt. One command does it, and it is safe to run at any time, as often as needed:
+
+```bash
+docker compose exec php-fpm php artisan search:reindex
+```
+
+It applies the versioned index settings (`config/scout.php`), drops every document and imports all public projects and their
+requests again. With `SCOUT_QUEUE=true` (the default) the documents are indexed by the queue worker, so search fills up over the
+next seconds to minutes depending on the number of projects; watch it with `docker compose logs -f queue-worker`. Private projects
+and their requests are never imported.
+
+Use it after: restoring a backup, wiping or replacing the `meilisearch-data` volume, upgrading to a release that changes the
+index (see "Upgrades"), or when search results are missing or stale (for example after Meilisearch was down for longer than the
+queue's retries). If the command names a step that failed, Meilisearch is unreachable or misconfigured — fix that and run it again.
+Failed sync jobs stay visible in the `failed_jobs` table (`php artisan queue:failed`) and can be retried with `queue:retry all`;
+reindexing makes them unnecessary.
+
 ## Backups
 
 **(needs approval — which tier to adopt for v1)**. Two demonstrated tiers, both Confirmed from evidence:
@@ -81,19 +101,18 @@ docker run --rm \
 docker compose up -d
 docker compose exec php-fpm php artisan optimize
 
-# 5. If the search index isn't part of the backup, reindex
-docker compose exec php-fpm php artisan <reindex-command>   # exact command Unknown until search archaeology is complete
+# 5. The search index is not part of the backup: rebuild it (see "Search index recovery")
+docker compose exec php-fpm php artisan search:reindex
 ```
 
 An untested restore procedure is not a backup — LCxHolz's own documentation makes this point explicitly and recommends periodic restore drills against a disposable database; the same discipline applies here.
 
 ## Upgrades
 
-> **Upgrading to the release with project requests (Slice 3):** the schema migration runs with the entrypoint's
-> `migrate --force`, but the search index is renamed (`items`) and needs a one-time rebuild afterwards:
-> `php artisan scout:sync-index-settings`, then `php artisan scout:import "App\Models\Project"` and
-> `php artisan scout:import "App\Models\ProjectRequest"`; the old `projects` index can be deleted. Until then search
-> returns nothing. Details: `docs/search/README.md`, "Third slice".
+> **Upgrading to a release that changes the search index** (project requests in Slice 3: the index is renamed `items`;
+> search completion in Slice 4: `req_type` becomes filterable): run `php artisan search:reindex` once after the
+> entrypoint's `migrate --force`; the old `projects` index can be deleted. Until then search returns nothing or its
+> filter fails. Details: `docs/search/README.md`.
 
 Confirmed pattern, identical across LCxHolz (`deploy.sh <tag>`) and Waffle Dashboard (manual `docker-compose.yaml` edit): bump the image tag, `docker compose down && docker compose up -d` (or `pull` + `up -d`), rely on the entrypoint's unconditional `php artisan migrate --force` to bring the schema up to date. Named volumes are untouched by this, so user data persists across the version bump.
 

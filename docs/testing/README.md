@@ -32,6 +32,13 @@ A small number of important user journeys through the real UI, per role/actor, t
 - The stack contains a `locationiq-stub` service (dev/CI only) answering the LocationIQ autocomplete
   endpoint with a fixed result; the place search is therefore exercised end to end without a key or
   network. Feature tests use `Http::fake()` against `LocationSearch` instead.
+- The search specs (`tests/E2E/specs/visitor/search.spec.ts`) need the stack to run with a small page size so the last page can
+  be reached: put `SEARCH_PAGE_SIZE=5` in `.env` (the app re-reads it on the next request) and pass `E2E_SEARCH_PAGE_SIZE=5` to
+  Playwright; without the variable the "load more" spec is skipped. The index-recovery spec additionally needs
+  `E2E_MEILISEARCH_URL` and `E2E_MEILISEARCH_KEY` (to wipe the index) and `E2E_REINDEX_COMMAND` (a shell command that runs
+  `php artisan search:reindex` in the stack, e.g. `docker compose -f compose.dev.yaml exec -T php-fpm php artisan search:reindex`);
+  it is skipped without them. CI sets all of these. The specs use words made unique per run because the development index
+  outlives every test.
 - `tests/Feature/Search/ProjectSearchSyncTest.php` mixes fast document-shape tests with a few
   `@group meilisearch` tests against the real engine (edit re-indexing, publish/hide, delete).
 
@@ -45,7 +52,7 @@ Every historical bug knowingly fixed during the rewrite ships with a regression 
 
 ## Search and mail testing
 
-- Search: fake Scout/Meilisearch in most Feature tests for speed; a smaller number of tests exercise real Meilisearch indexing/query behavior to catch configuration and ranking drift. See `docs/search/README.md` for the search semantics being verified.
+- Search: fake Scout/Meilisearch in most Feature tests for speed; a smaller number of tests (`@group meilisearch`, `tests/Helpers/search.php` for the shared helpers) exercise real Meilisearch indexing/query behavior to catch configuration and ranking drift — including `applyIndexSettings()`, which applies the checked-in settings to the test index first (the filter needs `req_type` filterable). See `docs/search/README.md` for the search semantics being verified.
 - Mail: use Laravel's mail fake for asserting triggers/recipients/content in Feature tests; verify actual rendering (subject, links, branding) against the historical templates (`../historical/emails-nusszopf`) separately — see `docs/email/README.md`.
 
 ### Isolation from the development stack

@@ -20,8 +20,8 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 | BUG-005 | Email / contact form                        | Medium   | Fix                                 | Spec'd — `intentional-changes.md`                                                       |
 | BUG-006 | Email / copy                                | Trivial  | Fix                                 | Spec'd — `intentional-changes.md`                                                       |
 | BUG-007 | Domain / `visibility` constraint            | Low      | Fix                                 | Implemented — first vertical slice (2026-09-18)                                         |
-| BUG-008 | Search / operations                         | Medium   | Fix                                 | Implemented — first vertical slice (2026-09-18)                                         |
-| BUG-009 | Background jobs / operations                | Medium   | Fix                                 | Implemented (search-sync path) — first vertical slice (2026-09-18)                      |
+| BUG-008 | Search / operations                         | Medium   | Fix                                 | Implemented — first vertical slice (2026-09-18); extended to requests and completed with `search:reindex` — fourth slice (2026-09-21) |
+| BUG-009 | Background jobs / operations                | Medium   | Fix                                 | Implemented (search-sync path) — first vertical slice (2026-09-18); failed-job regression test incl. requests — fourth slice (2026-09-21) |
 | BUG-010 | Email / contact form validation             | Medium   | Fix                                 | Needs an `intentional-changes.md` entry                                                 |
 | BUG-011 | Newsletter / consent asymmetry              | Medium   | Fix                                 | Decided 2026-09-21 (GDPR): double opt-in on every path — needs an `intentional-changes.md` entry before slice 9 |
 | BUG-012 | Auth / Apple social login                   | Low      | Replace (drop)                      | Decided — do not implement                                                              |
@@ -30,7 +30,7 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 | BUG-015 | Navigation / `login` return destination     | Low      | Preserve                            | Decided — register B11 (always `/user/projects`), reconciled 2026-09-21                 |
 | BUG-016 | Security / Meilisearch CORS configuration   | Medium   | Unknown                             | Needs more evidence or a fresh decision                                                 |
 | BUG-017 | Domain / `ProjectAnalytics.contactRequests` | Low      | Unknown                             | Needs more evidence                                                                     |
-| BUG-018 | Testing / historical search E2E coverage    | Medium   | Fix (close the gap)                 | Action item for the new Playwright suite                                                |
+| BUG-018 | Testing / historical search E2E coverage    | Medium   | Fix (close the gap)                 | Implemented — fourth slice (2026-09-21): `tests/E2E/specs/visitor/search.spec.ts`; the contact-from-result journey gains its final step in slice 6 |
 | BUG-019 | Design / rich-text editor field-order bug   | Low      | N/A — tied to architecture decision | Moot once Slate is replaced; verify the new editor doesn't reintroduce an analogous bug |
 | BUG-020 | Security / SSR Apollo client shared state   | Low      | Replace (moot)                      | Resolved — pre-implementation review pass, 2026-09-18                                   |
 | BUG-021 | Authorization / Project edit screen access  | Low      | Fix                                 | Implemented — first-slice verification pass (2026-09-19)                                |
@@ -41,6 +41,7 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 | BUG-026 | Domain / whitespace-only title and goal     | Trivial  | Fix                                 | Implemented — second slice (2026-09-19); extended to request titles in the third slice   |
 | BUG-027 | Domain / project creation is not atomic     | Low      | Fix                                 | Implemented — third slice (2026-09-21)                                                  |
 | BUG-028 | Domain / request title length               | Trivial  | Preserve                            | Decided — third slice (2026-09-21): the field caps at 30, validation allows 40           |
+| BUG-029 | Security / search hit rendering             | Medium   | Fix                                 | Implemented — fourth slice (2026-09-21); proposed and implemented together, awaits the maintainer's ratification |
 
 ---
 
@@ -530,3 +531,18 @@ directly from `web-nusszopf/projects/webapp/src/containers/user/ProjectForm/*` a
 - Regression test: `ProjectRequestWizardTest` ("validates a title of more than 40 characters"),
   `tests/E2E/specs/user/project-requests.spec.ts` (the 30-character cap).
 
+### BUG-029 — Search hits are injected into the page as raw HTML
+
+- Affected area: Security, search results (`HitCard`, `HitRequestCard`)
+- Historical behavior: Meilisearch highlights matches by wrapping them in `<em>` inside the *unescaped* stored
+  text, and the hit cards rendered that string with `dangerouslySetInnerHTML` (`HitCard.js`: title, goal and
+  the summary line; `HitRequestCard.js`: title and description). A project or request whose own text
+  contains markup therefore ran it in every visitor's browser on every search that surfaced it — stored XSS
+  through the one screen anyone can open.
+- Evidence: `web-nusszopf/.../containers/search/HitCard/HitCard.js`, `components/RequestCard/variants/HitRequestCard.js`;
+  `MEILI_CONFIG.attributesToHighlight` in `search.service.js` (no custom tags, no escaping).
+- Severity/impact: Medium — needs an author account, reaches anonymous visitors.
+- Classification: **Fix**
+- Corrected behavior: the text is escaped; only the engine's highlight is emphasis (`<em>`, the tag the
+  historical index used), asked for through private-use marker characters instead of markup.
+- Full spec: `docs/rewrite/intentional-changes.md` → "Search hits are escaped, only the highlight is markup (BUG-029)".

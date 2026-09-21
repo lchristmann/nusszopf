@@ -12,7 +12,7 @@ This documentation describes Nusszopf 2 as a product, system, development projec
 - `journeys/` — end-to-end acceptance journeys
 - `references/` — reference-project findings
 - `release/` — FOSS releases and upgrades
-- `rewrite/` — rewrite methodology and decisions, including `bugs.md` (the historical-defect register), `decisions-register.md` (the concise already-decided vs. needs-a-human-decision index), `first-slice.md` (the first implementation slice), `second-slice.md` (the project wizard and edit screen) and `third-slice.md` (the project requests)
+- `rewrite/` — rewrite methodology and decisions, including `bugs.md` (the historical-defect register), `decisions-register.md` (the concise already-decided vs. needs-a-human-decision index), `first-slice.md` (the first implementation slice), `second-slice.md` (the project wizard and edit screen) `third-slice.md` (the project requests) and `fourth-slice.md` (the completed search screen)
 - `search/` — search behavior
 - `security/` — security requirements, including `authorization-matrix.md` (the action-by-action authorization ruleset)
 - `testing/` — testing strategy
@@ -25,5 +25,5 @@ The historical Nusszopf repositories are the product reference. LCxHolz, Waffle 
 2. `docs/rewrite/source-map.md` — which historical repository revision every other document is a snapshot of.
 3. `docs/rewrite/decisions-register.md` — what's already decided vs. what still needs a human call.
 4. `docs/rewrite/bugs.md` — every classified historical defect, with severity and required regression test.
-5. `docs/rewrite/first-slice.md`, `docs/rewrite/second-slice.md` and `docs/rewrite/third-slice.md` — what the implemented slices contain, and why.
+5. `docs/rewrite/first-slice.md`, `docs/rewrite/second-slice.md`, `docs/rewrite/third-slice.md` and `docs/rewrite/fourth-slice.md` — what the implemented slices contain, and why.
 6. Topic directories above, as needed for the area you're touching.

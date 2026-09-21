@@ -321,6 +321,51 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 
 ---
 
+### Search hits are escaped, only the highlight is markup (BUG-029)
+
+- Status: Proposed — implemented in the fourth slice; awaits the maintainer's ratification
+- Date: 2026-09-21
+- Historical behavior: hit cards rendered Meilisearch's highlighted strings as raw HTML (`dangerouslySetInnerHTML`
+  in `HitCard.js` and `HitRequestCard.js`), so markup in a project's or request's own text executed for every visitor.
+- Why it is defective: stored cross-site scripting on the public search screen; nothing in the product relies on
+  authors' markup being interpreted (the highlight is the only intended markup).
+- New behavior: the query asks Meilisearch to mark matches with two private-use characters; the text is HTML-escaped and
+  exactly those markers become `<em>…</em>`. The visible result is identical to the historical one for ordinary text.
+  The summary line is cut at 90 visible characters like lodash `truncate`, without counting the markers and without
+  cutting a tag in half.
+- Affected screens: search (hit cards, nested request cards).
+- Migration implications: none.
+- Tests: `tests/Feature/Search/SearchHighlightTest.php`, `ProjectSearchTest.php` ("escapes the stored text and highlights only
+  what the engine marked"), `SearchEngineTest.php` ("highlights the matches and escapes everything else").
+- Approval: pending.
+
+---
+
+### Search shows only what anyone may see, and re-checks every document (search-completion slice)
+
+- Status: Approved (roadmap-authorized hardening, "private/hidden never returned, stale index documents filtered"); recorded 2026-09-21
+- Historical behavior: the index held only public projects (write-time gate); the page showed whatever the index returned.
+- New behavior: in addition, every project and request of a result is looked up again with `Project::visible(null)` /
+  `ProjectRequest::visible(null)` — the *guest's* view, for owners too — and a document whose row is gone, is private, or whose
+  request now belongs to another project is dropped. A signed-in owner does not see their own private project through search
+  (it is not in the index, and a stale document must not change that).
+- Affected screens: search. Tests: `ProjectSearchTest.php` (stale project, private-for-owner, stale request), `SearchEngineTest.php`.
+
+---
+
+### Recovery, uncapped paging and a page-size setting (BUG-008 completed)
+
+- Status: Approved (roadmap-authorized: "documented reindex/recovery command and an idempotency test"); recorded 2026-09-21
+- Historical behavior: no reindex operation existed; Meilisearch v0.19 reported every hit (`nbHits`) without a cap.
+- New behavior: `php artisan search:reindex` applies the versioned index settings, drops every document and imports all
+  public projects and requests (idempotent); `pagination.maxTotalHits` is raised to 100000 because current Meilisearch caps
+  reachable hits at 1000, which would silently end "Mehr laden"; `SEARCH_PAGE_SIZE` (default 50, the historical value) is a
+  setting only so the browser suite can reach the last page without creating dozens of projects.
+- Tests: `ReindexSearchTest.php` (empty index → equals live-synced, idempotent, stale documents removed, missing index,
+  failure reported), `SearchEngineTest.php` (settings, paging boundary), `search.spec.ts` (recovery).
+
+---
+
 ## Explicitly deferred (not proposed here, need a product decision first — see `docs/rewrite/open-questions.md` / `docs/rewrite/architecture-decisions.md`)
 
 The following were identified during archaeology as *possible* candidates for change but are deliberately **not** proposed above, because reasonable product intent could explain the historical behavior as-is:

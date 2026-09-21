@@ -49,6 +49,7 @@ first `up`, so files the containers create are owned by you, not root.
 | Migrations | `php artisan migrate` |
 | Fresh DB + seed | `php artisan migrate:fresh --seed` |
 | Sync search index settings | `php artisan scout:sync-index-settings` |
+| Rebuild the search index (settings + all documents) | `php artisan search:reindex` |
 | Queue worker (dev) | already running as the `queue-worker` Compose service |
 | Scheduler (dev) | already running as the `scheduler` Compose service |
 | Logs | `docker compose -f compose.dev.yaml logs -f [service]` |

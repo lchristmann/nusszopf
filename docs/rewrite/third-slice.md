@@ -111,7 +111,7 @@ Nusszopf 2 does all of this from the model events Scout already observes (below)
 | 7 | Dates shown as `j.n.Y` in the application's time zone | **Replace** | historically the viewer's zone |
 | 8 | A request write bumps only a *public* project's `updated_at` | **Preserve** | `ProjectRequest::booted()` |
 | 9 | "Kontaktieren" in the request dialog is the `mailto:` scaffold | **Deferred** | slice 6 replaces both buttons |
-| 10 | The search page still shows one project card per hit group | **Deferred** | nesting/filters are slice 4 |
+| 10 | The search page still shows one project card per hit group | **Done in slice 4** | nesting, filters and paging: `fourth-slice.md` |
 | 11 | A wizard request is edited/deleted by list index, an edit-screen request by id, resolved through the project | Implementation | see Authorization |
 
 ## Implementation
