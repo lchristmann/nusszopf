@@ -48,6 +48,17 @@ Every historical bug knowingly fixed during the rewrite ships with a regression 
 - Search: fake Scout/Meilisearch in most Feature tests for speed; a smaller number of tests exercise real Meilisearch indexing/query behavior to catch configuration and ranking drift. See `docs/search/README.md` for the search semantics being verified.
 - Mail: use Laravel's mail fake for asserting triggers/recipients/content in Feature tests; verify actual rendering (subject, links, branding) against the historical templates (`../historical/emails-nusszopf`) separately — see `docs/email/README.md`.
 
+### Isolation from the development stack
+
+Inside the Compose containers the development `.env` is the process environment, and Laravel reads
+`$_SERVER` first, so phpunit's `<env>` values used to be silently ignored: the Pest suite ran against the
+*development* database (re-migrating it), Redis queue and search index, and its queued jobs starved the
+queue worker for the browser suite that followed. `phpunit.xml` now forces its values and
+`tests/bootstrap.php` copies them over `$_SERVER`, so the suite always uses `nusszopf_testing`, the `sync`
+queue and the `null` Scout driver; the `meilisearch`-group tests still switch to the real engine explicitly.
+The real index is shared with development, so those tests use per-run search words (documents of earlier runs
+stay in it) and assert on their own ids.
+
 ## Test data
 
 Tests should use deterministic factories/seeders covering the domain entities established in `docs/domain/entities.md`. Fixture identifiers used by Playwright specs must be declared in one place (see "Browser tests" above), never inlined per spec.

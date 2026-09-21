@@ -86,7 +86,7 @@ test('register, create, publish, view, and find a project in search', async ({ p
     await expect(async () => {
         await search.search(projectTitle);
         await expect(search.resultLink(projectTitle)).toBeVisible();
-    }).toPass({ timeout: 15_000 });
+    }).toPass({ timeout: 30_000 });
 
     await publicContext.close();
 });

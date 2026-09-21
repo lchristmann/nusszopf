@@ -121,7 +121,7 @@ test('creates requests in the wizard and shows, edits and deletes them through t
     await expect(async () => {
         await search.search(searchWord);
         await expect(search.resultLink(title)).toHaveCount(1);
-    }).toPass({ timeout: 15_000 });
+    }).toPass({ timeout: 30_000 });
 
     // --- Edit screen: Gesuche view ------------------------------------------------------------------
     await page.goto(`/user/project/${projectId}/edit`);

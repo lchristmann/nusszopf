@@ -182,7 +182,7 @@ test('creates, publishes, edits and re-verifies a project through the historical
     await expect(async () => {
         await search.search(newTitle);
         await expect(search.resultLink(newTitle)).toBeVisible();
-    }).toPass({ timeout: 15_000 });
+    }).toPass({ timeout: 30_000 });
 
     // --- Delete from the settings view (native confirm) -------------------------------------------------
     await page.goto(`/user/project/${projectId}/edit`);
