@@ -10,10 +10,9 @@ use Livewire\Component;
 
 /**
  * docs/design/screen-specs.md, "Search" — proves the Scout/Meilisearch
- * query-side integration end to end. Only `Project` is searchable this
- * slice (no `Request` child resource yet, docs/rewrite/first-slice.md), so
- * there is no grouped-by-project HitCard nesting to reproduce yet — that
- * lands with the wizard/requests in the second slice.
+ * query-side integration end to end. Projects and their requests share one
+ * index; a hit is grouped into its project, so the grouped-by-project
+ * HitCard nesting of the matching requests is the search-completion slice's.
  *
  * Query interaction (verified against `SearchInput.js` in this
  * verification pass): historically search fires only on an explicit
@@ -53,8 +52,18 @@ class Search extends Component
         // page browses every public project, not an empty results screen
         // waiting for input (Meilisearch's own empty-query behavior already
         // matches "match everything").
+        //
+        // The index holds a document per request (or one for a project
+        // without requests), each carrying `group_id`, its project's id; the
+        // hits are grouped into their project, in relevance order. The card
+        // still shows only the project — nesting the matching requests and
+        // the category filter are the search-completion slice's.
+        /** @var list<array<string, mixed>> $documents */
+        $documents = Project::search($this->query)->raw()['hits'] ?? [];
+        $groupIds = collect($documents)->pluck('group_id')->unique()->values();
+
         return view('livewire.search.search', [
-            'hits' => Project::search($this->query)->query(fn ($query) => $query->visible())->get(),
+            'hits' => Project::visible()->whereIn('id', $groupIds)->get()->sortBy(fn (Project $project) => $groupIds->search($project->id))->values(),
         ]);
     }
 }

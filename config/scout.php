@@ -154,7 +154,7 @@ return [
          */
         'index-settings' => [
             Project::class => [
-                'searchableAttributes' => ['title', 'goal', 'description', 'location_text', 'team', 'motto', 'author'],
+                'searchableAttributes' => ['title', 'goal', 'description', 'location_text', 'team', 'motto', 'author', 'req_title', 'req_description'],
                 'filterableAttributes' => ['updated_at'],
                 'sortableAttributes' => ['updated_at'],
                 'rankingRules' => [

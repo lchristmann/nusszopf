@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Scout\Searchable;
 
@@ -55,6 +56,35 @@ class Project extends Model
     public const NUSSZOPF_CONTACT = 'mail@nusszopf.org';
 
     /**
+     * Search is one shared `items` index holding a document per request, or —
+     * for a project without requests — one for the project (search.function.js,
+     * docs/search/README.md).
+     */
+    public const SEARCH_INDEX = 'items';
+
+    /**
+     * A change to a project re-syncs its request documents (they carry the
+     * project's fields): they follow the project's visibility and refreshed
+     * `updated_at`. Requests are removed from the index before the database
+     * cascades their rows away, which raises no model events.
+     */
+    protected static function booted(): void
+    {
+        static::saved(function (self $project): void {
+            $requests = $project->requests()->get()->each->setRelation('project', $project);
+
+            $project->visibility === 'public' ? $requests->searchable() : $requests->unsearchable();
+        });
+
+        static::deleting(fn (self $project) => $project->requests()->get()->unsearchable());
+    }
+
+    public static function searchIndexName(): string
+    {
+        return config('scout.prefix').self::SEARCH_INDEX;
+    }
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array
@@ -73,6 +103,14 @@ class Project extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * @return HasMany<ProjectRequest, $this>
+     */
+    public function requests(): HasMany
+    {
+        return $this->hasMany(ProjectRequest::class);
     }
 
     /**
@@ -111,21 +149,41 @@ class Project extends Model
         });
     }
 
+    public function searchableAs(): string
+    {
+        return self::searchIndexName();
+    }
+
     /**
      * Only public projects are ever written to the search index — the same
      * indexing-time visibility gate the historical indexer enforced
      * (docs/search/README.md). A project flipped private is removed from
      * the index by Scout automatically, since this becomes false.
+     *
+     * A project with requests has no document of its own: its requests carry
+     * its fields instead (`_updateProjectAndRequests` deleted the project's
+     * document once request documents existed).
      */
     public function shouldBeSearchable(): bool
     {
-        return $this->visibility === 'public';
+        return $this->visibility === 'public' && ! $this->requests()->exists();
     }
 
     /**
      * @return array<string, mixed>
      */
     public function toSearchableArray(): array
+    {
+        return [...$this->projectDocument(), 'req_type' => 'none', 'group_id' => $this->id];
+    }
+
+    /**
+     * The fields every document of this project carries, whether it is the
+     * project's own or one of its requests'.
+     *
+     * @return array<string, mixed>
+     */
+    public function projectDocument(): array
     {
         $remote = (bool) ($this->location['remote'] ?? true);
         $flexible = (bool) ($this->period['flexible'] ?? true);

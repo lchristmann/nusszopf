@@ -8,3 +8,9 @@ parameters:
         - routes
 
     level: 7
+    ignoreErrors:
+        # Laravel Scout registers `searchable()` / `unsearchable()` on Eloquent collections as runtime macros.
+        -
+            identifier: method.notFound
+            message: '#Call to an undefined method Illuminate\\Database\\Eloquent\\Collection<int, App\\Models\\ProjectRequest>::(un)?searchable\(\)#'
+            path: app/Models/Project.php
