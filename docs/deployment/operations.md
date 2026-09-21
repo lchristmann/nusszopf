@@ -1,12 +1,17 @@
 # Operations
 
-> **Status: Proposal.** Day-2 operations for a self-hosted Nusszopf instance, derived from `../development-reference/lcxholz/docs/backups/README.md`, `../development-reference/lcxholz/docs/deployment/README.md`, `../development-reference/lcxholz/deploy.sh`, and `../foss-reference/waffle-dashboard/docs/WAFFLE-INSTALLATION-GUIDE.md` + `docs/code/backup.sh`. See `docs/references/laravel-docker-examples.md` for full evidence. Nothing here is implemented; items marked **(needs approval)** are undecided.
+> **Status: health, logs, queue and scheduler, upgrades, rollback, search recovery and troubleshooting are implemented and verified
+> (operational track O-1/O-2, 2026-09-22).** The backup and restore sections remain a documented proposal until the backup drill (P-10).
+> Commands assume the operator's directory (`docker-compose.yaml` and `.env` next to each other); contributors add
+> `-f compose.dev.yaml` and use the `workspace` service.
 
 ## Table of contents
 
 - [Health checks](#health-checks)
 - [Logs](#logs)
 - [Queue worker and scheduler](#queue-worker-and-scheduler)
+- [What happens when a dependency is down](#what-happens-when-a-dependency-is-down)
+- [Search index recovery](#search-index-recovery)
 - [Backups](#backups)
 - [Restore](#restore)
 - [Upgrades](#upgrades)
@@ -16,25 +21,47 @@
 
 ## Health checks
 
-- Container-level: `docker compose ps` shows `(healthy)`/`(unhealthy)` for `php-fpm`, `postgres`, `redis`, `meilisearch` once their healthchecks are wired (see `docs/deployment/README.md`).
-- Application-level: Laravel's built-in `/up` route, unauthenticated, unaffected by any auth gate — confirmed pattern from LCxHolz (`App\Providers\AppServiceProvider::configureHealthChecks()`, `spatie/laravel-health`). Whether Nusszopf adopts `spatie/laravel-health` for a richer status page, or stays with the framework's bare `/up`, is **(needs approval)** — Unknown until engineering-quality decisions are finalized.
-- Meilisearch's own `GET /health` — no reference project covers this since none use Meilisearch; add it as a Docker Compose healthcheck (`curl -f http://localhost:7700/health`) and, if a status page is built, as an additional check there.
+```bash
+docker compose ps                                        # every service "healthy"
+docker compose exec php-fpm php artisan nusszopf:health  # running version + database, redis, search, scheduler, queue
+curl -s https://nusszopf.example.org/health              # {"status":"ok"} (200) or {"status":"degraded"} (503) — point a monitor here
+curl -s -H "Authorization: Bearer $HEALTH_TOKEN" https://nusszopf.example.org/health   # + version and each check's reason
+```
+
+`/up` is the container liveness probe and tests nothing behind the application. The scheduler and queue worker prove themselves with a heartbeat once a minute,
+so a freshly started stack reports `degraded` for up to a minute — that is the check working, not a fault. Details: `docs/deployment/README.md`, "Health checks".
 
 ## Logs
 
-`docker compose logs -f <service>` for any service. No log aggregation is proposed for v1 — matches all three references, none of which run a log shipper.
+`docker compose logs -f <service>` for any service (the application logs to stderr in production). No log aggregation is proposed for v1 — matches all three references, none of which run a log shipper.
 
 ## Queue worker and scheduler
 
-Confirmed pattern from LCxHolz (the only reference with dedicated queue/scheduler services — `laravel-docker-examples` and Waffle Dashboard have neither):
+The historical product had no scheduled work (its cron triggers were empty), so the scheduler runs exactly two heartbeats and nothing else; new scheduled work is added only with the slice that needs it.
+The queue carries search indexing now and will carry mail. The worker runs `queue:work --tries=5 --backoff=10,30,60,120 --max-time=3600`: a failing job is tried again after 10 s, 30 s, 1 min and 2 min,
+then kept in the `failed_jobs` table — the historical webhooks gave up silently after three tries (BUG-009).
 
 ```bash
-docker compose exec queue-worker php artisan queue:work --status   # inspect
-docker compose restart queue-worker                                  # after a bad deploy or stuck job
-docker compose logs -f scheduler                                     # confirm scheduled tasks are firing
+docker compose logs -f queue-worker                      # RUNNING / DONE / FAIL per job, errors with the reason
+docker compose exec php-fpm php artisan queue:failed     # jobs that ran out of tries
+docker compose exec php-fpm php artisan queue:retry all  # run them again (after fixing the cause)
+docker compose exec php-fpm php artisan queue:flush      # forget them (search is rebuilt by search:reindex anyway)
+docker compose restart queue-worker                      # after a bad deploy or a stuck job; it also restarts itself hourly (--max-time)
+docker compose logs scheduler                            # the two heartbeats, once a minute
 ```
 
-Nusszopf's actual queued/scheduled work (mail sending, search index reconciliation, any recurring cleanup) depends on domain archaeology not yet complete — Unknown which jobs exist until `docs/domain/workflows.md` and `docs/search/README.md` are populated.
+## What happens when a dependency is down
+
+Verified on the production stack (2026-09-22) by stopping each service, working, and starting it again:
+
+| Down | What the visitor sees | What the stack does | Recovery |
+|---|---|---|---|
+| **Meilisearch** | Pages work; search shows no hits ("Verzopft…" — the historical behavior for a failed query); a project saved meanwhile is not searchable yet | `/health` → 503 with `search` failing. Index jobs fail and retry at +10 s, +30 s, +1 min, +2 min; after five attempts (about 3½ minutes) the job lands in `failed_jobs` | Start Meilisearch. The retry that follows finds it; give it up to a minute (the worker's DNS cache). Jobs already in `failed_jobs`: `queue:retry all`, or simply `search:reindex` |
+| **Redis** | Every page is a 500 (sessions live in Redis); `/up` stays 200 | `/health` → 503 (it needs no session, so it still answers); the queue worker crash-loops and Docker restarts it; nothing is lost that was queued before | Start Redis; everything resumes by itself, no manual step |
+| **PostgreSQL** | Pages that read data fail; the search page shell still renders | `/health` → 503 with `database` failing; `php-fpm` stays "healthy" (its check is PHP-FPM's own ping) | Start PostgreSQL; resumes by itself |
+| **SMTP** | — | Not applicable yet: nothing sends mail before the mail slice, whose jobs will use this same queue and retry policy | Verified again with that slice |
+
+A saved change is never lost when search is down: the database is written first and the index job is retried; `search:reindex` repairs whatever still went wrong.
 
 ## Search index recovery
 
@@ -109,25 +136,27 @@ An untested restore procedure is not a backup — LCxHolz's own documentation ma
 
 ## Upgrades
 
-> **Upgrading to a release that changes the search index** (project requests in Slice 3: the index is renamed `items`;
-> search completion in Slice 4: `req_type` becomes filterable): run `php artisan search:reindex` once after the
-> entrypoint's `migrate --force`; the old `projects` index can be deleted. Until then search returns nothing or its
-> filter fails. Details: `docs/search/README.md`.
-
-Confirmed pattern, identical across LCxHolz (`deploy.sh <tag>`) and Waffle Dashboard (manual `docker-compose.yaml` edit): bump the image tag, `docker compose down && docker compose up -d` (or `pull` + `up -d`), rely on the entrypoint's unconditional `php artisan migrate --force` to bring the schema up to date. Named volumes are untouched by this, so user data persists across the version bump.
+1. Read the release's `CHANGELOG.md` section for **Breaking:** and **Migration required:** entries (`docs/release/breaking-changes.md`).
+2. Back up (see [Backups](#backups)) — a migration cannot be undone by starting an older image.
+3. Set `NUSSZOPF_VERSION` in `.env` to the new release, then:
 
 ```bash
-# Waffle Dashboard's operator-facing form:
-nano docker-compose.yaml   # bump the image tag(s)
 docker compose pull
 docker compose up -d
+docker compose ps                                          # wait for "healthy"; a migration can make php-fpm take a while
+docker compose exec php-fpm php artisan nusszopf:health    # shows the new version
 ```
 
-`docs/release/upgrades.md` and `docs/release/breaking-changes.md` own the versioning/compatibility policy for what "safe to upgrade across" means; this document only owns the mechanics.
+Nothing else is needed: the `php-fpm` container's entrypoint applies pending migrations (locked, so it happens once) and rebuilds the caches before it serves; `queue-worker` and `scheduler`
+start after it; named volumes are untouched. If the changelog says the search index changed (Slice 3: index renamed `items`; Slice 4: `req_type` filterable), also run
+`docker compose exec php-fpm php artisan search:reindex` once. Upgrading across several releases in one step is supported the same way; read every changelog section in between.
+
+`docs/release/upgrades.md` and `docs/release/breaking-changes.md` own the compatibility policy; this document owns the mechanics.
 
 ## Rollback
 
-Same mechanism as upgrade, previous tag. **Confirmed limitation from LCxHolz, directly applicable**: this rolls back application code only, not database migrations. If the version being rolled back from ran a destructive migration, rolling back the image alone does not undo it — restore from a pre-upgrade backup instead. Not solved more generically than that by any reference; adopting the same trade-off for Nusszopf unless a future decision changes this.
+Set `NUSSZOPF_VERSION` back to the previous release, `docker compose pull && docker compose up -d`. **This rolls back the application code only, not database migrations.** If the release you are leaving
+ran a migration that older code cannot live with, restore the pre-upgrade backup instead (the policy is "restore from backup, not migrate down"). Then run `search:reindex` if the index changed in between.
 
 ## Running one-off Artisan commands
 
@@ -138,11 +167,17 @@ docker compose exec php-fpm php artisan <command>
 For commands that must run against a container that hasn't yet executed the entrypoint's `config:cache` (e.g. generating the first `APP_KEY`, or any command whose environment-dependent behavior would otherwise read cached config), use a fresh container with an overridden entrypoint instead of `exec`-ing into the running one — Confirmed necessity from LCxHolz's deployment documentation, which hit and documented exactly this failure mode:
 
 ```bash
-docker compose run --rm --entrypoint php php-fpm artisan key:generate --show
+docker compose run --rm --no-deps --entrypoint php php-fpm artisan key:generate --show
 ```
 
 ## Troubleshooting
 
-- **`php-fpm`/`queue-worker`/`scheduler` crash-looping on a genuinely empty database**: if migrations are ever run with an isolation lock backed by the database cache driver, the very first migration run can fail because the lock table itself doesn't exist yet. LCxHolz hit this exact failure and documented the fix (bootstrap once without the isolation flag, then let normal boots use it). Whether Nusszopf's migration strategy has the same isolation requirement is Unknown until the entrypoint script is actually implemented — flagged here so the same class of bug is checked for, not blindly assumed absent.
-- **Assets 404 or a stale UI after a deploy**: see `docs/deployment/README.md`'s "why a dedicated nginx image, not a shared assets volume" — if this is ever seen, it means the build pipeline regressed to the shared-volume pattern this architecture was explicitly designed to avoid.
-- **Backup restore doesn't match production dump-tool version**: LCxHolz documented three real MySQL-vs-MariaDB client incompatibilities from exactly this mismatch. PostgreSQL's `pg_dump`/`pg_restore` are more version-tolerant, but always restore using a client version compatible with the target server's major version.
+- **`docker compose up` says a variable is missing** (`Set NUSSZOPF_VERSION…`, `Set DB_PASSWORD…`): Compose is reading your `.env`; fill in the named line.
+- **`php-fpm` exits at once with "APP_KEY is not set"**: generate one (Running one-off Artisan commands) and put it into `.env`.
+- **`php-fpm` stays "starting" for minutes after an upgrade**: a migration is running (`docker compose logs -f php-fpm`); it has up to three minutes before it counts as unhealthy. If a migration failed the container keeps restarting and the log names it — restore the pre-upgrade backup and report it.
+- **`queue-worker`/`scheduler` "unhealthy" right after start**: they need their first heartbeat (up to a minute after `php-fpm` is up). Persistently unhealthy: `docker compose logs scheduler queue-worker`; `nusszopf:health` names the failing check and how old the last heartbeat is.
+- **Search shows nothing / is stale**: `nusszopf:health` (is `search` ok?), `queue:failed`, then `search:reindex`.
+- **Links or redirects use `http://` behind a proxy, or the login loops**: `TRUSTED_PROXIES`, `APP_URL=https://…` and `SESSION_SECURE_COOKIE` in `.env`, then `docker compose up -d` again (`config:cache` is rebuilt on start).
+- **A changed `.env` has no effect**: the configuration is cached at start — `docker compose up -d` recreates the containers with the new environment; `restart` alone does too.
+- **Assets 404 or a stale UI after a deploy**: the images of one release always carry matching assets; check that `web` and `php-fpm` run the same `NUSSZOPF_VERSION` (`docker compose images`) and `docker compose pull` was run.
+- **Backup restore doesn't match production dump-tool version**: PostgreSQL's `pg_dump`/`pg_restore` are version-tolerant, but always restore using a client version compatible with the target server's major version.

@@ -21,6 +21,12 @@ Nusszopf's operator-facing upgrade guide (to live in `docs/deployment/README.md`
 5. Verify health (application health check endpoint, queue/worker running, scheduler running) before considering the upgrade complete.
 6. If verification fails, roll back: point the compose file back at the previous image tag, restore from the pre-upgrade backup if a migration partially applied, and consult [`breaking-changes.md`](breaking-changes.md) for that version.
 
+## Implemented (operational track O-1, 2026-09-22)
+
+The recommended procedure exists and is verified as `docs/deployment/operations.md`, "Upgrades": change `NUSSZOPF_VERSION`, `docker compose pull`, `docker compose up -d`. The entrypoint of the `php-fpm` container
+applies pending migrations (`migrate --force --isolated`) and rebuilds the caches before it serves, so migrations are an explicit, tested behavior of Nusszopf's own entrypoint; `queue-worker` and `scheduler` wait for it.
+Verifying health afterwards is `docker compose ps` and `php artisan nusszopf:health`.
+
 ## Status
 
 Confirmed: reference upgrade mechanics (edit tag, `down`/`up`, volume persistence). Everything under "Recommendation for Nusszopf" is Inferred and depends on the entrypoint/migration design decided during infrastructure implementation — do not treat it as final until that design exists and this page is revisited.

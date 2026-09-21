@@ -21,7 +21,7 @@ Decisions about how Nusszopf 2 itself should work — as distinct from `docs/rew
 
 ### Version exposure to operators
 
-- Status: Proposed
+- Status: **Adopted and implemented** (operational track O-1, 2026-09-22): the release workflow passes the tag as build argument `NUSSZOPF_VERSION` → `ENV` in the image, the `org.opencontainers.image.version` label, `config('nusszopf.version')`; shown by `php artisan nusszopf:health`, `php artisan about`, `/health` (with the health token) and `docker image inspect`
 - Date: 2026-09-18
 - Context: unlike Waffle Dashboard (no version constant anywhere in code), Nusszopf's self-hosting operators need to know what they're running without inspecting image digests.
 - Requirement: `.claude/rules/06-self-hosting.md` — practical operation without deep source knowledge.
@@ -87,6 +87,7 @@ Decisions about how Nusszopf 2 itself should work — as distinct from `docs/rew
 - Requirement: `CLAUDE.md` / `.claude/rules/05-engineering-quality.md` — LCxHolz-level engineering discipline, which this manual process does not meet.
 - Historical evidence: none.
 - Reference-project evidence: Waffle Dashboard (what to go beyond); LCxHolz (`docs/references/lcxholz.md`) for what CI-driven automation should look like generally.
+- Implemented (O-1, 2026-09-22): `.github/workflows/release.yml` — tag → the whole CI gate (`workflow_call`) → multi-arch images to GHCR → GitHub Release from the `CHANGELOG.md` section with the operator files attached. **Not yet exercised by a real tag.**
 - Decision: automate build/push/tag/GitHub-Release-creation via GitHub Actions, triggered on pushing a version tag, running the full quality-gate suite (`docs/development/quality.md`) before any image is published.
 - Alternatives: keep it manual like Waffle Dashboard (rejected — explicitly a case where Nusszopf should exceed the reference, per `CLAUDE.md`).
 - Consequences: more CI complexity to build and maintain; removes human error from the release step and guarantees released images actually pass the quality gates.
@@ -117,6 +118,7 @@ Decisions about how Nusszopf 2 itself should work — as distinct from `docs/rew
 - Requirement: `.claude/rules/06-self-hosting.md` — "verify it's healthy."
 - Historical evidence: none.
 - Reference-project evidence: `docs/references/lcxholz.md` (confirmed `spatie/laravel-health` usage pattern).
+- Implemented (O-1, 2026-09-22) **without adding the package**: `App\Health\HealthChecker` (database, Redis, Meilisearch, scheduler and queue heartbeats), `/health`, `php artisan nusszopf:health`. Meilisearch needed a custom check either way and the rest is a handful of lines, so the equivalent view costs no dependency.
 - Decision: **`spatie/laravel-health`-equivalent** — a small dependency that directly serves the self-hosting operator-experience goal (a dependency-by-dependency status view — DB, Redis, Meilisearch, queue — is materially more useful for a self-hosting operator diagnosing "why is search broken" than a bare 200 OK). No product impact either way.
 - Alternatives: (a) bare `/up`, sufficient for container orchestration health checks; (b) `spatie/laravel-health`, giving operators a real dependency-by-dependency status view (DB, Redis, Meilisearch, queue) — more useful for a self-hosting operator diagnosing "why is search broken" than a bare 200 OK.
 - Consequences: (b) is a small dependency addition but directly serves the self-hosting operator-experience goal better than (a).
@@ -132,6 +134,7 @@ Decisions about how Nusszopf 2 itself should work — as distinct from `docs/rew
 - Requirement: Nusszopf is explicitly FOSS and third-party self-hosted, closer to Waffle Dashboard's situation than LCxHolz's.
 - Historical evidence: none.
 - Reference-project evidence: `docs/references/waffle-dashboard.md`, `docs/references/laravel-docker-examples.md`.
+- Implemented (O-1, 2026-09-22): `docker-compose.yaml` is the single definition of the stack; `compose.prod.yaml` is now only a `build:` override on top of it (no duplicated service list to keep in sync), and the release is pinned by `NUSSZOPF_VERSION` in `.env` rather than by editing the file.
 - Decision: follow Waffle Dashboard's naming — a root-level `docker-compose.yaml` that is `image:`-only (no build context, pinned to a released version tag) for operators to download standalone, distinct from `compose.dev.yaml`/`compose.prod.yaml` used inside the repository for development and for building the images that get published.
 - Alternatives: LCxHolz's single `compose.prod.yaml` with no separate operator artifact (rejected — doesn't fit Nusszopf's third-party-operator audience).
 - Consequences: one more file to keep in sync with each release (the operator-facing compose file's image tags must be bumped per release, ideally automated as part of the release-automation decision above).

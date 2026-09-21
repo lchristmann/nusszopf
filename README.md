@@ -27,7 +27,15 @@ The Nusszopf 2 rewrite aims to preserve the historical Nusszopf product — its 
 
 See `README-DEV.md` for development setup.
 
-See `docs/deployment/README.md` for self-hosting.
+Self-hosting (Docker and a domain name; nothing else to install):
+
+```sh
+mkdir /opt/nusszopf && cd /opt/nusszopf
+curl -fsSLO https://github.com/lchristmann/nusszopf/releases/latest/download/install.sh
+sh install.sh https://nusszopf.example.org && docker compose up -d
+```
+
+See `docs/deployment/README.md` for the details (reverse proxy, configuration) and `docs/deployment/operations.md` for running it (health, upgrades, recovery).
 
 ## Development
 

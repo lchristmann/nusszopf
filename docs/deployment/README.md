@@ -1,11 +1,14 @@
 # Deployment and Self-Hosting
 
-> **Status: Proposal.** Nothing in this document has been implemented yet. It is the target architecture derived from `../infrastructure-reference/laravel-docker-examples`, `../development-reference/lcxholz`, and `../foss-reference/waffle-dashboard` (see `docs/references/laravel-docker-examples.md` for the underlying evidence and comparison). Decisions marked **(needs approval)** must not be treated as settled.
+> **Status: implemented and verified (operational track O-1/O-2, 2026-09-22).** The install path, the images, the
+> release workflow and the health checks below exist and are exercised by `scripts/smoke-test.sh` (run by CI on every
+> change). Not yet done, by roadmap: a real tag has never been published (the release workflow is untested until the
+> first one), the backup scripts and restore drill (P-10), and the Playwright suite against these images (P-7).
 
 ## Table of contents
 
 - [Design goal](#design-goal)
-- [Two audiences, two sets of Compose files](#two-audiences-two-sets-of-compose-files)
+- [The files](#the-files)
 - [Services](#services)
 - [Why a dedicated nginx image, not a shared assets volume](#why-a-dedicated-nginx-image-not-a-shared-assets-volume)
 - [Required configuration](#required-configuration)
@@ -22,78 +25,48 @@ Per `CLAUDE.md` and `.claude/rules/06-self-hosting.md`: a person who has never s
 
 Docker Compose is the reference deployment. No Kubernetes, no orchestration platform, no SaaS control plane.
 
-## Two audiences, two sets of Compose files
+## The files
 
-Evidence (`docs/references/laravel-docker-examples.md` §5) shows two distinct patterns across the reference projects:
-
-- **LCxHolz**: one `compose.prod.yaml`, used by the project's own maintainer on a server they control, that keeps both `image:` (what actually runs, pulled from a registry) and `build:` (so a developer can rebuild the exact same image locally) on every service.
-- **Waffle Dashboard**: a separate, `image:`-only `docker-compose.yaml` at the repository root, designed to be `curl`'d directly by an operator who has never cloned the repository and never builds anything themselves.
-
-Nusszopf needs both, because it has both audiences — contributors who build and test the images, and self-hosting operators who only ever run them:
-
-| File | Audience | Contains |
+| File | Audience | What it is |
 |---|---|---|
-| `compose.dev.yaml` | Contributors | Bind-mounted source, Xdebug, a `workspace` sidecar for Composer/Node/Artisan, live-reloading Vite |
-| `compose.prod.yaml` | Contributors / CI | `build:` + `image:` on every service, for building and locally verifying the exact production image before it's published |
-| `docker-compose.yaml` (repo root) | Operators | `image:`-only, pinned to a released version tag, no build context needed at all |
+| `docker-compose.yaml` (repository root, attached to every release) | Operators | The whole stack, `image:`-only: no build context, nothing to compile. Which release runs is `NUSSZOPF_VERSION` in `.env` |
+| `.env.production.example` (attached to every release with its version filled in) | Operators | Every setting of a production installation, the ones that must be set marked `REQUIRED` |
+| `scripts/install.sh` (attached to every release) | Operators | Downloads the two files above, generates `APP_KEY` and the database, search and health secrets, writes `.env` |
+| `compose.prod.yaml` | Contributors / CI | An *override* that only adds `build:` to `web` and `php-fpm`: `docker compose -f docker-compose.yaml -f compose.prod.yaml up -d --build` runs the working copy's own images in the operator's stack |
+| `compose.dev.yaml` | Contributors | Bind-mounted source, Xdebug, a `workspace` sidecar for Composer/Node/Artisan, the Vite dev server, Playwright |
+| `scripts/smoke-test.sh` | Contributors / CI | Builds both images, installs into a clean directory with `install.sh`, starts the stack and checks it end to end |
 
-**(needs approval)**: exact filenames above follow Waffle Dashboard's naming; LCxHolz calls its operator-analog file `compose.prod.yaml` (it has no separate curl'd file because it isn't distributed to third-party operators). Nusszopf, being FOSS and self-hosted by third parties, is closer to Waffle Dashboard's situation.
+Following Waffle Dashboard, the operator file is a separate, curl-able, image-only artifact; unlike Waffle, a single `.env`
+value pins the release, so an upgrade is one line (see `docs/deployment/operations.md`).
 
 ## Services
 
 | Service | Image | Role |
 |---|---|---|
-| `web` | Thin nginx image built `FROM` the matching application image (see below) | HTTP, serves static assets, proxies PHP to `php-fpm` |
-| `php-fpm` | Application image (PHP 8.5-FPM, Laravel 13, Livewire 4) | Request handling |
-| `queue-worker` | Same application image, `command: php artisan queue:work` | Background jobs (mail, search indexing) |
-| `scheduler` | Same application image, `command: php artisan schedule:work` | Cron-less scheduled tasks (backups, cleanup, search reconciliation) |
-| `postgres` | `postgres:16` (matches all three references) | Primary datastore |
-| `redis` | `redis:alpine` (matches all three references) | Cache, session store (Confirmed as the reference default; Nusszopf's actual session/cache driver choice is Unknown pending domain archaeology), queue backend |
-| `meilisearch` | Official Meilisearch image | Search index — **no reference project uses Meilisearch**; this service's compose wiring, health check, and backup strategy are Nusszopf-original and unverified against any prior art |
-| `workspace` (dev only) | Node + Composer + CLI tools | Contributor shell, asset builds, Artisan, tests |
+| `web` | `ghcr.io/lchristmann/nusszopf-web` — nginx built `FROM` the application image's own assets | HTTP; serves static assets, passes PHP to `php-fpm`. The only published port (`APP_BIND`:`APP_PORT`) |
+| `php-fpm` | `ghcr.io/lchristmann/nusszopf-php-fpm` (PHP 8.5-FPM, Laravel 13, Livewire 4, non-root) | Request handling. Its entrypoint refuses to start without `APP_KEY`, runs `migrate --force --isolated`, then warms the config, route, view and event caches |
+| `queue-worker` | same application image | `queue:work --tries=5 --backoff=10,30,60,120`: background jobs (search indexing today, mail later). Healthy while it processes the scheduler's heartbeat job |
+| `scheduler` | same application image | `schedule:work`. Its only tasks are the two heartbeats (`routes/console.php`) — the historical product had no periodic work. Healthy while its heartbeat is fresh |
+| `postgres` | `postgres:16-alpine` | Primary datastore |
+| `redis` | `redis:alpine` | Sessions, cache, queue |
+| `meilisearch` | `getmeili/meilisearch:v1.11`, `MEILI_ENV=production`, master key from `MEILISEARCH_KEY` | Search index — derived data, rebuilt with `search:reindex` |
+| `workspace` (dev only) | Node + Composer + CLI tools | Contributor shell |
 
+`queue-worker` and `scheduler` wait for `php-fpm` to be healthy, i.e. for the migrations to have finished; nothing else migrates.
 There is deliberately no bundled reverse proxy or mail server — see [Reverse proxy and TLS](#reverse-proxy-and-tls) and `docs/email/README.md`.
 
 ## Why a dedicated nginx image, not a shared assets volume
 
 `laravel-docker-examples`' production Compose file shares a named volume between `web` and `php-fpm` to keep Vite's `manifest.json` and hashed filenames consistent between the two containers. This has a real, demonstrated flaw: Docker only seeds a new named volume from an image the first time it's created, so every redeploy after the first leaves stale assets in place unless something actively re-syncs the volume on every boot (full evidence in `docs/references/laravel-docker-examples.md` §4).
 
-LCxHolz papers over this with a custom nginx entrypoint that deletes and re-copies assets into the volume on every boot. Nusszopf instead follows **Waffle Dashboard's** structurally simpler approach: build Vite assets once, inside the application image's own multi-stage `Dockerfile` (no separate Node install in the nginx build), then build the nginx image `FROM <application-image>:<same-tag>` and `COPY --from=php-fpm-source /var/www/public /var/www/public`. Because both images are produced from the same source tree at the same version, the manifest can never drift, and no shared volume or runtime re-sync step is needed at all.
+LCxHolz papers over this with a custom nginx entrypoint that deletes and re-copies assets into the volume on every boot. Nusszopf instead follows **Waffle Dashboard's** structurally simpler approach: build Vite assets once, inside the application image's own multi-stage `Dockerfile` (no separate Node install in the nginx build), then build the nginx image `FROM` the application stage and `COPY --from=php-fpm /var/www/public /var/www/public`. Because both images are produced from the same source tree at the same version, the manifest can never drift, and no shared volume or runtime re-sync step is needed at all. The smoke test checks that a built stylesheet is served.
 
 ## Required configuration
 
-**Decided** (finalized during the first vertical slice's implementation, 2026-09-18 — `.env.example` is the source of truth; this is a copy for reference):
-
-```
-APP_NAME=Nusszopf
-APP_ENV=production
-APP_KEY=                 # generated once via `docker compose run --rm --entrypoint php php-fpm artisan key:generate --show`
-APP_URL=
-APP_TIMEZONE=Europe/Berlin
-APP_LOCALE=de
-
-DB_CONNECTION=pgsql
-DB_HOST=postgres
-DB_DATABASE=
-DB_USERNAME=
-DB_PASSWORD=
-
-SESSION_DRIVER=redis
-SESSION_LIFETIME=480     # 8-hour rolling session, preserved from history (docs/rewrite/open-questions.md)
-CACHE_STORE=redis
-QUEUE_CONNECTION=redis
-REDIS_HOST=redis
-
-MEILISEARCH_HOST=http://meilisearch:7700
-MEILISEARCH_KEY=
-SCOUT_DRIVER=meilisearch
-SCOUT_QUEUE=true          # closes BUG-009 — search sync is queued, not fire-and-forget
-
-LOCATIONIQ_KEY=           # project-location autocomplete (second slice) — see "Location search" below
-
-MAIL_MAILER=smtp          # any Laravel-supported driver; see docs/email/README.md
-FILESYSTEM_DISK=local     # avatars on local disk in v1, S3-compatible storage a documented upgrade
-```
+`.env.production.example` is the source of truth — every variable with its default or a `REQUIRED` marker (release, `APP_KEY`, `APP_URL`, `DB_PASSWORD`, `MEILISEARCH_KEY`).
+`install.sh` generates the secrets. Notable choices: `APP_ENV=production`, `APP_DEBUG=false`; sessions, cache and queue on Redis; `SCOUT_QUEUE=true` so search sync is a retried
+job, never fire-and-forget (BUG-009); `LOG_CHANNEL=stderr` so `docker compose logs` shows the application's log; `SESSION_LIFETIME=480`, the historical 8-hour rolling session;
+`TRUSTED_PROXIES`, `APP_BIND`, `APP_PORT` for the proxy setup below; `HEALTH_TOKEN` for `/health` details; `MAIL_*` (used from the mail slice on, `docs/email/README.md`).
 
 ### Location search (`LOCATIONIQ_KEY`)
 
@@ -106,35 +79,45 @@ location — "Ortsunabhängig" projects are unaffected. `LOCATIONIQ_URL` (defaul
 endpoint) exists only to point at a compatible service; the development/CI Compose stack points it at
 its bundled `locationiq-stub`.
 
-This is the first slice's real, verified list — it will grow (not shrink) as mail/newsletter/object-storage land in later slices.
-
-Every variable must have a documented default or an explicit "you must set this" note in `.env.example`, following Waffle Dashboard's `WAFFLE-INSTALLATION-GUIDE.md` pattern of naming exactly which lines a first-time operator has to edit (there: `APP_ENV`, `APP_DEBUG`, `APP_URL`, and optionally `APP_TIMEZONE`/`APP_LOCALE`).
+The list will grow (not shrink) as mail/newsletter/object-storage land in later slices; every variable keeps a default or an explicit `REQUIRED` note.
 
 ## Installation (operator path)
 
-**(needs approval — draft, modeled directly on `../foss-reference/waffle-dashboard/docs/WAFFLE-INSTALLATION-GUIDE.md`, which is the only reference of the three actually written for a third-party operator):**
+What you need: a Linux host with Docker (with the Compose plugin), `curl` and `openssl`; a domain name pointing at it if the site is public. Nothing else is installed on the host.
 
-1. `mkdir /opt/nusszopf && cd /opt/nusszopf`
-2. Download the release's `docker-compose.yaml` and `.env.example` (renamed to `.env`).
-3. Edit `.env`: set `APP_URL`, `APP_ENV=production`, `APP_DEBUG=false`, database/Meilisearch credentials.
-4. `docker network create nusszopf-network && docker compose up -d`
-5. Generate and set `APP_KEY`, restart.
-6. Open the app and register a normal account through the ordinary registration screen — **there is
-   no separate "first administrator" bootstrap step and no Artisan command for this.** Corrected
-   during the pre-implementation specification review (2026-09-18): this step originally mirrored
-   LCxHolz's/Waffle Dashboard's own installation guides (`php artisan make:filament-admin` and
-   equivalent), both of which have a real admin/staff role to bootstrap. Nusszopf's domain
+```sh
+mkdir /opt/nusszopf && cd /opt/nusszopf
+curl -fsSLO https://github.com/lchristmann/nusszopf/releases/latest/download/install.sh
+sh install.sh https://nusszopf.example.org          # or: sh install.sh https://nusszopf.example.org 0.1.0
+```
+
+`install.sh` downloads the release's `docker-compose.yaml` and `.env.production.example`, writes `.env` with freshly generated secrets
+(`APP_KEY`, `DB_PASSWORD`, `MEILISEARCH_KEY`, `HEALTH_TOKEN`; mode 600), and refuses to overwrite an existing `.env`. Then:
+
+1. Optionally edit `.env` — `MAIL_*`, `LOCATIONIQ_KEY`, `APP_BIND=127.0.0.1` when a reverse proxy runs on this host. Everything a first-time operator *must* set is marked `REQUIRED` in the file, and Compose refuses to start with a clear message if one is missing.
+2. `docker compose up -d` — the first start pulls the images, waits for PostgreSQL, Redis and Meilisearch, migrates the database and starts everything.
+3. `docker compose ps` — every service `healthy` (the queue worker and scheduler need up to a few minutes, they prove themselves with a heartbeat per minute).
+4. `docker compose exec php-fpm php artisan nusszopf:health` — the version and every dependency `ok`.
+5. Open the app and register a normal account through the ordinary registration screen — **there is
+   no separate "first administrator" bootstrap step and no Artisan command for this.** Nusszopf's domain
    archaeology **confirms no admin/staff role exists anywhere in the historical product**
    (`docs/domain/entities.md`, "Entities confirmed absent"; `docs/rewrite/decisions-register.md`,
-   "Explicitly not open") — every account is an ordinary equal-privilege user. Copying the
-   reference projects' bootstrap-an-admin step here would have been exactly the kind of
-   reference-project business-logic leakage `.claude/rules/03-reference-projects.md` forbids. This
-   is a genuine self-hosting simplification versus both references: one fewer required command.
-7. Verify health (see `docs/deployment/operations.md`).
+   "Explicitly not open") — every account is an ordinary equal-privilege user.
+
+Doing it by hand instead of `install.sh`: download `docker-compose.yaml` and `.env.production.example` (renamed `.env`) from the
+release, set the `REQUIRED` lines, and generate the key with
+`docker compose run --rm --no-deps --entrypoint php php-fpm artisan key:generate --show` (`.env` must contain `NUSSZOPF_VERSION`
+and the database/search passwords first, Compose reads them).
 
 ## Reverse proxy and TLS
 
-**Unknown / needs approval.** Two of three references (LCxHolz, Waffle Dashboard) document Nginx Proxy Manager as the TLS-terminating layer in front of the stack, reached over a shared external Docker network, with the application's own `web` service never publishing a host port once a domain is configured. Neither bundles it as a Compose service — it's presented as a separate, pre-existing or operator-installed stack. Nusszopf should likely follow the same pattern (document the shared external network + NPM as one option, Caddy/Traefik as alternatives) rather than bundling a reverse proxy, but this has not been decided.
+**Decided** (`docs/rewrite/architecture-decisions.md`): no reverse proxy is bundled. The stack publishes one port (`web`, default `8080`);
+put whatever terminates TLS for your other services in front of it — Nginx Proxy Manager, Caddy or Traefik — and proxy your domain to
+`http://<host>:8080`. For a proxy on the same host set `APP_BIND=127.0.0.1` so only it can reach the port.
+
+The application must be told to believe the proxy about the original scheme and address: `TRUSTED_PROXIES=*` (or a comma-separated list of proxy
+addresses) in `.env`, `APP_URL` with `https://`, and `SESSION_SECURE_COOKIE=true` — all preset in `.env.production.example`. Without
+`TRUSTED_PROXIES` links and redirects would use `http://`. Caddy needs only `nusszopf.example.org { reverse_proxy 127.0.0.1:8080 }`.
 
 ## Persistent storage
 
@@ -148,14 +131,17 @@ No shared assets volume — see [above](#why-a-dedicated-nginx-image-not-a-share
 
 ## Health checks
 
-Confirmed mechanisms from the references, all recommended for Nusszopf:
+Three layers, all verified by the smoke test:
 
-- `php-fpm-healthcheck` script (all three references) for `php-fpm`, `queue-worker`, `scheduler` images.
-- `pg_isready` for `postgres` (all three references).
-- `redis-cli ping` for `redis` (`laravel-docker-examples`, LCxHolz, Waffle's dev/prod compose — absent from Waffle's operator-facing file since it has no Redis health check wired, worth noting as a gap rather than copying it).
-- Meilisearch's own `/health` HTTP endpoint — **no reference covers this**; this is a Nusszopf-original addition.
+- **Container health** (`docker compose ps`): `php-fpm` answers PHP-FPM's ping; `web` fetches `/up`; `postgres` `pg_isready`; `redis` `redis-cli ping`; `meilisearch` `/health`;
+  `queue-worker` and `scheduler` run `php artisan nusszopf:health --only=queue|scheduler`, which passes while the heartbeat (written by a scheduled task every minute; for the queue by a job
+  the worker must process) is at most three minutes old. `depends_on: condition: service_healthy` orders the start (databases → `php-fpm` → `web`, `queue-worker`, `scheduler`).
+- **`/up`**: Laravel's liveness probe — 200 while the application boots. Touches no dependency.
+- **`/health`**: 200 `{"status":"ok"}` or 503 `{"status":"degraded"}`; it starts no session, so it still answers while Redis is down. With `HEALTH_TOKEN` set, a request with
+  `Authorization: Bearer <token>` also gets the version and each check (`database`, `redis`, `search`, `scheduler`, `queue`) with its reason. Point an uptime monitor at it.
+- **`php artisan nusszopf:health`** — the same from the shell, with the running version; exit code 1 when a check fails. `php artisan about` shows the version too, and `docker image inspect` the `org.opencontainers.image.version` label.
 
-`depends_on: condition: service_healthy` should gate startup order end-to-end (`web` → `php-fpm` → `postgres`/`redis`/`meilisearch`), as in all three references.
+The version is the Git tag: the release workflow passes it as the `NUSSZOPF_VERSION` build argument (there is no hand-maintained version file); an image built from a working copy reports `dev`.
 
 ## Backups, upgrades, recovery
 
@@ -167,10 +153,7 @@ See `docs/deployment/operations.md` for the full procedures. Summary of what eac
 
 ## Open questions
 
-Recorded for `docs/rewrite/architecture-decisions.md`:
+Resolved by the operational track (`docs/rewrite/architecture-decisions.md`): container registry (GHCR, `ghcr.io/lchristmann/nusszopf-*`), reverse proxy (operator-owned), health depth
+(own checks, no extra dependency), environment variables (`.env.production.example`), first administrator (none exists).
 
-1. Container registry: GHCR (LCxHolz's private-package pattern) vs. Docker Hub (Waffle Dashboard's public pattern) — Nusszopf, being FOSS, likely wants a public registry, but this hasn't been decided.
-2. Whether to bundle a reverse proxy/TLS solution or document it as operator-owned (all evidence points to "operator-owned," but no reference makes this an explicit product decision — it's just what each project happened to do).
-3. Whether Meilisearch's index is backed up or always rebuilt from PostgreSQL on restore.
-4. ~~Exact `.env` variable list and defaults~~ — **Resolved**, see "Required configuration" above.
-5. ~~First-admin-account bootstrap command~~ — **Resolved (pre-implementation review pass, 2026-09-18): moot.** Nusszopf has no admin/staff role (confirmed absent from the entire historical product); operators create their own account through the ordinary registration screen like any user. See the corrected "Installation (operator path)" step 6 above.
+Still open: whether Meilisearch's index is ever backed up rather than rebuilt (the documented answer is *rebuilt*, `search:reindex`), and the backup scripts themselves (phase P-10).

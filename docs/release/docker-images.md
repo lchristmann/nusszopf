@@ -17,6 +17,12 @@
 - **Multi-arch**: Waffle Dashboard's guide gives no evidence of multi-platform builds (`linux/amd64` vs `linux/arm64`). Given self-hosters increasingly run on ARM (e.g. Hetzner ARM instances, Raspberry Pi home servers), building multi-arch images in CI (`docker buildx`) is a recommended improvement, not a copy of reference behavior.
 - **Provenance/security metadata**: no evidence of SBOM/provenance attestation in the reference. Recommended as a "nice to have" if CI tooling makes it low-friction (e.g. `docker/build-push-action` with `provenance: true`), not a hard requirement.
 
+## Implemented (operational track O-1, 2026-09-22)
+
+Two images, built in CI on a release tag for `linux/amd64` and `linux/arm64`: `ghcr.io/lchristmann/nusszopf-php-fpm` (also the queue worker and scheduler) and `ghcr.io/lchristmann/nusszopf-web` (nginx with the same
+build's assets). Tags: the immutable version and `latest` (not for pre-releases). Labels: the version, source repository, `GPL-3.0-or-later`. The version is also baked in as `NUSSZOPF_VERSION`.
+No floating major tag yet (nothing is `1.x`), no SBOM/provenance attestation (nice to have, not required). See `release-process.md` for the workflow.
+
 ## Status
 
 Confirmed: two-image split, registry+tag pattern, and manual process as practiced by Waffle Dashboard. All CI/registry/multi-arch recommendations are Inferred and require approval before being treated as Nusszopf's actual architecture.

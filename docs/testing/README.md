@@ -42,6 +42,13 @@ A small number of important user journeys through the real UI, per role/actor, t
 - `tests/Feature/Search/ProjectSearchSyncTest.php` mixes fast document-shape tests with a few
   `@group meilisearch` tests against the real engine (edit re-indexing, publish/hide, delete).
 
+## Production stack
+
+`scripts/smoke-test.sh` (run from the host, needs Docker, curl and openssl; CI job "Production stack") builds the two production images from the working copy, installs into a fresh temporary directory exactly
+as an operator would (`install.sh` against the repository's own `docker-compose.yaml` and `.env.production.example`), starts the stack, waits for every healthcheck, and checks: the release is baked into the images,
+`/up`, `/search`, `/login` and a built stylesheet are served, migrations ran and the caches are warm, an unknown page is a plain 404, `/health` turns 200 and only the token reveals details, and `search:reindex` runs.
+`SMOKE_KEEP=1` leaves the stack running for manual drills (`docs/deployment/operations.md`). The Playwright suite has not yet been run against these images (phase P-7).
+
 ## Visual parity
 
 Because visual fidelity is a hard requirement (`CLAUDE.md`, `.claude/rules/02-visual-fidelity.md`), Nusszopf needs a way to verify screens actually match the historical design, not just that they render without error. Where practical, use Playwright screenshot comparison against reference captures of the historical `web-nusszopf` UI for key screens/states. This is an open tooling decision (exact screenshot-diff mechanism, baseline management, acceptable pixel/threshold tolerance) to record in `docs/rewrite/architecture-decisions.md` once made — do not invent a mechanism silently.
