@@ -52,22 +52,35 @@
                             <x-project-form.motto class="mt-5 lg:mt-0" :error="$errors->first('motto')" />
                         </x-framed-grid-card.body-col>
                     @elseif ($this->currentStep() === 2)
-                        {{--
-                            RequestsStep.js. Intentional scaffolding (docs/rewrite/second-slice.md,
-                            "Gesuche"): ProjectRequests are a later slice, so the "Gesuch erstellen"
-                            dialog does not exist yet and the button is inert. Zero requests is the
-                            historical default state and passes through unvalidated.
-                        --}}
+                        {{-- RequestsStep.js: the intro and "Gesuch erstellen" on the left, the created requests (or the info card) on the right. --}}
                         <x-framed-grid-card.body-col variant="twoCols" class="text-center lg:text-left lg:pr-4 lg:col-start-2">
                             <x-text class="mb-2 text-left">Projektgesuche</x-text>
                             <x-text variant="textSm" class="text-left">Gesuche in dem Projekt zeigen anderen Nusszopfer:innen, was für die Projektumsetzung noch alles benötigt wird.</x-text>
-                            <x-button data-test="btn_create_requests-step" color="stone" size="large" class="mt-8 bg-stone-300" disabled title="Gesuche können in Kürze erstellt werden">
+                            <x-button data-test="btn_create_requests-step" color="stone" size="large" class="mt-8 bg-stone-300" wire:click="openRequestDialog">
                                 <x-slot:iconLeft><x-icon name="plus-circle" class="mr-2 -ml-2" /></x-slot:iconLeft>
                                 Gesuch erstellen
                             </x-button>
                         </x-framed-grid-card.body-col>
                         <x-framed-grid-card.body-col variant="twoCols" class="lg:pl-4">
-                            <x-info-card class="mt-8 bg-livid-200 text-livid-700 lg:mt-0">Gesuche für das Projekt kannst Du entweder jetzt oder später erstellen.</x-info-card>
+                            @if (count($requests) > 0)
+                                <div class="mt-8 lg:mt-0" data-test="list_requests-step">
+                                    <x-text class="mb-4">Erstellte Gesuche</x-text>
+                                    @foreach ($requests as $index => $request)
+                                        <x-request-card
+                                            variant="edit"
+                                            wire:key="request-{{ $index }}-{{ $request['created_at'] }}"
+                                            :title="$request['title']"
+                                            :category="$request['category']"
+                                            :created-at="\Illuminate\Support\Carbon::parse($request['created_at'])->timezone(config('app.timezone'))->format('j.n.Y')"
+                                            :edit="'$wire.editRequest(\''.$index.'\')'"
+                                            :delete="'$wire.deleteRequest(\''.$index.'\')'"
+                                            :class="$index < count($requests) - 1 ? 'mb-3' : ''"
+                                        />
+                                    @endforeach
+                                </div>
+                            @else
+                                <x-info-card class="mt-8 bg-livid-200 text-livid-700 lg:mt-0">Gesuche für das Projekt kannst Du entweder jetzt oder später erstellen.</x-info-card>
+                            @endif
                         </x-framed-grid-card.body-col>
                     @else
                         <x-framed-grid-card.body-col variant="twoCols" class="lg:pr-4 lg:col-start-2">
@@ -99,4 +112,9 @@
             </x-frame>
         </form>
     </x-framed-grid-card>
+
+    {{-- A form of its own, so outside the wizard's. --}}
+    @if ($requestDialogOpen)
+        <x-request-edit-dialog :editing="$requestKey !== null" />
+    @endif
 </div>

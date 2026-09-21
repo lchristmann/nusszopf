@@ -106,8 +106,28 @@
 
                 <x-framed-grid-card.body-col variant="twoCols" class="row-start-1 lg:row-start-auto lg:pl-4 text-stone-800">
                     <x-text class="mb-4" variant="textLg">Projektgesuche</x-text>
-                    {{-- ProjectRequests arrive in a later slice; until then every project has none. --}}
-                    <x-info-card class="mt-2">Alles zopfig! Derzeit gibt es keine Gesuche.</x-info-card>
+                    {{-- Each request is a card opening its dialog; `openRequest` is the id of the one shown. --}}
+                    <div x-data="{ openRequest: null }" x-on:keydown.escape.window="openRequest = null">
+                        @forelse ($requests as $request)
+                            <x-request-card
+                                variant="view"
+                                :title="$request->title"
+                                :category="$request->category"
+                                :created-at="$request->created_at->format('j.n.Y')"
+                                x-on:click="openRequest = '{{ $request->id }}'"
+                                :class="$loop->index > 0 ? 'mt-4 lg:mt-3' : ''"
+                            />
+                            <x-request-view-dialog
+                                :request="$request"
+                                :created-at="$request->created_at->format('j.n.Y')"
+                                :contact-href="$mailto"
+                                :open="'openRequest === \''.$request->id.'\''"
+                                close="openRequest = null"
+                            />
+                        @empty
+                            <x-info-card class="mt-2">Alles zopfig! Derzeit gibt es keine Gesuche.</x-info-card>
+                        @endforelse
+                    </div>
 
                     {{-- Avatar, `project` variant. The initial-on-grey circle replaces the historical ui-avatars.com image (an external service), same colors. --}}
                     <div class="flex items-center mt-16 lg:mt-14">

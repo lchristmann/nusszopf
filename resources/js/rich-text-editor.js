@@ -36,7 +36,7 @@ function isUrl(string) {
 }
 
 document.addEventListener('alpine:init', () => {
-    window.Alpine.data('nzRichText', ({ property, placeholder, label }) => {
+    window.Alpine.data('nzRichText', ({ property, placeholder, label, blurAction = 'blurred' }) => {
         // Kept out of Alpine's reactive proxy: ProseMirror must see the raw object.
         let editor = null;
 
@@ -98,7 +98,7 @@ document.addEventListener('alpine:init', () => {
                         this.tick++;
                     },
                     onBlur: () => {
-                        wire.$call('blurred', property);
+                        wire.$call(blurAction, property);
                     },
                 });
             },

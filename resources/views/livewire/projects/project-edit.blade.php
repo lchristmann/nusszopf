@@ -84,19 +84,32 @@
                     </x-framed-grid-card.body>
                 </form>
             @elseif ($view === 'Gesuche')
-                {{-- RequestsView.js — intentional scaffolding until ProjectRequests exist (docs/rewrite/second-slice.md). --}}
+                {{-- RequestsView.js --}}
                 <x-framed-grid-card.body gap="medium" class="grid-flow-row bg-white" wire:key="view-requests">
                     <x-framed-grid-card.body-col variant="twoCols" class="text-center lg:text-left lg:pr-4 lg:col-start-2">
                         <x-text class="mb-2 text-left">Projektgesuche</x-text>
                         <x-text variant="textSm" class="text-left">Gesuche in dem Projekt zeigen anderen Nusszopfer:innen, was für die Projektumsetzung noch alles benötigt wird.</x-text>
-                        <x-button data-test="btn_create_requests-view" color="stone" size="large" class="mt-8 bg-stone-300" disabled title="Gesuche können in Kürze erstellt werden">
+                        <x-button data-test="btn_create_requests-view" color="stone" size="large" class="mt-8 bg-stone-300" wire:click="openRequestDialog">
                             <x-slot:iconLeft><x-icon name="plus-circle" class="mr-2 -ml-2" /></x-slot:iconLeft>
                             Gesuch erstellen
                         </x-button>
                     </x-framed-grid-card.body-col>
                     <x-framed-grid-card.body-col variant="twoCols" class="lg:pl-4">
                         <x-text class="mt-8 mb-4 lg:mt-0">Aktuelle Gesuche</x-text>
-                        <x-info-card class="bg-livid-200 text-livid-700">Alles zopfig! Derzeit gibt es keine Gesuche.</x-info-card>
+                        @forelse ($requests as $request)
+                            <x-request-card
+                                variant="edit"
+                                wire:key="request-{{ $request->id }}-{{ $request->updated_at->timestamp }}"
+                                :title="$request->title"
+                                :category="$request->category"
+                                :created-at="$request->created_at->format('j.n.Y')"
+                                :edit="'$wire.editRequest(\''.$request->id.'\')'"
+                                :delete="'if (confirm(\'Möchtest Du das Gesuch wirklich löschen?\')) { nzToast(\'loading\', \'Wird gelöscht...\'); $wire.deleteRequest(\''.$request->id.'\'); }'"
+                                :class="! $loop->last ? 'mb-3' : ''"
+                            />
+                        @empty
+                            <x-info-card class="bg-livid-200 text-livid-700">Alles zopfig! Derzeit gibt es keine Gesuche.</x-info-card>
+                        @endforelse
                     </x-framed-grid-card.body-col>
                 </x-framed-grid-card.body>
             @else
@@ -139,4 +152,9 @@
             @endif
         </x-frame>
     </x-framed-grid-card>
+
+    @if ($requestDialogOpen)
+        {{-- Historically the toast comes from the service after the form is valid: "Gesuch erstellen..." / "Änderungen speichern...". --}}
+        <x-request-edit-dialog :editing="$requestKey !== null" :loading-toast="$requestKey !== null ? 'Änderungen speichern...' : 'Gesuch erstellen...'" />
+    @endif
 </div>

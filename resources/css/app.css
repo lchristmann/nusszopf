@@ -182,6 +182,26 @@
         @apply bg-lilac-200 text-lilac-800 border-lilac-800;
     }
 
+    /* Link.theme.js `stone-*`: the links inside a request's rich text, per category. */
+    .nz-link-stone {
+        @apply border-stone-800 text-stone-800 bg-stone-400;
+    }
+    .nz-link-stone-red {
+        @apply bg-red-300 border-stone-800 text-stone-800;
+    }
+    .nz-link-stone-yellow {
+        @apply bg-yellow-300 border-stone-800 text-stone-800;
+    }
+    .nz-link-stone-turquoise {
+        @apply bg-turquoise-300 border-stone-800 text-stone-800;
+    }
+    .nz-link-stone-blue {
+        @apply bg-blue-300 border-stone-800 text-stone-800;
+    }
+    .nz-link-stone-pink {
+        @apply bg-pink-300 border-stone-800 text-stone-800;
+    }
+
     /* Button color/border ring treatment — see Button.css in docs/design/visual-language.md. */
     .nz-btn-stone {
         @apply transition-shadow duration-200 ease-out border-2 rounded-full ring-2 ring-transparent text-stone-800 border-stone-800;
@@ -251,8 +271,18 @@
     @apply float-left h-0 pointer-events-none opacity-30;
 }
 
-/* Select.css (`nz-select-lilac`). */
+/* The `stone` RichTextEditor (the request dialog's): the editor's links are `nz-link-stone`. */
+.nz-rte-stone .nz-rte-content a {
+    @apply bg-stone-400 text-stone-800 border-stone-800;
+}
+
+/* Select.css (`nz-select-lilac`, `nz-select-stone`). */
 @layer components {
+    .nz-select-stone {
+        @apply bg-transparent border-2 ring-2 ring-transparent border-stone-800 text-stone-800;
+        @apply hover:ring-stone-800/50 focus-within:ring-stone-800/50;
+    }
+
     .nz-select-lilac {
         @apply bg-transparent border-2 ring-2 ring-transparent border-lilac-800 text-lilac-800;
         @apply hover:ring-lilac-800/25 focus-within:ring-lilac-800/25;

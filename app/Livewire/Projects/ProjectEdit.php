@@ -3,10 +3,14 @@
 namespace App\Livewire\Projects;
 
 use App\Livewire\Concerns\ManagesProjectFields;
+use App\Livewire\Concerns\ManagesRequestDialog;
 use App\Models\Project;
+use App\Models\ProjectRequest;
+use App\Support\RichText;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Throwable;
@@ -19,7 +23,8 @@ use Throwable;
  * "Einstellungen" saves visibility and contact and holds project deletion.
  * Switching views discards unsaved changes (after the historical native
  * `confirm()`, driven from the view) and reloads the stored values.
- * "Gesuche" is intentional scaffolding until ProjectRequests exist.
+ * "Gesuche" lists the project's requests, newest first, and creates, edits and
+ * deletes them one write at a time (`RequestsView.js`), each with its own toasts.
  *
  * Only the owner reaches this screen: anyone else — including anonymous
  * visitors, who are sent to log in first — gets a 404, never a 403 (BUG-021).
@@ -31,7 +36,7 @@ use Throwable;
 ])]
 class ProjectEdit extends Component
 {
-    use ManagesProjectFields;
+    use ManagesProjectFields, ManagesRequestDialog;
 
     /** `projectEditData.nav` */
     public const VIEWS = ['Beschreibung', 'Gesuche', 'Einstellungen'];
@@ -71,7 +76,91 @@ class ProjectEdit extends Component
         }
 
         $this->fillFromProject($this->project->refresh(), Auth::user());
+        $this->closeRequestDialog();
         $this->view = $view;
+    }
+
+    /**
+     * A request of *this* project by id — an id from anywhere else (another
+     * project's request, a made-up one, a malformed one) is simply not found.
+     */
+    private function ownRequest(string $key): ?ProjectRequest
+    {
+        return Str::isUuid($key) ? $this->project->requests()->find($key) : null;
+    }
+
+    protected function requestFormValues(string $key): ?array
+    {
+        $request = $this->ownRequest($key);
+
+        if ($request === null) {
+            return null;
+        }
+
+        Gate::authorize('update', $request);
+
+        return ['title' => $request->title, 'category' => $request->category, 'description' => RichText::normalize($request->description_template)];
+    }
+
+    /**
+     * `addRequest` / `updateRequest` in `projects.service.js`. Historically the
+     * dialog closed whether or not the write worked, after an error toast.
+     */
+    protected function storeRequest(?string $key, array $values): bool
+    {
+        $request = $key === null ? null : $this->ownRequest($key);
+
+        abort_if($key !== null && $request === null, 404);
+
+        $attributes = [
+            'title' => $values['title'],
+            'category' => $values['category'],
+            'description' => RichText::toPlainText($values['description']),
+            'description_template' => $values['description'],
+        ];
+
+        try {
+            if ($request === null) {
+                Gate::authorize('create', [ProjectRequest::class, $this->project]);
+                $this->project->requests()->create($attributes);
+            } else {
+                Gate::authorize('update', $request);
+                $request->update($attributes);
+            }
+        } catch (Throwable $e) {
+            report($e);
+            $this->dispatch('toast', type: 'error', message: $request === null ? 'Sorry, das Gesuch konnte nicht erstellt werden.' : 'Sorry, das Gesuch konnte nicht aktualisiert werden.');
+
+            return true;
+        }
+
+        $this->dispatch('toast', type: 'success', message: $request === null ? 'Gesuch wurde erstellt.' : 'Gesuch wurde aktualisiert.');
+
+        return true;
+    }
+
+    /**
+     * Invoked after the browser's own `confirm()` (Möchtest Du das Gesuch
+     * wirklich löschen?), as historically (BUG-013, preserved).
+     */
+    public function deleteRequest(string $key): void
+    {
+        $request = $this->ownRequest($key);
+
+        abort_if($request === null, 404);
+        Gate::authorize('delete', $request);
+
+        try {
+            $request->delete();
+        } catch (Throwable $e) {
+            report($e);
+            $this->dispatch('toast', type: 'error', message: 'Sorry, das Gesuch konnte nicht gelöscht werden.');
+
+            return;
+        }
+
+        $this->closeRequestDialog();
+        $this->dispatch('toast', type: 'success', message: 'Gesuch wurde gelöscht.');
     }
 
     public function saveProject(): void
@@ -180,6 +269,12 @@ class ProjectEdit extends Component
 
     public function render(): View
     {
-        return view('livewire.projects.project-edit', ['email' => Auth::user()->email]);
+        return view('livewire.projects.project-edit', [
+            'email' => Auth::user()->email,
+            // `requests(order_by: { created_at: desc })`, through the BUG-002 scope like every read.
+            'requests' => $this->view === self::VIEWS[1]
+                ? $this->project->requests()->visible()->orderByDesc('created_at')->orderByDesc('id')->get()
+                : collect(),
+        ]);
     }
 }

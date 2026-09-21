@@ -78,6 +78,8 @@ class ProjectDetail extends Component
             'period' => $this->periodLabel(),
             'shareTitle' => Str::limit($project->title, 60, '...'),
             'mailto' => 'mailto:'.$project->contact.'?subject='.rawurlencode('Nusszopf – Nussige Nachricht'),
+            // `requests(order_by: { created_at: desc })`, through the BUG-002 scope like every read.
+            'requests' => $project->requests()->visible()->orderByDesc('created_at')->orderByDesc('id')->get(),
         ]);
     }
 }
