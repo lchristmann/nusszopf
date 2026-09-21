@@ -13,7 +13,6 @@
                 applied by that same submit — until then the icon shows "refresh".
             --}}
             <form
-                wire:submit="search"
                 x-data="{
                     pending: @js($filter),
                     open: false,
