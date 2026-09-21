@@ -11,7 +11,7 @@ editor, location, period, team/motto/contact/visibility, owner/non-owner behavio
 detail content those fields drive, search synchronization, the icon/asset pipeline the screens need,
 tests, browser coverage, the golden-master review.
 
-**Out of scope (unchanged)**: `ProjectRequest`, newsletter (BUG-011 stays deferred), password reset,
+**Out of scope (unchanged)**: `ProjectRequest` (built in the third slice, `third-slice.md`), newsletter (BUG-011 stays deferred), password reset,
 Google login, avatar upload, account deletion, `ProjectAnalytics`/visitor counter, the project-report
 link, the contact form dialog.
 
@@ -66,7 +66,7 @@ Progress is `(step + 1) / 4` of the bar (25/50/75/100 %). The header shows the t
   motto; right: location, period, team), validated as a whole, saved with `Speichern`.
 - **Einstellungen** — visibility + contact, `Speichern`, and *Projekt löschen* (native `confirm`,
   "Möchtest Du das Projekt wirklich löschen?", then My Projects).
-- **Gesuche** — intentional scaffolding (below).
+- **Gesuche** — the request list and dialog, built in the third slice (`third-slice.md`).
 - Saving an unchanged form does nothing (`formik.dirty`); a view switch with unsaved edits asks
   "Möchtest Du die Seite wirklich verlassen? Deine Änderungen gehen dann verloren." and discards.
 - Only the owner reaches it; everyone else — including for a public project — gets a 404 (BUG-021).
@@ -165,8 +165,8 @@ service, never the live API.
 
 | Item | Why | Ends with |
 |---|---|---|
-| Wizard step 3 and edit view "Gesuche": the "Gesuch erstellen" button is present but disabled; the created-requests area shows the "no requests" state | The four-step structure is required, `ProjectRequest` is out of scope | The ProjectRequest slice |
-| Detail: "Kontaktieren" is a `mailto:` for every project; for "Über Nusszopf" it goes to `mail@nusszopf.org` | Historically it opens the contact form dialog (server-sent e-mail), which is the e-mail slice | The e-mail/contact slice |
+| ~~Wizard step 3 and edit view "Gesuche": inert button, empty state~~ | Removed by the third slice (`third-slice.md`) | — |
+| Detail: "Kontaktieren" (on the project and in a request's dialog) is a `mailto:` for every project; for "Über Nusszopf" it goes to `mail@nusszopf.org` | Historically it opens the contact form dialog (server-sent e-mail), which is the e-mail slice | The e-mail/contact slice |
 | Detail: no visitor counter, no "Projekt melden" link | `ProjectAnalytics` is out of scope | Later slices |
 | Author avatar is an initial-on-grey circle (same colors) instead of the ui-avatars.com image | External service dropped (self-hosting); avatar upload is out of scope | Avatar slice |
 

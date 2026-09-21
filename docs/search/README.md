@@ -71,3 +71,39 @@ private → public save indexes, a public → private save removes, and deleting
 screen's settings view removes it. The historical "only reindex when a watched column changed"
 optimisation is not reproduced (an unchanged form saves nothing, so no spurious reindex happens
 from the edit screen); regression tests are in `tests/Feature/Search/ProjectSearchSyncTest.php`.
+
+## Third slice — requests in the index
+
+`Project` and `ProjectRequest` share **one index, `items`** (`Project::SEARCH_INDEX`, prefixed by
+`SCOUT_PREFIX`), as the historical indexer did (**Confirmed**, `search.function.js`). Each document is
+keyed by its own id and carries `group_id` (the project's id) and `req_type`:
+
+- a **project with requests** has no document of its own; each **request** has one — the project's
+  fields (as above, unprefixed) plus `req_title`, `req_description`, `req_type` (its category, one of
+  `companions | rooms | materials | financials | others`) and `group_id`; its `updated_at` is the
+  project's (`_parseRequestToDocument`);
+- a **project without requests** has a project document with `req_type: "none"` and `group_id` its own id
+  (`_addProjectOrRequests` / `_updateProjectAndRequests`).
+
+Only **public** projects are indexed, requests included: a request's `shouldBeSearchable()` is "its project
+is public", the project's is "public and no requests". Synchronization is still the model-save path, extended
+by two hooks: a save of a `Project` re-syncs all its requests' documents (they follow its visibility and
+carry its fields and `updated_at`) and its deletion removes them first (the database cascade raises no
+model events); a save or delete of a request of a **public** project touches the project's `updated_at`
+(historically `_syncProject`), which re-syncs the project. Turning a project private removes it and all its
+requests; turning it public again restores them. Deleting the last request brings the project's document back.
+
+The historical open question "what happens to requests when a project turns private" is **Resolved,
+Confirmed** by `_upsertProject`'s second branch (they are removed) and reproduced.
+
+The search page now reads the index's `group_id`s and lists the *visible* projects in relevance order, once
+each — a project found only through a request's text appears, a stale document of a private or deleted
+project does not (`Project::visible()` on hydration, BUG-002 defence in depth). The grouped hit card with its
+matching requests, the category filter (`req_type` becomes filterable then) and paging are the
+search-completion slice's. A page is at most Meilisearch's default 20 *documents*, so a project with many
+requests takes several of them until that slice's paging exists.
+
+**Upgrade**: `php artisan scout:sync-index-settings`, then re-import both models —
+`php artisan scout:import "App\Models\Project"` and `php artisan scout:import "App\Models\ProjectRequest"`
+(the previous `projects` index is no longer used and can be deleted). Test data left behind in a shared
+development index is why the real-Meilisearch tests use a per-run search word.

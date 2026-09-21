@@ -52,6 +52,12 @@ without new, explicit, approved evidence — see `CLAUDE.md`'s "Never" list.
 | Move request to a different project      | Denied                                                    | Denied                             | **Denied even for the owner** | `project_id` excluded from allowed update columns                                   | Confirmed — immutable parent | No `project_id` mass-assignment path                                                                                                                                              |
 | Delete request                           | Denied                                                    | Denied                             | Allowed                       | `project.user_id = caller`                                                          | Confirmed                    | `RequestPolicy::delete()`                                                                                                                                                         |
 
+**Implemented (third slice, 2026-09-21)** as `ProjectRequestPolicy` (`view`, `create(user, project)`, `update`,
+`delete`) and `ProjectRequest::scopeVisible()`, both inheriting `Project::scopeVisible()`; the class is
+`ProjectRequestPolicy`, not `RequestPolicy`, after the model name (register B7). "Move to a different
+project" has no code path — `project_id` is not fillable and no form or action carries it. Tests:
+`tests/Feature/Projects/ProjectRequestAuthorizationTest.php` (an allow and a deny per row, guest included).
+
 ## User (account / profile)
 
 | Action                    | anonymous              | user (self)                                                                       | user (another account) | Rule                                                                    | Historical status                                                                                  | Nusszopf 2 enforcement                                                                                                                                              |

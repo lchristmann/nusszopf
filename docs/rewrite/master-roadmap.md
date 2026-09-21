@@ -164,7 +164,7 @@ coding, as slice 2 did.
 
 Slice sizes: S = a few days of focused work, M = about a week, L = more than a week.
 
-### Slice 3 — Project Requests (Gesuche) — **L**
+### Slice 3 — Project Requests (Gesuche) — **L** — ✅ implemented 2026-09-21 (`docs/rewrite/third-slice.md`)
 
 - **Purpose**: complete the project concept; two scaffolds (wizard step 3, edit "Gesuche") disappear.
 - **Covers**: inventory 8–12.

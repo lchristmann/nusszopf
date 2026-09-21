@@ -178,7 +178,7 @@ the first-slice review used.
 | Edit: owner-only, 404 | BUG-021 | `ProjectEdit::mount()` | (already a fix) | Historical bug fix | BUG-021 |
 | Detail: header, body sections, requests column, avatar, banner | `[id].js`, `Banner.js`, `Avatar` | `project-detail.blade.php` | See scaffolding table | Match / Intentional scaffolding | None |
 | Copy typos | `project-form.data.js`, `edit-projects-views.data.js` | — | "Peronen", "gepeichert" corrected | Historical bug fix | BUG-025 |
-| Requests step/view, request cards, request dialog | `RequestsStep.js`, `RequestsView.js` | inert button + empty state | Whole feature out of scope | Intentional scaffolding | ProjectRequest slice |
+| Requests step/view, request cards, request dialog | `RequestsStep.js`, `RequestsView.js` | inert button + empty state (second slice) → the full feature (third slice, `third-slice.md`) | — | Match (was intentional scaffolding) | Done |
 | ContactDialog (contact via Nusszopf) | `ContactDialog.js` | `mailto:mail@nusszopf.org` | Out of scope (server e-mail) | Intentional scaffolding | E-mail slice |
 | VisitorCounter, "Projekt melden" | `[id].js` | absent | Out of scope | Intentional scaffolding | Later slice |
 

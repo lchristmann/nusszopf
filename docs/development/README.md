@@ -57,7 +57,7 @@ The compose service names above (`web`, `php-fpm`, `workspace`, `queue-worker`, 
 | Queue worker (dev) | `php artisan queue:listen` |
 | Scheduler (dev) | `php artisan schedule:work` |
 | Sync search index settings | `php artisan scout:sync-index-settings` |
-| Full search reindex | `php artisan scout:import "App\Models\Project"` |
+| Full search reindex | `php artisan scout:import "App\Models\Project"` and `php artisan scout:import "App\Models\ProjectRequest"` (one shared `items` index) |
 | Logs | `docker compose -f compose.dev.yaml logs -f [service]` |
 
 This table must stay in sync with `composer.json`/`package.json` scripts as they are implemented — a command listed here that no longer exists, or an implemented script missing from here, is a documentation bug.

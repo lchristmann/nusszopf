@@ -26,6 +26,18 @@ unprefixed tags; it stays in `0.x` until the rewrite reaches parity with the his
 - **Migration required:** run `php artisan scout:sync-index-settings` once after upgrading — projects are
   now also searchable by location, team, motto and author.
 
+- Project requests (Gesuche), historically faithful (`docs/rewrite/third-slice.md`): the wizard's step 3
+  and the edit screen's "Gesuche" view create, edit and delete requests through the request dialog
+  (title, category, rich-text description) with the historical copy, category colors, context menu, toasts
+  and confirmations; the project detail page lists them as cards and opens each in its dialog; a request is
+  deleted with its project.
+- Requests are searchable: they are indexed into the shared `items` index (a project with requests is found
+  through them), only while their project is public.
+- **Migration required:** run `php artisan migrate` (new `project_requests` table), then
+  `php artisan scout:sync-index-settings` and re-import both searchable models —
+  `php artisan scout:import "App\Models\Project"` and `php artisan scout:import "App\Models\ProjectRequest"`.
+  The search index is now named `items` (previously `projects`, which can be deleted).
+
 ### Changed
 
 - New projects default to **public** visibility on the wizard's last step (the historical wizard default);
@@ -36,13 +48,18 @@ unprefixed tags; it stays in `0.x` until the rewrite reaches parity with the his
 
 ### Fixed
 
+- Creating a project together with its requests is atomic: if a request cannot be written, no project is
+  left behind (BUG-027).
 - Period validation no longer blocks a flexible period because of stale dates (BUG-022).
 - Project dates are shown as the calendar date the author chose, in every time zone (BUG-023).
 - The rich-text list buttons announce their real function (BUG-024).
 - Two copy typos ("Peronen", "gepeichert") (BUG-025).
-- A title or goal made only of spaces is rejected (BUG-026).
+- A title, goal or request title made only of spaces is rejected (BUG-026).
 
 ### Security
 
+- A request under a private project is no longer readable by anyone but the project's owner: request
+  visibility always inherits from its project on every read path (BUG-002; historically the API let any
+  caller read any request).
 - Rich-text documents and selected places are re-validated on the server against a whitelist before
   they are stored or rendered; links are forced to `https://` and every string is escaped.

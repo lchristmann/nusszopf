@@ -96,7 +96,7 @@ The historical domain is deliberately small: five tables plus one view. There is
 
 ### `Request`
 
-- Status: Confirmed (schema), Inferred (product concept)
+- Status: Confirmed (schema), Inferred (product concept). **Implemented** in the third slice as `App\Models\ProjectRequest` (`project_requests`) — see `docs/rewrite/third-slice.md`.
 - Historical table: `public.requests`.
 - Purpose: Inferred — a specific ask/need posted under a `Project` (e.g. "we need volunteers", "we need materials/donations"), given `category` and its scoping to a single `project_id`.
 - Identifier: `id` — `uuid`, `DEFAULT gen_random_uuid()`.

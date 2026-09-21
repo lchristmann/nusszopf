@@ -135,8 +135,24 @@ kept, the rich-text toolbar, the place search, a fixed period) → detail (locat
 formatted description, team, motto, contact, owner banner) → edit (values loaded, whole-form
 validation, modify, save, discard-confirm) → settings (private → 404 for others, public → visible and
 searchable) → delete (native confirm). Differences from the historical Cypress spec, all deliberate:
-the Requests step/tab is scaffolding (no request dialog yet — the ProjectRequest slice), a real
+the Requests step/tab was scaffolding here (completed by the third slice, below), a real
 location and period are exercised rather than remote/flexible only, and no fixed `cy.wait(2000)` —
 the search assertion retries until the (queued) index has caught up.
 `tests/E2E/specs/user/project-wizard.spec.ts` adds the mechanics Cypress never covered (deep links,
 refresh, history, Enter, blur timing, toolbar ceiling, place-search keyboard, access, phone layout).
+
+## Third slice — Journey 3's requests
+
+`tests/E2E/specs/user/project-requests.spec.ts` completes Journey 3 (the historical Cypress spec created
+one request in the wizard, edited it and deleted it from the edit view): in the wizard's step 3 the dialog
+validates with the historical copy, ignores Escape, caps the title at 30 characters, colors its category
+select and asks the native `confirm()` when a dirty dialog is cancelled; two requests are created, one
+edited from its card, one deleted from its menu, and the list survives going back and forth; the project
+is created with them; the detail page shows the cards (category colors, newest first) and the dialog
+(rich text, "Kontaktieren", Escape/"Schließen"); a visitor's search finds the project through the request's
+text; the edit screen's "Gesuche" view creates, edits and deletes requests with the historical toasts and
+the native delete confirmation; a private project's request is never visible to a visitor (404); deleting
+the project deletes its requests. A phone-width test asserts the full-screen dialog and no horizontal
+overflow. Deliberate differences from the Cypress spec: it asserts the visible result on the detail page
+rather than `text_title_preview-request-card` on the My Projects card (slice 5 adds that preview), and it
+covers what Cypress never did (validation, cancel confirmations, private visibility, search).

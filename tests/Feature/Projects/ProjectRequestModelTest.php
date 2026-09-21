@@ -96,3 +96,12 @@ it('leaves the updated_at of a private project alone, like the historical indexe
 
     expect($project->fresh()->updated_at->isToday())->toBeFalse();
 });
+
+it('cannot be moved to another project by mass assignment', function () {
+    $request = ProjectRequest::factory()->create();
+    $other = Project::factory()->create();
+
+    $request->update(['title' => 'Neuer Titel', 'project_id' => $other->id]);
+
+    expect($request->fresh()->project_id)->not->toBe($other->id)->and($request->fresh()->title)->toBe('Neuer Titel');
+});
