@@ -44,7 +44,9 @@ it('indexes a project without requests as a project document of type none', func
 });
 
 it('shares one index between the two models', function () {
-    expect((new Project)->searchableAs())->toBe('items')->and((new ProjectRequest)->searchableAs())->toBe('items');
+    expect(Project::SEARCH_INDEX)->toBe('items')
+        ->and((new Project)->searchableAs())->toBe(config('scout.prefix').'items')
+        ->and((new ProjectRequest)->searchableAs())->toBe((new Project)->searchableAs());
 });
 
 it('indexes a project only while it is public and has no requests, and its requests only while it is public', function () {
