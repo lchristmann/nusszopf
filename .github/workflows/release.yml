@@ -1,0 +1,135 @@
+name: Release
+
+# Pushing an unprefixed semantic-version tag (docs/release/release-process.md) publishes that release:
+# the whole CI gate runs first, then both images are built for amd64 and arm64 and pushed to GHCR, and a
+# GitHub Release is created with the operator's files attached. Nothing is published if any check fails.
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+      - "[0-9]+.[0-9]+.[0-9]+-*"
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    name: Quality gate
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    name: Build and publish images
+    needs: gate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      REGISTRY: ghcr.io
+      NAMESPACE: lchristmann
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # A pre-release tag (0.2.0-rc.1) is published under its own version only; `latest` moves with real releases.
+      - id: meta
+        run: |
+          echo "version=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          case "$GITHUB_REF_NAME" in
+            *-*) echo "latest=false" >> "$GITHUB_OUTPUT" ;;
+            *)   echo "latest=true"  >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      - name: Tags and labels (php-fpm)
+        id: fpm
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ env.NAMESPACE }}/nusszopf-php-fpm
+          tags: |
+            type=raw,value=${{ steps.meta.outputs.version }}
+            type=raw,value=latest,enable=${{ steps.meta.outputs.latest }}
+
+      - name: Tags and labels (web)
+        id: web
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ env.NAMESPACE }}/nusszopf-web
+          tags: |
+            type=raw,value=${{ steps.meta.outputs.version }}
+            type=raw,value=latest,enable=${{ steps.meta.outputs.latest }}
+
+      - name: Build and push php-fpm
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/php/Dockerfile
+          target: php-fpm
+          platforms: linux/amd64,linux/arm64
+          push: true
+          build-args: NUSSZOPF_VERSION=${{ steps.meta.outputs.version }}
+          tags: ${{ steps.fpm.outputs.tags }}
+          labels: ${{ steps.fpm.outputs.labels }}
+          cache-from: type=gha,scope=php-fpm
+          cache-to: type=gha,mode=max,scope=php-fpm
+
+      - name: Build and push web
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/php/Dockerfile
+          target: nginx
+          platforms: linux/amd64,linux/arm64
+          push: true
+          build-args: NUSSZOPF_VERSION=${{ steps.meta.outputs.version }}
+          tags: ${{ steps.web.outputs.tags }}
+          labels: ${{ steps.web.outputs.labels }}
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web
+
+  release:
+    name: GitHub Release
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      # The release notes are the tag's section of CHANGELOG.md; a release without one is not published.
+      - name: Release notes from CHANGELOG.md
+        run: |
+          version="${GITHUB_REF_NAME}"
+          awk -v v="$version" '
+            $0 ~ "^## \\[" v "\\]" { found = 1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "CHANGELOG.md has no section '## [$version]'. Add it, move the tag, and push again." >&2
+            exit 1
+          fi
+
+      # The operator's files: the compose file, the configuration template naming this very release, and the installer.
+      - name: Operator files
+        run: |
+          mkdir release-assets
+          cp docker-compose.yaml release-assets/docker-compose.yaml
+          sed "s|^NUSSZOPF_VERSION=.*|NUSSZOPF_VERSION=${GITHUB_REF_NAME}|" .env.production.example > release-assets/.env.production.example
+          cp scripts/install.sh release-assets/install.sh
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          flags=""
+          case "$GITHUB_REF_NAME" in *-*) flags="--prerelease" ;; esac
+          gh release create "$GITHUB_REF_NAME" $flags \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file release-notes.md \
+            release-assets/docker-compose.yaml release-assets/.env.production.example release-assets/install.sh
