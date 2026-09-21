@@ -18,17 +18,20 @@
         </include>
     </source>
     <php>
+        <!-- Forced: the development .env is the process environment inside the Compose containers and must not win
+             (tests/bootstrap.php). The DB host, port and credentials stay unforced: CI points them at its service
+             containers through the process environment (.github/workflows/ci.yml). -->
         <env name="APP_ENV" value="testing" force="true"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file" force="true"/>
         <env name="BCRYPT_ROUNDS" value="4" force="true"/>
         <env name="BROADCAST_CONNECTION" value="null" force="true"/>
         <env name="CACHE_STORE" value="array" force="true"/>
-        <env name="DB_CONNECTION" value="pgsql" force="true"/>
-        <env name="DB_HOST" value="postgres" force="true"/>
-        <env name="DB_PORT" value="5432" force="true"/>
+        <env name="DB_CONNECTION" value="pgsql"/>
+        <env name="DB_HOST" value="postgres"/>
+        <env name="DB_PORT" value="5432"/>
         <env name="DB_DATABASE" value="nusszopf_testing" force="true"/>
-        <env name="DB_USERNAME" value="nusszopf" force="true"/>
-        <env name="DB_PASSWORD" value="nusszopf" force="true"/>
+        <env name="DB_USERNAME" value="nusszopf"/>
+        <env name="DB_PASSWORD" value="nusszopf"/>
         <env name="DB_URL" value="" force="true"/>
         <env name="MAIL_MAILER" value="array" force="true"/>
         <env name="QUEUE_CONNECTION" value="sync" force="true"/>

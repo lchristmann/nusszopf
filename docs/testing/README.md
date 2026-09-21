@@ -53,8 +53,8 @@ Every historical bug knowingly fixed during the rewrite ships with a regression 
 Inside the Compose containers the development `.env` is the process environment, and Laravel reads
 `$_SERVER` first, so phpunit's `<env>` values used to be silently ignored: the Pest suite ran against the
 *development* database (re-migrating it), Redis queue and search index, and its queued jobs starved the
-queue worker for the browser suite that followed. `phpunit.xml` now forces its values and
-`tests/bootstrap.php` copies them over `$_SERVER`, so the suite always uses `nusszopf_testing`, the `sync`
+queue worker for the browser suite that followed. `phpunit.xml` now forces its values (all but the database host, port and credentials, which CI points at its
+service containers through the process environment) and `tests/bootstrap.php` copies them over `$_SERVER`, so the suite always uses `nusszopf_testing`, the `sync`
 queue and the `null` Scout driver; the `meilisearch`-group tests still switch to the real engine explicitly.
 The real index is shared with development, so those tests use per-run search words (documents of earlier runs
 stay in it) and assert on their own ids.
