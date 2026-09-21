@@ -14,6 +14,8 @@ use Tests\TestCase;
 |
 */
 
+require_once __DIR__.'/Helpers/search.php';
+
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->in('Feature');

@@ -1,8 +1,11 @@
 @props([
     'variant' => 'view',
-    'title',
+    'title' => '',
     'category',
-    'createdAt',
+    'createdAt' => null,
+    // `hit` only: escaped HTML with the matches in `<em>`.
+    'titleHtml' => '',
+    'descriptionHtml' => '',
     'edit' => null,
     'delete' => null,
 ])
@@ -24,7 +27,18 @@
     ][$category] ?? ['bg-stone-400 border border-stone-600', 'lilac']; // only a tampered wizard form has another category
 @endphp
 
-@if ($variant === 'edit')
+@if ($variant === 'hit')
+    {{-- HitRequestCard.js: not a button — the whole hit card is the link. --}}
+    <div data-test="card_request-hit" {{ $attributes->class(['w-full rounded-lg px-3 py-2 text-stone-800', $color[0]]) }}>
+        <div class="flex items-start">
+            <x-icon name="request" :size="18" class="flex-shrink-0 mt-1 mr-1.5" />
+            <x-text variant="textXs" class="font-medium">{!! $titleHtml !!}</x-text>
+        </div>
+        @if ($descriptionHtml !== '')
+            <x-text variant="textXs">{!! $descriptionHtml !!}</x-text>
+        @endif
+    </div>
+@elseif ($variant === 'edit')
     <div
         data-test="card_request"
         {{ $attributes->class(['relative w-full flex text-stone-800 rounded-lg cursor-pointer transition duration-150 ease-in-out ring-1 ring-transparent focus:outline-none', $color[0]]) }}

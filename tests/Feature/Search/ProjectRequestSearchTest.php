@@ -1,13 +1,11 @@
 <?php
 
 use App\Livewire\Projects\ProjectEdit;
+use App\Livewire\Search\Search;
 use App\Models\Project;
 use App\Models\ProjectRequest;
 use App\Models\User;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Str;
 use Laravel\Scout\EngineManager;
 use Livewire\Livewire;
 
@@ -68,51 +66,6 @@ it('indexes a project only while it is public and has no requests, and its reque
 });
 
 // --- Against the real Meilisearch ---------------------------------------------------
-
-/**
- * The raw index hits for a query.
- *
- * @return Collection<int, array<string, mixed>>
- */
-function indexHits(string $query): Collection
-{
-    return collect(Project::search($query)->raw()['hits'] ?? []);
-}
-
-function indexHas(string $query, string $id): bool
-{
-    return indexHits($query)->contains(fn (array $hit) => $hit['id'] === $id);
-}
-
-function awaitIndex(Closure $condition): bool
-{
-    for ($attempt = 0; $attempt < 40; $attempt++) {
-        if ($condition()) {
-            return true;
-        }
-        usleep(100_000);
-    }
-
-    return false;
-}
-
-/**
- * A search word made unique to this run: documents of earlier runs stay in the
- * real index (their rows are rolled back, the index is not).
- */
-function w(string $word): string
-{
-    static $tag = null;
-    $tag ??= strtolower(Str::random(8));
-
-    return $word.$tag;
-}
-
-function realMeilisearch(): void
-{
-    Config::set('scout.driver', 'meilisearch');
-    Config::set('scout.queue', false);
-}
 
 it('replaces the project\'s document with its requests\' documents, grouped by the project', function () {
     realMeilisearch();
@@ -203,16 +156,17 @@ it('finds a project on the search page through the text of its request, once, in
     ProjectRequest::factory()->count(2)->for($project)->create(['description' => 'Wir suchen Bierbaenke '.w('Sperber').'.']);
     Project::factory()->private()->create(['title' => 'Privat '.w('Sperber')]);
 
-    $found = false;
-    for ($attempt = 0; $attempt < 40 && ! $found; $attempt++) {
+    $html = '';
+    for ($attempt = 0; $attempt < 40 && ! str_contains($html, 'Nachbarschaftsfest'); $attempt++) {
         usleep(100_000);
-        $found = str_contains($this->get(route('search', ['q' => w('Sperber')]))->getContent(), 'Nachbarschaftsfest');
+        $html = Livewire::test(Search::class)->set('query', w('Sperber'))->call('load')->html();
     }
 
-    $response = $this->get(route('search', ['q' => w('Sperber')]));
-    expect($found)->toBeTrue()
-        ->and(substr_count($response->getContent(), 'data-test="card_search-hit"'))->toBe(1);
-    $response->assertDontSee('Privat '.w('Sperber'));
+    expect($html)->toContain('Nachbarschaftsfest')
+        ->and(substr_count($html, 'data-test="route_hitcard"'))->toBe(1)
+        // Both requests matched; both are nested in the one card.
+        ->and(substr_count($html, 'data-test="card_request-hit"'))->toBe(2)
+        ->and($html)->not->toContain('Privat '.w('Sperber'));
 })->group('meilisearch');
 
 it('does not show a project on the search page for a stale request document of a project that is private', function () {
@@ -224,5 +178,5 @@ it('does not show a project on the search page for a stale request document of a
     app(EngineManager::class)->engine()->update(collect([$request->load('project')]));
     expect(awaitIndex(fn () => indexHas(w('Bussard'), $request->id)))->toBeTrue();
 
-    $this->get(route('search', ['q' => w('Bussard')]))->assertOk()->assertDontSee('Kurzzeitig Oeffentlich '.w('Bussard'));
+    Livewire::test(Search::class)->set('query', w('Bussard'))->call('load')->assertOk()->assertDontSee('Kurzzeitig Oeffentlich '.w('Bussard'));
 })->group('meilisearch');

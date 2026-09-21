@@ -6,6 +6,8 @@
     // explicitly (docs/rewrite/golden-master-review.md).
     'color' => 'steel',
     'type' => 'text',
+    // Input.atom.js `displayRing`: the search field draws its own border and no hover/focus ring.
+    'displayRing' => true,
 ])
 
 @php
@@ -26,11 +28,16 @@
     // `rounded-md`, not squared corners, and `placeholder-current` so
     // placeholder text takes the same color as the input's own text color
     // rather than Tailwind's default gray.
-    $baseClass = 'inline-block w-full text-current border-current bg-transparent rounded-md appearance-none placeholder-current ring-2 ring-transparent transition-shadow duration-200 ease-out focus:outline-none focus:placeholder-transparent disabled:opacity-50 disabled:pointer-events-none';
+    $baseClass = 'inline-block w-full text-current border-current bg-transparent rounded-md appearance-none placeholder-current transition-shadow duration-200 ease-out focus:outline-none focus:placeholder-transparent disabled:opacity-50 disabled:pointer-events-none';
+@endphp
+
+@php
+    $ringClass = $displayRing ? 'ring-2 ring-transparent' : '';
+    $colorClass = $displayRing ? $colorClass : '';
 @endphp
 
 @if ($as === 'textarea')
-    <textarea {{ $attributes->class([$baseClass, $sizeClass, $colorClass]) }}>{{ $slot }}</textarea>
+    <textarea {{ $attributes->class([$baseClass, $sizeClass, $colorClass, $ringClass]) }}>{{ $slot }}</textarea>
 @else
-    <input type="{{ $type }}" {{ $attributes->class([$baseClass, $sizeClass, $colorClass]) }} />
+    <input type="{{ $type }}" {{ $attributes->class([$baseClass, $sizeClass, $colorClass, $ringClass]) }} />
 @endif

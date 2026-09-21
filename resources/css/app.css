@@ -303,3 +303,8 @@
 .nz-toast-in {
     animation: nz-toast-in 0.3s ease-out;
 }
+
+/* Alpine hides `x-cloak` elements until it has initialised them (popovers, menus). */
+[x-cloak] {
+    display: none !important;
+}

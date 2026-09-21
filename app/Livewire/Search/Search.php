@@ -2,68 +2,98 @@
 
 namespace App\Livewire\Search;
 
-use App\Models\Project;
+use App\Services\Search\ProjectSearch;
+use App\Services\Search\SearchResults;
 use Illuminate\Contracts\View\View;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
 /**
- * docs/design/screen-specs.md, "Search" — proves the Scout/Meilisearch
- * query-side integration end to end. Projects and their requests share one
- * index; a hit is grouped into its project, so the grouped-by-project
- * HitCard nesting of the matching requests is the search-completion slice's.
+ * docs/design/screen-specs.md, "Search" (`pages/search.js`, `search.service.js`).
  *
- * Query interaction (verified against `SearchInput.js` in this
- * verification pass): historically search fires only on an explicit
- * submit (Enter, blur-after-Enter, or the search-icon click), throttled
- * 500ms against rapid resubmission — never live-as-you-type. `#[Url]`
- * still keeps the query deep-linkable/shareable; only *when* a query
- * triggers a search changed, via `search()` below, not `wire:model.live`.
+ * Interaction (verified against `SearchInput.js`): a query runs only on an
+ * explicit submit — Enter or the search icon — never while typing. The filter
+ * popover's checkboxes are picked first and applied by that same submit; until
+ * then the icon shows "refresh" (Alpine, in the view, compares the picked
+ * options with {@see self::$filter}). Both are deep-linkable (`?q=`, `?f[]=`).
  *
- * Visibility is enforced at *indexing* time (Project::shouldBeSearchable()),
- * matching the historical mechanism (docs/search/README.md) — a private
- * project is never in the index for this query to accidentally surface.
- * `Project::visible()` is additionally applied to the result-hydration
- * query as defense-in-depth (docs/search/README.md, "Authorization
- * filtering at search time": "should also apply a defense-in-depth
- * query-time scope, since Scout drivers/queries in Laravel are easier to
- * accidentally call without the gate than the historical bespoke webhook
- * was") — a stale/leaked index document is still filtered out here, not
- * just relied upon to never exist.
+ * The page opens on the skeleton and loads the first results right after
+ * (`wire:init`), as the historical page did with its first, empty query.
+ * "Mehr laden" asks for one more page of documents ({@see ProjectSearch::PAGE_SIZE});
+ * the whole result is re-fetched from the start, which keeps it free of
+ * duplicates however the index changed in between.
+ *
+ * Visibility is enforced when documents are indexed and again when they are
+ * shown ({@see ProjectSearch}); this component adds nothing of its own to that.
+ *
+ * @property-read SearchResults $results
  */
 #[Layout('components.layout')]
 class Search extends Component
 {
+    /** `SearchInput.js`: `maxLength="30"` */
+    public const MAX_QUERY_LENGTH = 30;
+
     #[Url(as: 'q')]
     public string $query = '';
 
     /**
-     * Explicit-submit trigger (Enter in the search field, or the search
-     * button) — no-op body, since the deferred `wire:model` binding already
-     * synced `$query` before this action ran; the action's own network
-     * round-trip is what re-renders the results.
+     * The applied filter: the checked options of {@see ProjectSearch::CATEGORIES}.
+     *
+     * @var list<string>
      */
-    public function search(): void {}
+    #[Url(as: 'f')]
+    public array $filter = [];
+
+    public int $pages = 1;
+
+    public bool $ready = false;
+
+    public function load(): void
+    {
+        $this->ready = true;
+    }
+
+    /**
+     * The submit: applies the query and the picked options and starts over at the first page.
+     *
+     * @param  list<string>  $filter
+     */
+    public function search(array $filter = []): void
+    {
+        $this->query = mb_substr($this->query, 0, self::MAX_QUERY_LENGTH);
+        $this->filter = array_values(array_intersect(ProjectSearch::CATEGORIES, $filter));
+        $this->pages = 1;
+        unset($this->results);
+    }
+
+    public function loadMore(): void
+    {
+        $this->pages++;
+        unset($this->results);
+
+        if ($this->results->failed) {
+            // `loadMore()`'s catch: a toast, the hits stay as they were.
+            $this->pages--;
+            unset($this->results);
+            $this->dispatch('toast', type: 'error', message: 'Sorry! Das hat gerade nicht geklappt.');
+        }
+    }
+
+    #[Computed]
+    public function results(): SearchResults
+    {
+        if (! $this->ready) {
+            return new SearchResults([], false);
+        }
+
+        return app(ProjectSearch::class)->search(mb_substr($this->query, 0, self::MAX_QUERY_LENGTH), $this->filter, $this->pages);
+    }
 
     public function render(): View
     {
-        // An empty query is a real, unremarkable state historically — the
-        // page browses every public project, not an empty results screen
-        // waiting for input (Meilisearch's own empty-query behavior already
-        // matches "match everything").
-        //
-        // The index holds a document per request (or one for a project
-        // without requests), each carrying `group_id`, its project's id; the
-        // hits are grouped into their project, in relevance order. The card
-        // still shows only the project — nesting the matching requests and
-        // the category filter are the search-completion slice's.
-        /** @var list<array<string, mixed>> $documents */
-        $documents = Project::search($this->query)->raw()['hits'] ?? [];
-        $groupIds = collect($documents)->pluck('group_id')->unique()->values();
-
-        return view('livewire.search.search', [
-            'hits' => Project::visible()->whereIn('id', $groupIds)->get()->sortBy(fn (Project $project) => $groupIds->search($project->id))->values(),
-        ]);
+        return view('livewire.search.search');
     }
 }
