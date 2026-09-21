@@ -137,14 +137,25 @@ jobs:
       - run: cp .env.example .env
       - name: Let the search page run out of results quickly
         run: echo "SEARCH_PAGE_SIZE=5" >> .env
+      # Before the stack starts: Compose hands `.env` to the containers as environment, and an empty APP_KEY
+      # there would win over a key generated into the file afterwards.
+      - name: Generate the application key
+        run: sed -i "s|^APP_KEY=.*|APP_KEY=base64:$(openssl rand -base64 32)|" .env
       - name: Start the real dev stack
-        run: docker compose -f compose.dev.yaml up -d --build web php-fpm queue-worker postgres redis meilisearch
+        run: docker compose -f compose.dev.yaml up -d --build workspace web php-fpm queue-worker postgres redis meilisearch
       - name: Wait for the app to be healthy
         run: |
           timeout 120 sh -c 'until docker compose -f compose.dev.yaml ps php-fpm | grep -q healthy; do sleep 2; done'
+      # The dev stack bind-mounts the checkout and keeps vendor/ and node_modules/ in named volumes, which
+      # start empty on a CI runner: install the dependencies and build the assets through the workspace
+      # service (the volumes are shared with php-fpm and the queue worker) before any artisan command.
+      - name: Install dependencies and build the assets
+        run: |
+          docker compose -f compose.dev.yaml exec -T workspace composer install --no-interaction --prefer-dist
+          docker compose -f compose.dev.yaml exec -T workspace npm ci
+          docker compose -f compose.dev.yaml exec -T workspace npm run build
       - name: Initialize the application
         run: |
-          docker compose -f compose.dev.yaml exec -T php-fpm php artisan key:generate
           docker compose -f compose.dev.yaml exec -T php-fpm php artisan migrate --force
           docker compose -f compose.dev.yaml exec -T php-fpm php artisan search:reindex
       - uses: actions/setup-node@v4
