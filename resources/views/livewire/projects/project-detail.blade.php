@@ -168,14 +168,7 @@
                         <x-contact-dialog :project="$project" open="contactOpen" close="contactOpen = false" />
                     @endunless
 
-                    {{-- Avatar, `project` variant. The initial-on-grey circle replaces the historical ui-avatars.com image (an external service), same colors. --}}
-                    <div class="flex items-center mt-16 lg:mt-14">
-                        <div class="relative flex items-center justify-center flex-shrink-0 overflow-hidden text-2xl font-medium uppercase border-2 rounded-full w-14 h-14 border-steel-700" style="background-color: #cfd8dc; color: #37474f" aria-hidden="true">{{ mb_substr($project->user->name, 0, 1) }}</div>
-                        <div class="ml-5">
-                            <x-text data-test="username_avatar" variant="textSmMedium">{{ \Illuminate\Support\Str::limit($project->user->name, 33, '...') }}</x-text>
-                            <x-text variant="textSm">Aktualisiert am {{ $project->updated_at->format('j.n.Y') }}</x-text>
-                        </div>
-                    </div>
+                    <x-avatar variant="project" :user="$project->user" :project="$project" class="mt-16 lg:mt-14" />
                 </x-framed-grid-card.body-col>
             </x-framed-grid-card.body>
         </x-frame>

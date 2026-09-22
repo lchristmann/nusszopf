@@ -15,9 +15,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 
-#[Fillable(['name', 'email', 'password', 'picture', 'google_id', 'email_verified_at'])]
+#[Fillable(['name', 'email', 'password', 'picture', 'avatar_version', 'google_id', 'email_verified_at'])]
 #[Hidden(['password', 'remember_token', 'email', 'google_id'])]
 class User extends Authenticatable implements MustVerifyEmailContract
 {
@@ -40,7 +42,39 @@ class User extends Authenticatable implements MustVerifyEmailContract
         return [
             'password' => 'hashed',
             'email_verified_at' => 'datetime',
+            'avatar_version' => 'integer',
         ];
+    }
+
+    /**
+     * `picture` holds either a Google-provided absolute URL (BUG-004's sync,
+     * `App\Http\Controllers\Auth\GoogleController`) or a path on the local
+     * `public` disk (a manual upload, `App\Support\AvatarUploader`) — the same
+     * duality the historical `users.picture` column held (a Spaces CDN URL
+     * either way, so the distinction was invisible there). `null` here (never
+     * ui-avatars.com, docs/rewrite/intentional-changes.md) means the caller
+     * renders the initial-on-grey fallback instead.
+     */
+    public function avatarUrl(): ?string
+    {
+        if (blank($this->picture)) {
+            return null;
+        }
+
+        return Str::startsWith($this->picture, ['http://', 'https://'])
+            ? $this->picture
+            : Storage::disk('public')->url($this->picture);
+    }
+
+    /**
+     * Gates the Profile page's avatar-edit affordance (`Avatar.molecule.js`'s
+     * `isSocialAccount`, Confirmed): an account linked to Google has its
+     * picture kept in sync from there (BUG-004) and was never offered a manual
+     * "replace avatar" control historically — preserved as-is, not a bug.
+     */
+    public function isSocialAccount(): bool
+    {
+        return $this->google_id !== null;
     }
 
     /**

@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import 'cropperjs/dist/cropper.css';
 
 @import '@fontsource/barlow/400.css';
 @import '@fontsource/barlow/500.css';
@@ -307,4 +308,18 @@
 /* Alpine hides `x-cloak` elements until it has initialised them (popovers, menus). */
 [x-cloak] {
     display: none !important;
+}
+
+/*
+ * AvatarDialog's crop area (react-easy-crop's `cropShape="round"`, Confirmed):
+ * cropperjs has no built-in round crop box, so the view/face/box are masked
+ * into a circle here — the documented recipe for this exact effect, scoped
+ * to the avatar dialog only.
+ */
+.nz-avatar-cropper .cropper-view-box,
+.nz-avatar-cropper .cropper-face {
+    border-radius: 50%;
+}
+.nz-avatar-cropper .cropper-view-box {
+    outline: 1px solid rgba(255, 255, 255, 0.75);
 }

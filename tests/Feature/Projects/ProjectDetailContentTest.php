@@ -136,6 +136,24 @@ it('shows the author and the update date', function () {
     $this->get(route('projects.show', $project))->assertSee('gartenfreund')->assertSee('Aktualisiert am '.$project->updated_at->format('j.n.Y'));
 });
 
+/**
+ * Slice 8 (docs/rewrite/master-roadmap.md): the author avatar image replaces
+ * the initial-on-grey fallback once the owner has an uploaded picture, on
+ * the project detail page as much as on Profile itself.
+ */
+it('shows the author\'s real avatar image once they have one, and the fallback initial otherwise', function () {
+    $withAvatar = User::factory()->create(['picture' => 'https://example.com/avatar.jpg']);
+    $withoutAvatar = User::factory()->create(['name' => 'nussknacker']);
+    $projectWithAvatar = Project::factory()->for($withAvatar)->public()->create();
+    $projectWithoutAvatar = Project::factory()->for($withoutAvatar)->public()->create();
+
+    $this->get(route('projects.show', $projectWithAvatar))
+        ->assertSee('src="https://example.com/avatar.jpg"', false);
+
+    $this->get(route('projects.show', $projectWithoutAvatar))
+        ->assertSee('background-color: #cfd8dc; color: #37474f', false);
+});
+
 it('shows the owner banner, in both variants, to the owner', function () {
     $owner = User::factory()->create();
     $public = Project::factory()->for($owner)->public()->create();

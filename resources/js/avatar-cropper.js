@@ -1,0 +1,127 @@
+import Cropper from 'cropperjs';
+
+/**
+ * The historical `AvatarDialog`/`Cropper` (`react-easy-crop`): pick an image,
+ * crop it to a round 1:1 area with rotate/zoom-in/zoom-out controls, then
+ * upload the result (`ui-library/stories/organisms/Cropper/Cropper.organism.js`).
+ * `cropperjs` is the smallest client-side package that covers the same
+ * rotate/zoom/crop feature set without reimplementing canvas crop math by
+ * hand (`CLAUDE.md`, "smallest client-side solution").
+ *
+ * The crop box itself is fixed (not draggable/resizable) matching the
+ * historical UI, which only ever let the *image* move under a fixed circular
+ * mask, never the crop area itself.
+ */
+document.addEventListener('alpine:init', () => {
+    window.Alpine.data('nzAvatarCropper', () => ({
+        hasImage: false,
+        uploading: false,
+        cropper: null,
+
+        pickFile(event) {
+            const file = event.target.files?.[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = () => {
+                this.hasImage = true;
+                // `$nextTick` alone is not enough here: it resolves once
+                // Alpine has applied the `x-show` DOM change, but the browser
+                // has not necessarily *painted* that layout change yet.
+                // cropperjs measures the container synchronously at
+                // construction time and never re-measures on its own, so
+                // constructing it before a real layout/paint pass has
+                // happened makes it size its canvas against the old
+                // (`display: none`, zero-size) box — two animation frames is
+                // the standard way to wait for that pass to land.
+                this.$nextTick(() => {
+                    requestAnimationFrame(() => requestAnimationFrame(() => this.startCropper(reader.result)));
+                });
+            };
+            reader.readAsDataURL(file);
+        },
+
+        startCropper(dataUrl) {
+            const img = this.$refs.cropperImage;
+
+            this.cropper?.destroy();
+            this.cropper = null;
+
+            img.onload = () => {
+                this.cropper = new Cropper(img, {
+                    aspectRatio: 1,
+                    viewMode: 1,
+                    dragMode: 'move',
+                    autoCropArea: 1,
+                    cropBoxMovable: false,
+                    cropBoxResizable: false,
+                    toggleDragModeOnDblclick: false,
+                    minCropBoxWidth: 100,
+                    background: false,
+                });
+            };
+            img.src = dataUrl;
+        },
+
+        rotate() {
+            this.cropper?.rotate(90);
+        },
+
+        zoomIn() {
+            this.cropper?.zoom(0.1);
+        },
+
+        zoomOut() {
+            this.cropper?.zoom(-0.1);
+        },
+
+        reset() {
+            this.cropper?.destroy();
+            this.cropper = null;
+            this.hasImage = false;
+            this.uploading = false;
+            if (this.$refs.fileInput) this.$refs.fileInput.value = '';
+        },
+
+        save() {
+            if (!this.cropper || this.uploading) return;
+
+            this.uploading = true;
+            window.nzToast('loading', 'Bild wird gespeichert.');
+
+            const canvas = this.cropper.getCroppedCanvas({
+                width: 512,
+                height: 512,
+                imageSmoothingQuality: 'high',
+            });
+
+            canvas.toBlob(
+                (blob) => {
+                    if (!blob) {
+                        this.uploading = false;
+                        window.nzToast('error', 'Bild konnte nicht gespeichert werden.');
+                        return;
+                    }
+
+                    const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
+
+                    this.$wire.upload(
+                        'avatarUpload',
+                        file,
+                        // The server validates/re-encodes and dispatches its own
+                        // `toast` + (on success only) `avatar-saved` browser event
+                        // (App\Livewire\Profile\Profile::saveAvatar) — this only
+                        // resets the dialog's local crop state either way.
+                        () => this.$wire.saveAvatar().then(() => this.reset()),
+                        () => {
+                            this.uploading = false;
+                            window.nzToast('error', 'Bild konnte nicht gespeichert werden.');
+                        }
+                    );
+                },
+                'image/jpeg',
+                0.85
+            );
+        },
+    }));
+});
