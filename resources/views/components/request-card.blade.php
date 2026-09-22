@@ -27,7 +27,16 @@
     ][$category] ?? ['bg-stone-400 border border-stone-600', 'lilac']; // only a tampered wizard form has another category
 @endphp
 
-@if ($variant === 'hit')
+@if ($variant === 'preview')
+    {{-- PreviewRequestCard.js: nested inside `EditProjectCard`, not a button — the whole project card is. --}}
+    <div data-test="card_preview-request" {{ $attributes->class(['w-full rounded-lg px-3 py-2 text-stone-800', $color[0]]) }}>
+        <div class="flex items-start">
+            <x-icon name="request" :size="18" class="flex-shrink-0 mt-1.5 mr-1.5" />
+            <x-text as="span" variant="textSmMedium" data-test="text_title_preview-request-card">{{ $title }}</x-text>
+        </div>
+        <x-text variant="textXs">Erstellt am {{ $createdAt }}</x-text>
+    </div>
+@elseif ($variant === 'hit')
     {{-- HitRequestCard.js: not a button — the whole hit card is the link. --}}
     <div data-test="card_request-hit" {{ $attributes->class(['w-full rounded-lg px-3 py-2 text-stone-800', $color[0]]) }}>
         <div class="flex items-start">

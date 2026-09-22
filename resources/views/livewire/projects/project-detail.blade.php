@@ -38,7 +38,7 @@
         </div>
     @endif
 
-    {{-- pages/projects/[id].js. VisitorCounter (ProjectAnalytics) and the project-report link are out of scope for this slice. --}}
+    {{-- pages/projects/[id].js. --}}
     <x-framed-grid-card class="lg:mt-12">
         <x-frame class="bg-lilac-300 lg:bg-steel-100">
             <x-framed-grid-card.header class="bg-lilac-300">
@@ -102,6 +102,24 @@
                             <x-text variant="textSm">{{ $project->motto }}</x-text>
                         </div>
                     @endif
+
+                    {{--
+                        VisitorCounter.js: four zero-padded digit boxes ("+9999"
+                        past that cap), server-counted only (BUG-001's fix).
+                    --}}
+                    @php
+                        $digits = $views === null
+                            ? ['0', '0', '0', '0']
+                            : ($views > 9999 ? ['+', '9', '9', '9', '9'] : str_split(str_pad((string) $views, 4, '0', STR_PAD_LEFT)));
+                    @endphp
+                    <div class="inline-flex items-center py-2 px-2.5 bg-lilac-150 rounded-md mt-12 mb-3 md:mb-0" data-test="visitor-counter_project-detail">
+                        <x-icon name="eye" :size="22" class="mr-2" />
+                        @foreach ($digits as $digit)
+                            <div class="flex items-center justify-center w-6 h-6 mx-0.5 rounded-md bg-lilac-300">
+                                <x-text variant="textXs" class="font-medium">{{ $digit }}</x-text>
+                            </div>
+                        @endforeach
+                    </div>
                 </x-framed-grid-card.body-col>
 
                 <x-framed-grid-card.body-col variant="twoCols" class="row-start-1 lg:row-start-auto lg:pl-4 text-stone-800">
@@ -141,4 +159,18 @@
             </x-framed-grid-card.body>
         </x-frame>
     </x-framed-grid-card>
+
+    {{-- pages/projects/[id].js: report link, `mailto:` with the project id appended to the subject. --}}
+    <x-frame class="pt-4 pb-16 text-center lg:pb-20 lg:text-right bg-steel-100">
+        <a
+            href="{{ $reportMailto }}"
+            title="Projekt {{ \App\Models\Project::NUSSZOPF_CONTACT }} melden"
+            aria-label="Projekt {{ \App\Models\Project::NUSSZOPF_CONTACT }} melden"
+            data-test="link_report_project-detail"
+            class="inline-flex items-center underline lg:pr-2.5"
+        >
+            <x-icon name="alert-triangle" :size="21" class="mr-2" />
+            <x-text as="span" variant="textSmMedium">Projekt melden</x-text>
+        </a>
+    </x-frame>
 </div>

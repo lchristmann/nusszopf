@@ -13,7 +13,7 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 
 | ID      | Area                                        | Severity | Classification                      | Status                                                                                  |
 |---------|---------------------------------------------|----------|-------------------------------------|-----------------------------------------------------------------------------------------|
-| BUG-001 | Authorization / Project analytics           | High     | Fix                                 | Spec'd — deferred to the slice that builds `ProjectAnalytics`/view counting (not required by the first slice's acceptance criteria) |
+| BUG-001 | Authorization / Project analytics           | High     | Fix                                 | Implemented — fifth slice (2026-09-22)                                                  |
 | BUG-002 | Authorization / Request visibility          | High     | Fix                                 | Implemented — third slice (2026-09-21)                                                  |
 | BUG-003 | Auth / route protection                     | Medium   | Fix                                 | Implemented — first vertical slice (2026-09-18)                                         |
 | BUG-004 | Auth / avatar sync                          | Low      | Fix                                 | Spec'd — `intentional-changes.md`                                                       |

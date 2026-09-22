@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Scout\Searchable;
 
@@ -111,6 +112,14 @@ class Project extends Model
     public function requests(): HasMany
     {
         return $this->hasMany(ProjectRequest::class);
+    }
+
+    /**
+     * @return HasOne<ProjectAnalytics, $this>
+     */
+    public function analytics(): HasOne
+    {
+        return $this->hasOne(ProjectAnalytics::class);
     }
 
     /**

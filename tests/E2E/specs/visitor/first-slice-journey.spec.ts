@@ -45,7 +45,10 @@ test('register, create, publish, view, and find a project in search', async ({ p
     await wizard.clickNext();
     await expect(page).toHaveURL(/\/user\/projects$/);
     await expect(page.getByText(projectTitle)).toBeVisible();
-    await expect(page.getByText('Privat').first()).toBeVisible();
+    // `EditProjectCard` marks visibility with the Eye/EyeOff icon only, no
+    // text label — `EyeOff`'s is the only one of the two with a diagonal
+    // strike-through `<line>`.
+    await expect(myProjects.card(projectTitle).locator('svg line')).toBeVisible();
 
     // 3. The owner can view their own private project.
     await myProjects.editFirstProject();

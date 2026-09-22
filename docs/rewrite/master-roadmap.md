@@ -209,7 +209,7 @@ Slice sizes: S = a few days of focused work, M = about a week, L = more than a w
   `docs/deployment`.
 - **Human approval**: no.
 
-### Slice 5 — My Projects and project lifecycle completion — **S/M**
+### Slice 5 — My Projects and project lifecycle completion — **S/M** — ✅ implemented 2026-09-22 (`docs/rewrite/fifth-slice.md`)
 
 - **Covers**: 17–19.
 - **Scope**: card actions with the 1-per-second toggle throttle, delete, click-through; skeleton and `WelcomeCard`;

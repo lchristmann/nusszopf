@@ -219,7 +219,7 @@ test.describe('edit access', () => {
         await wizard.goto();
         await wizard.fillStepOne('Fremdes Projekt', 'Ziel', 'Beschreibung');
         await wizard.finishFromStepOne();
-        await page.getByTestId('link_edit-project').first().click();
+        await page.getByTestId('route_edit-project_projects-page').first().click();
         const editUrl = page.url();
 
         const other = await browser.newContext();

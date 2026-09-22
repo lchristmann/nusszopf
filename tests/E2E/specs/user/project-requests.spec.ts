@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { ProjectWizardPage } from '../../pages/ProjectWizardPage';
 import { ProjectEditPage } from '../../pages/ProjectEditPage';
 import { RequestDialogPage } from '../../pages/RequestDialogPage';
+import { MyProjectsPage } from '../../pages/MyProjectsPage';
 import { SearchPage } from '../../pages/SearchPage';
 import { registerFreshUser } from '../../support/session';
 import { uniqueSuffix } from '../../support/env';
@@ -21,6 +22,7 @@ test('creates requests in the wizard and shows, edits and deletes them through t
     const wizard = new ProjectWizardPage(page);
     const requests = new RequestDialogPage(page);
     const edit = new ProjectEditPage(page);
+    const myProjects = new MyProjectsPage(page);
 
     // --- Wizard step 3 -------------------------------------------------------------------
     await wizard.goto();
@@ -96,7 +98,7 @@ test('creates requests in the wizard and shows, edits and deletes them through t
     await expect(page.getByText('Projekt wurde erstellt.')).toBeVisible();
 
     // --- Detail page: the request as a card and in its dialog ---------------------------------
-    await page.getByRole('link', { name: 'Ansehen' }).first().click();
+    await myProjects.openProject(title);
     const projectId = new URL(page.url()).pathname.split('/').at(-1)!;
     await expect(page.getByText('Projektgesuche')).toBeVisible();
     await expect(requests.cards).toHaveCount(1);

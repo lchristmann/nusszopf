@@ -120,7 +120,9 @@ The historical domain is deliberately small: five tables plus one view. There is
 
 ### `ProjectAnalytics`
 
-- Status: Confirmed (schema)
+- Status: Confirmed (schema). **Implemented** in the fifth slice as `App\Models\ProjectAnalytics`
+  (`project_analytics`, `views` only — no `contactRequests` column, BUG-017) — see
+  `docs/rewrite/fifth-slice.md`.
 - Historical table: `public.projects_analytics`.
 - Purpose: Confirmed — per-project counters, replacing the earlier `projects.views` column.
 - Identifier: `project_id` — `text`, `PRIMARY KEY` and `UNIQUE`, FK to `projects.id` (`ON UPDATE/DELETE CASCADE`). This is a 1:1 extension table, not an independent entity with its own id.

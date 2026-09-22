@@ -156,3 +156,43 @@ it('shows no owner banner to another authenticated user', function () {
 
     $this->actingAs(User::factory()->create())->get(route('projects.show', $project))->assertDontSee('So sieht das Projekt für andere Nusszopfer:innen aus.');
 });
+
+// --- Visitor counter (BUG-001) and report link -----------------------------------------------
+
+/**
+ * `<x-text variant="textXs" class="font-medium">{{ $digit }}</x-text>` is the
+ * one place on this screen using exactly this class combination — a direct
+ * substring/order assertion on lone digit characters like "0" would be
+ * meaningless noise against the rest of the page.
+ */
+function visitorCounterDigits(string $html): array
+{
+    preg_match_all('/<p class="nz-text-xs font-medium">([^<]*)<\/p>/', $html, $matches);
+
+    return $matches[1];
+}
+
+it('shows the visitor counter as four zero-padded digits, incremented by this visit', function () {
+    $project = Project::factory()->public()->create();
+
+    $response = $this->get(route('projects.show', $project))->assertSeeHtml('data-test="visitor-counter_project-detail"');
+
+    expect(visitorCounterDigits($response->getContent()))->toBe(['0', '0', '0', '1']);
+});
+
+it('shows the visitor counter capped at "+999 9" past 9999 views', function () {
+    $project = Project::factory()->public()->create();
+    $project->analytics()->create(['views' => 10000]);
+
+    $response = $this->actingAs($project->user)->get(route('projects.show', $project));
+
+    expect(visitorCounterDigits($response->getContent()))->toBe(['+', '9', '9', '9', '9']);
+});
+
+it('shows a "Projekt melden" mailto link carrying the project id in the subject', function () {
+    $project = Project::factory()->public()->create();
+
+    $this->get(route('projects.show', $project))
+        ->assertSee('Projekt melden')
+        ->assertSee('href="mailto:mail@nusszopf.org?subject=Projekt melden (ID: '.$project->id.')"', false);
+});

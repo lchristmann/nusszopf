@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { ProjectWizardPage } from '../../pages/ProjectWizardPage';
 import { ProjectEditPage } from '../../pages/ProjectEditPage';
+import { MyProjectsPage } from '../../pages/MyProjectsPage';
 import { SearchPage } from '../../pages/SearchPage';
 import { registerFreshUser } from '../../support/session';
 import { uniqueSuffix } from '../../support/env';
@@ -18,9 +19,10 @@ test('creates, publishes, edits and re-verifies a project through the historical
     const user = await registerFreshUser(page);
     const wizard = new ProjectWizardPage(page);
     const edit = new ProjectEditPage(page);
+    const myProjects = new MyProjectsPage(page);
 
     // --- Start creation from My Projects -----------------------------------
-    await page.getByTestId('btn_create-project_user-projects').click();
+    await page.getByTestId('route_create-project_projects-page').first().click();
     await expect(page).toHaveURL(/\/user\/project\/create\?step=0$/);
     await expect(wizard.stepLabel('Beschreibung 1/2')).toBeVisible();
     await expect(page.getByRole('heading', { level: 1, name: 'Neues Projekt' })).toBeVisible();
@@ -95,7 +97,7 @@ test('creates, publishes, edits and re-verifies a project through the historical
     await expect(page.getByText(title)).toBeVisible();
 
     // --- Project detail ---------------------------------------------------------------------
-    await page.getByRole('link', { name: 'Ansehen' }).first().click();
+    await myProjects.openProject(title);
     const projectId = new URL(page.url()).pathname.split('/').at(-1)!;
     await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();
     await expect(page.getByText('Eine grüne Fläche für alle schaffen.')).toBeVisible();

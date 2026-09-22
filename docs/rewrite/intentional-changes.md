@@ -22,17 +22,17 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 
 ### `ProjectAnalytics` counters become server-controlled only
 
-- Status: Proposed
+- Status: Approved (implemented in the fifth slice, 2026-09-22)
 - Date: 2026-09-18
-- Historical behavior: `projects_analytics.views`/`contactRequests` are insertable/updatable by **any** caller (`anonymous` or `user`) for **any** `project_id`, with no ownership check — confirmed in `docs/domain/permissions.md`, `docs/domain/entities.md`, `docs/security/README.md`.
-- Why it is defective/incomplete or why change is required: this is a genuine, exploitable defect — any visitor can set any project's view/contact counters to an arbitrary value, including for projects they don't own or that are private. Nothing in the product's intent (a simple visitor/engagement counter) requires this to be client-writable at all.
-- New behavior: `views`/`contactRequests` are incremented exclusively by server-side application code (e.g. a controller action on project view / contact-button click), never exposed as a directly client-writable field/column through any authorization boundary.
-- Affected screens: Project detail (`docs/design/screens.md`).
-- Affected domain: `Project`/`ProjectAnalytics` (`docs/domain/entities.md`, `docs/domain/permissions.md`).
-- Affected workflows: "view counting" and "contact counting" (`docs/domain/workflows.md`, if a `contactRequests`-incrementing workflow is confirmed by frontend evidence — the backend pass only confirms the column exists, not which frontend action increments it).
-- Migration implications: none for existing/seed data; only the write path changes.
-- Tests: Feature test asserting an unauthenticated/unauthorized request cannot set an arbitrary counter value; regression test reproducing the historical exploit path to prove it's closed.
-- Approval: pending.
+- Historical behavior: `projects_analytics.views`/`contactRequests` are insertable/updatable by **any** caller (`anonymous` or `user`) for **any** `project_id`, with no ownership check — confirmed in `docs/domain/permissions.md`, `docs/domain/entities.md`, `docs/security/README.md`. The view counter's row-creation/increment mechanism is a client-side `localStorage['nusszopf_viewed_projects']` dedupe (`pages/projects/[id].js`), excluding the owner; `contactRequests` has no confirmed call site (BUG-017, resolved dead, not reproduced).
+- Why it is defective/incomplete or why change is required: this is a genuine, exploitable defect — any visitor can set any project's view counter to an arbitrary value, including for projects they don't own or that are private. Nothing in the product's intent (a simple visitor/engagement counter) requires this to be client-writable at all.
+- New behavior: `views` is incremented exclusively by `App\Livewire\Projects\ProjectDetail::recordView()`, never exposed as a directly client-writable field/column through any authorization boundary. The dedupe mechanism (register B-4) is a signed cookie (`nz_viewed_projects`), not `localStorage` — the increment now happens server-side, so there is no client script left to read `localStorage` from — with the same "not spoof-proof" property the historical mechanism had (clearing cookies re-counts). The owner's own views are still excluded.
+- Affected screens: Project detail (`docs/design/screens.md`) — the `VisitorCounter` digit display and the "Projekt melden" report link, both previously scaffolded out, now render.
+- Affected domain: `Project`/`ProjectAnalytics` (`docs/domain/entities.md`, `docs/domain/permissions.md`); `ProjectAnalytics` is its own table (register B8), keyed by `project_id`, `views` only.
+- Affected workflows: "view counting" (`docs/domain/workflows.md`). No `contactRequests`-incrementing workflow was ever confirmed; it is not reproduced (BUG-017's own entry covers that decision).
+- Migration implications: `database/migrations/2026_09_22_090000_create_project_analytics_table.php` (new table, no existing data affected).
+- Tests: `tests/Feature/Projects/ProjectAnalyticsTest.php` — first-visit creates the row at 1, further visits increment, cookie dedupe (same browser, different project), owner never counted, an authenticated stranger is counted, no route exposes a client-writable counter (the closed exploit path), cascade delete; `tests/Feature/Projects/ProjectDetailContentTest.php` — digit rendering and the `+9999` cap; `tests/E2E/specs/visitor/project-detail.spec.ts` — the counter increments once per guest browser, never for the owner.
+- Approval: Approved (the maintainer's approval of the master roadmap, 2026-09-21, which schedules it as slice 5).
 
 ---
 
@@ -150,7 +150,7 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 
 ### `ProjectAnalytics.contactRequests` is not reproduced
 
-- Status: Proposed
+- Status: Approved (implemented in the fifth slice, 2026-09-22 — `ProjectAnalytics` has no `contactRequests` column at all)
 - Date: 2026-09-18 (pre-implementation review pass)
 - Historical behavior: `projects_analytics.contactRequests` exists in the schema with the same
   bounds/permission shape as `views` (`docs/domain/entities.md`), but has **no increment call site
