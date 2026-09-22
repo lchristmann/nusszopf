@@ -30,8 +30,20 @@ class UserFactory extends Factory
             // no whitespace and <= 15 chars.
             'name' => fake()->unique()->userName(),
             'email' => fake()->unique()->safeEmail(),
+            'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
         ];
+    }
+
+    /**
+     * Decision A-3 (docs/rewrite/decisions-register.md) has no historical
+     * equivalent, so — matching Laravel's own convention for this trait —
+     * the factory default is verified; tests targeting the new gate opt into
+     * this state explicitly.
+     */
+    public function unverified(): static
+    {
+        return $this->state(fn (): array => ['email_verified_at' => null]);
     }
 }
