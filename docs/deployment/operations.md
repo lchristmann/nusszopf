@@ -52,14 +52,18 @@ docker compose logs scheduler                            # the two heartbeats, o
 
 ## What happens when a dependency is down
 
-Verified on the production stack (2026-09-22) by stopping each service, working, and starting it again:
+Verified on the production stack (2026-09-22) by stopping each service, working, and starting it again
+(the two Google/OAuth rows are reasoned from the code instead — Google itself isn't a Compose service
+to stop):
 
 | Down | What the visitor sees | What the stack does | Recovery |
 |---|---|---|---|
 | **Meilisearch** | Pages work; search shows no hits ("Verzopft…" — the historical behavior for a failed query); a project saved meanwhile is not searchable yet | `/health` → 503 with `search` failing. Index jobs fail and retry at +10 s, +30 s, +1 min, +2 min; after five attempts (about 3½ minutes) the job lands in `failed_jobs` | Start Meilisearch. The retry that follows finds it; give it up to a minute (the worker's DNS cache). Jobs already in `failed_jobs`: `queue:retry all`, or simply `search:reindex` |
 | **Redis** | Every page is a 500 (sessions live in Redis); `/up` stays 200 | `/health` → 503 (it needs no session, so it still answers); the queue worker crash-loops and Docker restarts it; nothing is lost that was queued before | Start Redis; everything resumes by itself, no manual step |
 | **PostgreSQL** | Pages that read data fail; the search page shell still renders | `/health` → 503 with `database` failing; `php-fpm` stays "healthy" (its check is PHP-FPM's own ping) | Start PostgreSQL; resumes by itself |
-| **SMTP** | Contact form: submitting still succeeds (the mail is queued, not sent inline) | Queued mailables (`App\Mail\ContactMail implements ShouldQueue`) ride the same queue and retry/backoff policy as search indexing; an unreachable mail server fails and retries the same way, landing in `failed_jobs` after five attempts. Verified at the Feature-test level (`tests/Feature/Mail/ContactMailTest.php`, "leaves a failed contact send in failed_jobs instead of losing it"), not yet with a live production-stack drill the way the three rows above were | `queue:retry all` once SMTP is reachable again |
+| **SMTP** | Contact form, registration, "forgot password", a login lockout: the triggering action still succeeds (every mail is queued, never sent inline) | Every mailable (`App\Mail\ContactMail`/`WelcomeMail`/`ChangePasswordMail`/`VerifyEmailMail`/`BlockedAccountMail`, all `ShouldQueue`) rides the same queue and retry/backoff policy as search indexing; an unreachable mail server fails and retries the same way, landing in `failed_jobs` after five attempts. Verified at the Feature-test level (e.g. `tests/Feature/Mail/ContactMailTest.php`, "leaves a failed contact send in failed_jobs instead of losing it"), not yet with a live production-stack drill the way the three rows above were | `queue:retry all` once SMTP is reachable again |
+| **Google (OAuth)** — no GOOGLE_CLIENT_ID/SECRET configured | The login screen simply has no Google button; password/username login and registration are entirely unaffected | Both `/auth/google/*` routes 404 | Set `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` and restart; not a dependency the app requires to function |
+| **Google (OAuth)** — configured but unreachable/erroring mid-login | A generic "Sorry, da lief etwas schief." toast on the login screen; no account is created or modified | `GoogleController::callback()` catches the failure and redirects to `/login`, synchronously (this is a request-time auth exchange, not a background job — there is nothing to retry) | The visitor retries, or uses password/username login instead |
 
 A saved change is never lost when search is down: the database is written first and the index job is retried; `search:reindex` repairs whatever still went wrong.
 

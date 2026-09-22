@@ -79,7 +79,16 @@ location — "Ortsunabhängig" projects are unaffected. `LOCATIONIQ_URL` (defaul
 endpoint) exists only to point at a compatible service; the development/CI Compose stack points it at
 its bundled `locationiq-stub`.
 
-The list will grow (not shrink) as mail/newsletter/object-storage land in later slices; every variable keeps a default or an explicit `REQUIRED` note.
+### Google login (`GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`)
+
+Google login (docs/authentication/README.md §3) needs an OAuth 2.0 client from the
+[Google Cloud Console](https://console.cloud.google.com/apis/credentials) with an authorized redirect
+URI of `<APP_URL>/auth/google/callback`. Without both variables set, the "Google" button on the login
+screen is hidden and its routes 404 — password/username login is completely unaffected.
+`GOOGLE_REDIRECT_URI` only needs setting if the app is reachable at a different URL than `APP_URL`
+(e.g. behind a path-rewriting proxy).
+
+The list will grow (not shrink) as newsletter/object-storage land in later slices; every variable keeps a default or an explicit `REQUIRED` note.
 
 ## Installation (operator path)
 
@@ -94,7 +103,7 @@ sh install.sh https://nusszopf.example.org          # or: sh install.sh https://
 `install.sh` downloads the release's `docker-compose.yaml` and `.env.production.example`, writes `.env` with freshly generated secrets
 (`APP_KEY`, `DB_PASSWORD`, `MEILISEARCH_KEY`, `HEALTH_TOKEN`; mode 600), and refuses to overwrite an existing `.env`. Then:
 
-1. Optionally edit `.env` — `MAIL_*`, `LOCATIONIQ_KEY`, `APP_BIND=127.0.0.1` when a reverse proxy runs on this host. Everything a first-time operator *must* set is marked `REQUIRED` in the file, and Compose refuses to start with a clear message if one is missing.
+1. Optionally edit `.env` — `MAIL_*`, `LOCATIONIQ_KEY`, `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`, `APP_BIND=127.0.0.1` when a reverse proxy runs on this host. Everything a first-time operator *must* set is marked `REQUIRED` in the file, and Compose refuses to start with a clear message if one is missing.
 2. `docker compose up -d` — the first start pulls the images, waits for PostgreSQL, Redis and Meilisearch, migrates the database and starts everything.
 3. `docker compose ps` — every service `healthy` (the queue worker and scheduler need up to a few minutes, they prove themselves with a heartbeat per minute).
 4. `docker compose exec php-fpm php artisan nusszopf:health` — the version and every dependency `ok`.

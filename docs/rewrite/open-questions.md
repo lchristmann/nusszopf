@@ -74,39 +74,39 @@ Unresolved historical behavior, consolidated from the archaeology pass across `d
 
 ### Auth0 password policy authoritative configuration
 
-- Status: Unknown
+- Status: Resolved (register B-2; already implemented since the first vertical slice in `App\Rules\PasswordPolicy`, formally recorded in `docs/rewrite/decisions-register.md` 2026-09-21) — this entry itself was stale (master-roadmap §2.3, B-2), fixed in this pass.
 - Area: Authentication
 - Sources inspected: `auth-login/src/containers/SignUpForm/SignUpForm.js` (client-side mirror of the policy, 5 composed rules)
 - Historical evidence: a source comment ties the rule directly to "Auth0 Dashboard/Authentication/Database/PasswordPolicy" — i.e. the authoritative config lived in the Auth0 tenant dashboard, which is not present in any repository.
 - Conflicting evidence: none.
 - Possible interpretations: the 5 client-mirrored rules are the complete policy (most likely, since Auth0's dashboard UI for a custom password policy typically maps 1:1 to exactly these kinds of rules), or the dashboard had additional server-enforced rules never mirrored client-side.
 - Recommended investigation: none possible from repository evidence alone; treat the 5 client-mirrored rules as the best available approximation.
-- Decision: adopt the 5-rule policy as the Nusszopf 2 default, explicitly flagged as "best available approximation, not verified against the authoritative source" — record as an architecture decision once approved.
-- Date: 2026-09-18
+- Decision: adopted the 5-rule policy as the Nusszopf 2 default, explicitly flagged as "best available approximation, not verified against the authoritative source" — also applied by the seventh slice's password-reset screen (`App\Livewire\Auth\ResetPassword`), the identical historical requirement (§4.2).
+- Date: 2026-09-18; resolved 2026-09-22.
 
 ### IP-block thresholds and breached-password-check scope
 
-- Status: Unknown
+- Status: Split. The **IP-block threshold** half is Resolved (register B-7/B-12; implemented in the seventh slice). The **breached-password-check** half remains explicitly Deferred (register C2) — not built, not scheduled.
 - Area: Authentication / Security
 - Sources inspected: `emails-nusszopf/src/auth0/{blocked-account,password-breach-alert}.mjml`, `be-nusszopf/docs/auth0`
 - Historical evidence: both are Auth0 platform features (Attack Protection, breached-password detection); their thresholds/behavior live entirely in Auth0 tenant configuration, not in any repository.
 - Conflicting evidence: none.
 - Possible interpretations: cannot be recovered from available evidence.
-- Recommended investigation: none possible; this must be a fresh decision (see `docs/rewrite/architecture-decisions.md`), not a port.
-- Decision: pending architecture decision.
-- Date: 2026-09-18
+- Recommended investigation: none possible; this was a fresh decision (see `docs/rewrite/architecture-decisions.md`), not a port.
+- Decision: a documented, reasonable default — 5 failed attempts locks the *specific account* (not the historical IP-wide block) for 15 minutes, plus the existing per-IP rate limit (60s) from the first slice; `App\Mail\BlockedAccountMail` notifies only that account's owner, once per lock, with a real unblock link (`App\Http\Controllers\Auth\UnblockLoginController`) that clears exactly that IP/account pair. Breached-password detection is not built (register C2 stands).
+- Date: 2026-09-18; IP-block half resolved 2026-09-22 (`docs/rewrite/intentional-changes.md`, "Google login... and login-lockout notice").
 
 ### 8-hour rolling session duration — deliberate or default?
 
-- Status: Unknown
+- Status: Resolved (register B-13; already implemented since the first vertical slice — `SESSION_LIFETIME=480` in `.env.example`/`.env.production.example`) — this entry itself was stale, fixed in this pass.
 - Area: Authentication
 - Sources inspected: `webapp/src/utils/libs/auth0.js` (`rollingDuration` literal, 8 hours)
 - Historical evidence: the value is a literal in application config; no comment or documentation explains why 8 hours specifically.
 - Conflicting evidence: none.
 - Possible interpretations: a deliberate product choice (e.g. "log back in daily"), or simply the `@auth0/nextjs-auth0` library's suggested/example default that was never revisited.
 - Recommended investigation: check `be-nusszopf/docs/auth0` for any session-duration rationale; otherwise unresolvable.
-- Decision: preserve 8 hours as the Nusszopf 2 default pending a specific reason to change it — record as an architecture decision.
-- Date: 2026-09-18
+- Decision: preserve 8 hours as the Nusszopf 2 default pending a specific reason to change it — Laravel's session lifetime resets on activity by default (a rolling window), matching the historical mechanic.
+- Date: 2026-09-18; resolved 2026-09-22.
 
 ### `be-nusszopf` apparent staleness relative to `web-nusszopf`
 

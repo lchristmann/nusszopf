@@ -16,7 +16,7 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 | BUG-001 | Authorization / Project analytics           | High     | Fix                                 | Implemented — fifth slice (2026-09-22)                                                  |
 | BUG-002 | Authorization / Request visibility          | High     | Fix                                 | Implemented — third slice (2026-09-21)                                                  |
 | BUG-003 | Auth / route protection                     | Medium   | Fix                                 | Implemented — first vertical slice (2026-09-18)                                         |
-| BUG-004 | Auth / avatar sync                          | Low      | Fix                                 | Spec'd — `intentional-changes.md`                                                       |
+| BUG-004 | Auth / avatar sync                          | Low      | Fix                                 | Implemented — seventh slice (2026-09-22)                                                |
 | BUG-005 | Email / contact form                        | Medium   | Fix                                 | Implemented — sixth slice (2026-09-22)                                                  |
 | BUG-006 | Email / copy                                | Trivial  | Fix                                 | Spec'd — `intentional-changes.md`; the affected templates (newsletter subscribe/unsubscribe) are slice 9's, not slice 6's |
 | BUG-007 | Domain / `visibility` constraint            | Low      | Fix                                 | Implemented — first vertical slice (2026-09-18)                                         |
@@ -42,6 +42,7 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 | BUG-027 | Domain / project creation is not atomic     | Low      | Fix                                 | Implemented — third slice (2026-09-21)                                                  |
 | BUG-028 | Domain / request title length               | Trivial  | Preserve                            | Decided — third slice (2026-09-21): the field caps at 30, validation allows 40           |
 | BUG-029 | Security / search hit rendering             | Medium   | Fix                                 | Implemented — fourth slice (2026-09-21); ratified by the maintainer as an intentional Fix (2026-09-22) |
+| BUG-030 | Auth / no e-mail verification               | Low      | Fix (product change, decision A-3)  | Implemented — seventh slice (2026-09-22)                                                                |
 
 ---
 
@@ -550,3 +551,26 @@ directly from `web-nusszopf/projects/webapp/src/containers/user/ProjectForm/*` a
 - Corrected behavior: the text is escaped; only the engine's highlight is emphasis (`<em>`, the tag the
   historical index used), asked for through private-use marker characters instead of markup.
 - Full spec: `docs/rewrite/intentional-changes.md` → "Search hits are escaped, only the highlight is markup (BUG-029)".
+
+### BUG-030 — No e-mail verification exists
+
+- Affected area: Authentication, `User.email`
+- Historical behavior: no `email_verified` concept anywhere — no template, no Auth0 rule, no gate.
+  Registering and logging in are never blocked by it (Confirmed, `docs/authentication/README.md` §2).
+- Evidence: `docs/authentication/README.md` §2, §8; `docs/rewrite/decisions-register.md` (A-3).
+- Severity/impact: Low — not a security defect on its own (the historical product never claimed to
+  verify addresses), but the maintainer's decision treats an unverified address as too weak a basis
+  for two specific, higher-trust actions: publishing it as a project's public contact, and (from
+  slice 9) subscribing it to the newsletter.
+- Classification: **Fix (deliberate product change, decision A-3)** — not a defect in historical
+  behavior; the historical absence itself is preserved as the default (login/registration stay
+  ungated). What changes is that Nusszopf 2 now tracks `email_verified_at` and gates exactly those two
+  actions on it.
+- Intended Nusszopf 2 behavior: registration and every new Google-created account send a verification
+  e-mail (`App\Mail\VerifyEmailMail`, no historical template — new copy); the "Persönlich" project
+  contact option requires `hasVerifiedEmail()`; Google login links/creates an account only when Google
+  itself asserts the address is verified, and a Google login always marks the local account verified.
+- Regression test: `tests/Feature/Auth/EmailVerificationTest.php`, `tests/Feature/Projects/ProjectEditTest.php`
+  and `ProjectWizardTest.php` ("Persönlich" gating), `tests/Feature/Auth/GoogleLoginTest.php`.
+- Full spec: `docs/rewrite/intentional-changes.md` → "E-mail verification, gating only the personal
+  contact and the future newsletter subscription (BUG-030)".

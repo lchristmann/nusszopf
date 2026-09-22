@@ -32,7 +32,7 @@ Limits, stated plainly:
 
 | Area | Implemented | Not implemented |
 |---|---|---|
-| Auth | Register (username/email/password, 5-rule policy), login (email or username), logout, server-side route gate (BUG-003) | Password reset, Google login, welcome/reset/blocked emails, throttling, avatar sync (BUG-004), email-verification decision |
+| Auth | Register (username/email/password, 5-rule policy), login (email or username), logout, server-side route gate (BUG-003), password reset, Google login (Socialite, hidden if unconfigured), welcome/reset/blocked-account/verification emails, per-account login lockout with notice (B-7/B-12), avatar sync (BUG-004), e-mail verification gating the personal contact (BUG-030, A-3) | Profile-page resend-verification UI (only reachable from the project contact field so far — slice 8) |
 | Projects | Detail (owner/visitor, share, location/period/rich text/team/motto/contact), wizard (4 steps), edit (3 views), delete, visibility policy (BUG-007/021) | Requests, contact dialog, visitor counter, report link, avatar image |
 | My Projects | Grid of own projects, "create" button, edit link | Per-card actions (visibility toggle throttled 1/s, delete, click-through), skeleton, `WelcomeCard` verification |
 | Search | Meilisearch/Scout indexing of projects, results page, visibility defense-in-depth (BUG-008/009 search-sync path) | Request hits nested in project cards, category filter popover, load-more, scroll-to-top, skeleton/no-hits states (**verify** against `screen-specs.md`), reindex/recovery command |
@@ -240,7 +240,7 @@ Slice sizes: S = a few days of focused work, M = about a week, L = more than a w
 - **Done when**: the slice-2 mailto scaffold row is removed; search-result contact journey (BUG-018) completed.
 - **Human approval**: no (A-6 is about later campaign mail, not this).
 
-### Slice 7 — Authentication completion — **M/L**
+### Slice 7 — Authentication completion — **M/L** — ✅ implemented 2026-09-22 (`docs/rewrite/seventh-slice.md`)
 
 - **Covers**: 1–6.
 - **Scope**: forgot-password + set-new-password screens; reset email; Google login via Socialite, visible only

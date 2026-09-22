@@ -16,7 +16,12 @@ Source: `historical/web-nusszopf/projects/e2e/cypress/integration/*.spec.js` (Cy
 
 `[data-test="route_create-project-page"]`, however, **does not exist anywhere in the `web-nusszopf` source tree at the studied commit** (`b915940`, see `docs/rewrite/source-map.md`) — confirmed by an exhaustive grep across `webapp/src/**`, including `HowToSection`'s sibling `StepCard.js` (which renders three static, non-interactive informational cards with no links at all). This is a genuine, confirmed evidence gap, not an unopened file: **step 3 of this journey cannot be verified against source and may describe a CTA that had already been removed from the product by this commit** while the E2E spec was left unchanged (a stale/dead E2E assertion, not an unread implementation detail). Treat step 3's specific selector and destination as **Unconfirmed** for the rewrite — the *general* fact that creating a project while logged out routes through the login flow is still almost certainly true (consistent with `docs/design/navigation.md`'s hamburger-menu "Create project" behavior, which does the same thing), but do not reproduce a `route_create-project-page` `data-test` hook or assume it lives on the landing page specifically without new evidence.
 
-## Journey 2 — Registration, logout, login (`_auth.spec.js`)
+## Journey 2 — Registration, logout, login (`_auth.spec.js`) — password reset/lockout completed, seventh slice
+
+**Updated, seventh slice** (`docs/rewrite/seventh-slice.md`): this journey's historical scope was
+register → logout → login only — no forgot-password, no Google, no lockout. Those are new coverage
+(`tests/E2E/specs/visitor/password-reset.spec.ts`, `login-lockout.spec.ts`), not a port, since no
+historical Cypress spec drove `auth-password` or Auth0's Attack Protection at all.
 
 **Actors:** anonymous visitor → registered user. **Precondition:** `before()` (not `beforeEach`) visits `/` once — the whole file runs as one continuous session, per the structural note above.
 
@@ -115,7 +120,7 @@ Actual search behavior in the historical product is exercised **only incidentall
 3. If the project's `contact` field is set to the owner's own address: **Contact** instead opens the visitor's mail client directly via `mailto:` — no in-app dialog, no server involvement.
 4. Optionally, the visitor picks a specific `Request` first (via `RequestDialog`), and the outgoing message's subject reflects "`<project title>` / `<request title>`" rather than just the project title.
 
-**Playwright coverage:** `tests/E2E/specs/visitor/project-detail.spec.ts` drives the in-app dialog path end-to-end and asserts the mail actually arrives (recipient, subject, body) via the dev/CI Mailpit catcher's own API, not just `Mail::fake()`; the `mailto:` path is asserted at the Feature-test level (`tests/Feature/Projects/ProjectDetailContentTest.php`) and via `tests/E2E/specs/user/project-journey.spec.ts`'s existing `href` assertion. This was new coverage, not a port — no historical E2E exercised this at all.
+**Playwright coverage:** `tests/E2E/specs/visitor/project-detail.spec.ts` drives the in-app dialog path end-to-end and asserts the mail actually arrives (recipient, subject, body) via the dev/CI Mailpit catcher's own API, not just `Mail::fake()`; the `mailto:` path is asserted at the Feature-test level (`tests/Feature/Projects/ProjectDetailContentTest.php`). This was new coverage, not a port — no historical E2E exercised this at all. **Updated, seventh slice:** `tests/E2E/specs/user/project-journey.spec.ts` no longer exercises the personal-contact `mailto:` path itself — the freshly-registered account it uses is unverified, and "Persönlich" now requires a verified e-mail address (decision A-3, `docs/rewrite/seventh-slice.md`); it exercises the "Über Nusszopf" dialog open/close instead, and the personal-contact rendering stays covered at the Feature-test level.
 
 ## Journey 8 — Avatar upload / crop (Inferred — no E2E evidence)
 
@@ -126,6 +131,23 @@ Actual search behavior in the historical product is exercised **only incidentall
 3. `users.picture` updates; the previous picture (if any) is queued for storage cleanup (per the historical `clean_up_users_digitalocean`-equivalent job, made durable per BUG-009's fix).
 
 This journey's *internals* (crop UI mechanics, exact upload endpoint) were never opened during archaeology — the four steps above are the structural shape only; exact validation (file size/type limits) is Unknown and must not be invented without either finding further historical evidence or making an explicit, documented product decision.
+
+## Seventh slice — password reset, login lockout
+
+`tests/E2E/specs/visitor/password-reset.spec.ts`: registers an account (in a throwaway browser context,
+since registration logs in immediately and the reset screens are guest-only), requests a reset link from
+`/password/forgot`, retrieves the mail via the dev/CI Mailpit catcher, follows the link to
+`/password/reset/{token}`, sets a new password and logs in with it.
+
+`tests/E2E/specs/visitor/login-lockout.spec.ts`: five failed logins against one account lock it out (a
+sixth attempt fails even with the correct password); the mailed "Das bin ich!" link is retrieved via
+Mailpit and, once visited, login with the correct password succeeds again.
+
+Google login is not driven through a real browser in Playwright (there is no historical E2E precedent —
+`docs/authentication/README.md` §3's Google button was never exercised by Cypress either — and stubbing
+an OAuth provider's own consent screen at the browser level would test Playwright's network mocking, not
+Nusszopf 2's own code); it is covered at the Feature-test level instead
+(`tests/Feature/Auth/GoogleLoginTest.php`, using Socialite's own testing fake).
 
 ## Not covered by this pass
 

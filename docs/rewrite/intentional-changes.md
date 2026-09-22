@@ -54,7 +54,7 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 
 ### Social-login avatar sync only fills an empty picture, never overwrites
 
-- Status: Proposed
+- Status: Approved — implemented in the seventh slice (2026-09-22)
 - Date: 2026-09-18
 - Historical behavior: `be-nusszopf/auth0/rules/userPicture.js` unconditionally overwrites `users.picture` from the social provider's avatar on **every** social login, with no guard comparing against an existing/manually-set value. Confirmed in `docs/domain/workflows.md` ("Workflow: profile picture replacement").
 - Why it is defective/incomplete or why change is required: a user who uploads a custom avatar and later logs in again via Google/Apple would have it silently reverted — there is no plausible product intent behind destroying a user's own choice on every login; this looks like an oversight (the rule likely predates avatar upload existing, or was never revisited after it was added).
@@ -64,7 +64,79 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 - Affected workflows: "Workflow: account creation / sync on first authentication," "Workflow: profile picture replacement" (`docs/domain/workflows.md`).
 - Migration implications: none.
 - Tests: Feature test — a user with a manually-set picture who logs in via Google keeps their picture; a user with no picture who logs in via Google gets the social picture.
-- Approval: pending.
+- Approval: Approved (the maintainer's approval of the master roadmap, 2026-09-21, which schedules it as slice 7). `tests/Feature/Auth/GoogleLoginTest.php`.
+
+---
+
+### E-mail verification, gating only the personal contact and the future newsletter subscription (BUG-030)
+
+- Status: Approved — implemented in the seventh slice (2026-09-22)
+- Date: 2026-09-22
+- Historical behavior: no `email_verified` concept existed anywhere in historical Nusszopf — no
+  template, no Auth0 rule, no gate on login/registration. Confirmed in `docs/authentication/README.md`
+  §2, §8.
+- Why it changes: this is not a defect fix — the maintainer's decision (A-3,
+  `docs/rewrite/decisions-register.md`, 2026-09-21) is a deliberate product change: an unverified
+  address is too weak a basis for two specific, higher-trust actions (publishing it as a project's
+  public contact; the future newsletter subscription, slice 9), even though nothing about
+  login/registration itself was ever broken.
+- New behavior: `users.email_verified_at` (nullable timestamp). Registration and every newly-created
+  Google account send `App\Mail\VerifyEmailMail` (new copy — no historical template to mirror; a
+  signed link, 7-day expiry, that only marks the address verified, never signs the visitor in). Login
+  and registration remain completely ungated by verification, exactly as historically. The project
+  wizard's and edit screen's settings step reject choosing "Persönlich" (the owner's own e-mail as
+  public contact) while `hasVerifiedEmail()` is false, with a resend-verification action next to the
+  error. Google login (see the "Social-login avatar sync" entry above and the Google-login decision
+  below) links an existing account by e-mail, or creates a new one, only when Google itself asserts
+  the address is verified — and a Google-authenticated account is always marked verified immediately,
+  since there is nothing further to confirm.
+- Affected screens: project creation wizard step 4 ("Einstellungen"), project edit "Einstellungen".
+- Affected domain: `User.email_verified_at` (new column); `Project.contact` (no schema change, new
+  save-time rule).
+- Affected workflows: registration, Google login, "Workflow: set project contact" (the "Persönlich"
+  branch only).
+- Migration implications: `database/migrations/2026_09_22_120000_add_auth_completion_columns_to_users_table.php`
+  adds the column, defaulting every existing row to unverified (there are none yet — A-2, no data
+  import).
+- Tests: `tests/Feature/Auth/EmailVerificationTest.php` (mail sent, non-gating of login, signed-link
+  verify/expiry/tamper, resend); `tests/Feature/Projects/ProjectEditTest.php` and `ProjectWizardTest.php`
+  ("Persönlich" gating, allow/deny); `tests/Feature/Auth/GoogleLoginTest.php` (link/create only when
+  Google asserts verified, always pre-verified on creation).
+- Approval: Approved (the maintainer's decision A-3, ratified by the master roadmap's slice-7 scope).
+
+---
+
+### Google login (Socialite), password reset, welcome mail and login-lockout notice — new functionality, not bug fixes
+
+- Status: Approved — implemented in the seventh slice (2026-09-22)
+- Date: 2026-09-22
+- This entry exists only to record that these were built to already-specified historical behavior
+  (`docs/authentication/README.md` §3, §4, §6; `docs/email/README.md` items 1–3) and the roadmap's own
+  adopted defaults (register B-6, B-7, B-12), not as a bug-fix-protocol item — no historical defect is
+  being corrected here, so there is nothing to classify as Fix/Preserve/Replace in `bugs.md` beyond
+  what already exists. Recorded per `CLAUDE.md`'s "leave no docs stale" rule, alongside three
+  deliberate implementation choices worth naming:
+  - **Login lockout is per-account, not per-IP** (register B-7's "send the notice only to the account
+    owner when lockout is per-account" — Auth0 itself blocked the IP; Nusszopf 2 keeps the existing
+    first-slice per-IP rate limit *and* adds a second, per-account limiter, because only the latter
+    lets the app identify a real account to notify). `App\Mail\BlockedAccountMail` drops the
+    historical `{{ user.city }}`/`{{ user.country }}` clauses — no geo-IP lookup service is a
+    dependency this self-hosted app should require (same category as the ui-avatars.com and
+    SendGrid-CDN-logo replacements) — the source IP is kept.
+  - **The "Das bin ich!" unblock link actually clears the specific IP/account lock** (a signed URL,
+    not a decorative link to a page that does nothing) — the closest faithful equivalent to Auth0's
+    real unblock action without inventing a manual-unlock admin surface that doesn't exist historically.
+  - **A password-visibility (eye/eye-off) toggle was added to every password field**, including the
+    two that already existed from the first slice (login, register) — `docs/design/components.md`
+    lists `InputGroup` as "Listed, not Read" (usage only, not measured), so this is a reasonable,
+    documented reproduction of the historical `InputGroup.RightElement` pattern present on every
+    historical password field (`LoginForm.js`, `SignUpForm.js`, `PasswordForm.js`), not a pixel-exact
+    trace.
+- Tests: `tests/Feature/Auth/PasswordResetTest.php`, `tests/Feature/Auth/GoogleLoginTest.php`,
+  `tests/Feature/Auth/LoginLockoutTest.php`, `tests/Feature/Auth/EmailVerificationTest.php` (welcome
+  mail assertion).
+- Approval: Approved (the maintainer's approval of the master roadmap, 2026-09-21, which schedules
+  all of this as slice 7).
 
 ---
 
