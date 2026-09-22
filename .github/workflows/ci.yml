@@ -137,6 +137,16 @@ jobs:
       - run: cp .env.example .env
       - name: Let the search page run out of results quickly
         run: echo "SEARCH_PAGE_SIZE=5" >> .env
+      # compose.dev.yaml's meilisearch service only falls back to its default master key
+      # (nusszopf-dev-master-key-change-me) through Compose's own `${MEILISEARCH_KEY:-...}` substitution when
+      # the variable is empty or unset; .env.example ships MEILISEARCH_KEY empty. php-fpm gets MEILISEARCH_KEY
+      # from the same `.env` via `env_file`, which passes the literal (empty) value through with no such
+      # fallback. Left as-is, php-fpm's Scout client authenticates with an empty key against a server actually
+      # running with the fallback key, so scout:flush/scout:import get rejected for a missing Authorization
+      # header. Set to the same value the meilisearch service falls back to, matching E2E_MEILISEARCH_KEY
+      # passed to Playwright below.
+      - name: Match the dev stack's Meilisearch master key
+        run: sed -i "s|^MEILISEARCH_KEY=.*|MEILISEARCH_KEY=nusszopf-dev-master-key-change-me|" .env
       # Before the stack starts: Compose hands `.env` to the containers as environment, and an empty APP_KEY
       # there would win over a key generated into the file afterwards.
       # The containers run as UID/GID from `.env` (default 1000); the runner's user owns the checkout.
