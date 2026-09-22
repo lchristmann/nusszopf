@@ -14,5 +14,7 @@ Third-party components bundled in the source or the built application (all GPL-3
 - Feather icons: MIT, Copyright (c) 2013-2023 Cole Bemis (resources/icons/LICENSE-feather.txt);
   one glyph from Lucide (ISC).
 
-Not covered by this license: third-party names and logos (for example Auth0, Vercel, LocationIQ),
-which belong to their owners and are not distributed in this repository.
+Not covered by this license: third-party names and logos (for example Auth0, Vercel, LocationIQ,
+Google), which belong to their owners. The Google "G" mark (`resources/icons/google.svg`) is
+reproduced only as the historical, standard "Sign in with Google" affordance for the optional
+Google-login button (App\Http\Controllers\Auth\GoogleController).

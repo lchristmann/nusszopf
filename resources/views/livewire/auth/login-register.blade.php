@@ -55,9 +55,8 @@
                     <x-input-error :message="$errors->first('emailOrName')" />
                 </div>
                 <div>
-                    <x-input
+                    <x-password-field
                         wire:model="loginPassword"
-                        type="password"
                         name="loginPassword"
                         data-test="input_login-password"
                         aria-label="Passwort"
@@ -66,9 +65,27 @@
                     <x-input-error :message="$errors->first('loginPassword')" />
                 </div>
                 <div class="text-center pt-2">
-                    <x-button type="submit" data-test="btn_login">Einloggen</x-button>
+                    <x-button type="submit" data-test="btn_login" class="mx-1.5 mb-4 sm:mx-2">Einloggen</x-button>
+                    <x-button :as="'a'" href="{{ route('password.request') }}" data-test="btn_forgot-password" class="mx-1.5 mb-4 sm:mx-2">Passwort vergessen</x-button>
                 </div>
             </form>
+            @if ($googleConfigured)
+                <div>
+                    <div class="flex items-center justify-center mt-2">
+                        <div class="w-10 h-px mr-3 bg-steel-700 sm:w-20"></div>
+                        <x-text variant="textSm" class="text-center">Oder einloggen mit</x-text>
+                        <div class="w-10 h-px ml-3 bg-steel-700 sm:w-20"></div>
+                    </div>
+                    <div class="mt-6 text-center">
+                        <x-button :as="'a'" href="{{ route('google.redirect') }}" data-test="btn_login-google" class="bg-steel-100">
+                            <span class="inline-flex items-center gap-2">
+                                <x-icon name="google" :size="20" />
+                                Google
+                            </span>
+                        </x-button>
+                    </div>
+                </div>
+            @endif
         @else
             <form wire:submit="register" class="space-y-4 w-full">
                 <div>
@@ -94,9 +111,8 @@
                     <x-input-error :message="$errors->first('email')" />
                 </div>
                 <div>
-                    <x-input
+                    <x-password-field
                         wire:model="registerPassword"
-                        type="password"
                         name="registerPassword"
                         data-test="input_register-password"
                         aria-label="Passwort"
@@ -111,6 +127,17 @@
                         zu
                     </x-checkbox>
                     <x-input-error :message="$errors->first('privacy')" class="!ml-8" />
+                </div>
+                <div>
+                    {{--
+                        Rendered but unwired (inventory item 27,
+                        docs/rewrite/master-roadmap.md) — the `Lead` model and
+                        signup-side double opt-in belong to slice 9. Intentional
+                        scaffolding, docs/rewrite/seventh-slice.md.
+                    --}}
+                    <x-checkbox wire:model="newsletter" name="newsletter" data-test="checkbox_newsletter" aria-label="Nussigen Newsletter abonnieren" class="whitespace-normal">
+                        Nussigen Newsletter abonnieren
+                    </x-checkbox>
                 </div>
                 <div class="text-center pt-2">
                     <x-button type="submit" data-test="btn_register">Registrieren</x-button>

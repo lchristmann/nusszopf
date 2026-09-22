@@ -2,25 +2,35 @@
 
 namespace App\Livewire\Auth;
 
+use App\Http\Controllers\Auth\GoogleController;
+use App\Mail\BlockedAccountMail;
+use App\Mail\WelcomeMail;
 use App\Models\User;
 use App\Rules\PasswordPolicy;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 /**
  * The historical combined Login/Register screen (docs/authentication/README.md
- * §2-3) — one screen, tab-switched, not two separate routes. Registration
- * fields are deliberately scoped to this slice's acceptance criterion #1
- * only (username + email + password + privacy consent) — no newsletter
- * checkbox, no social login, no password reset (docs/rewrite/first-slice.md).
+ * §2-3) — one screen, tab-switched, not two separate routes.
  */
 #[Layout('components.layout')]
 class LoginRegister extends Component
 {
+    /**
+     * Register B-12 (docs/rewrite/decisions-register.md): a documented,
+     * reasonable default — Auth0's own threshold is unrecoverable.
+     */
+    private const int MAX_ACCOUNT_ATTEMPTS = 5;
+
+    private const int ACCOUNT_LOCK_DECAY_SECONDS = 900;
+
     public string $tab = 'login';
 
     public string $emailOrName = '';
@@ -35,6 +45,13 @@ class LoginRegister extends Component
 
     public bool $privacy = false;
 
+    /**
+     * Rendered per inventory item 27 (docs/rewrite/master-roadmap.md) but
+     * wired to nothing yet — the `Lead` model doesn't exist until slice 9.
+     * Intentional scaffolding, recorded in docs/rewrite/seventh-slice.md.
+     */
+    public bool $newsletter = false;
+
     public function mount(string $tab = 'login'): void
     {
         $this->tab = $tab === 'register' ? 'register' : 'login';
@@ -42,9 +59,10 @@ class LoginRegister extends Component
 
     public function login(): void
     {
-        $key = 'login:'.request()->ip();
+        $ip = request()->ip();
+        $ipKey = 'login:'.$ip;
 
-        if (RateLimiter::tooManyAttempts($key, maxAttempts: 5)) {
+        if (RateLimiter::tooManyAttempts($ipKey, maxAttempts: 5)) {
             $this->addError('emailOrName', 'Zu viele Versuche. Bitte warte kurz.');
 
             return;
@@ -62,14 +80,39 @@ class LoginRegister extends Component
             ->orWhere('name', $this->emailOrName)
             ->first();
 
-        if (! $user || ! Hash::check($this->loginPassword, $user->password)) {
-            RateLimiter::hit($key, decaySeconds: 60);
+        $accountKey = $user ? 'login-account:'.$user->id : null;
+
+        if ($accountKey && RateLimiter::tooManyAttempts($accountKey, maxAttempts: self::MAX_ACCOUNT_ATTEMPTS)) {
+            $this->addError('loginPassword', 'Dieser Account ist vorübergehend gesperrt. Wir haben dir eine E-Mail geschickt.');
+
+            return;
+        }
+
+        if (! $user || ! $user->password || ! Hash::check($this->loginPassword, $user->password)) {
+            RateLimiter::hit($ipKey, decaySeconds: 60);
+
+            if ($user && $accountKey) {
+                $attemptsBefore = RateLimiter::attempts($accountKey);
+                RateLimiter::hit($accountKey, decaySeconds: self::ACCOUNT_LOCK_DECAY_SECONDS);
+
+                // B-7 (register): send the "blocked" notice only to the
+                // account owner, and only once — right as the lock trips,
+                // not on every further attempt while it holds.
+                if ($attemptsBefore + 1 === self::MAX_ACCOUNT_ATTEMPTS) {
+                    $this->sendBlockedAccountNotice($user, $ip);
+                }
+            }
+
             $this->addError('loginPassword', 'Sorry, da lief etwas schief.');
 
             return;
         }
 
-        RateLimiter::clear($key);
+        RateLimiter::clear($ipKey);
+
+        if ($accountKey) {
+            RateLimiter::clear($accountKey);
+        }
 
         Auth::login($user);
         session()->regenerate();
@@ -114,14 +157,38 @@ class LoginRegister extends Component
             'password' => $this->registerPassword,
         ]);
 
+        // Welcome (docs/email/README.md item 1) sends unconditionally, exactly
+        // as historically. The verification e-mail (decision A-3) is new —
+        // login/registration are never gated by it.
+        Mail::send(new WelcomeMail($user));
+        $user->sendEmailVerificationNotification();
+
         Auth::login($user);
         session()->regenerate();
 
         $this->redirectRoute('projects.mine', navigate: false);
     }
 
+    public function googleConfigured(): bool
+    {
+        return GoogleController::configured();
+    }
+
+    private function sendBlockedAccountNotice(User $user, string $ip): void
+    {
+        $url = URL::temporarySignedRoute(
+            'login.unblock',
+            now()->addDay(),
+            ['ip' => $ip, 'user' => $user->id],
+        );
+
+        Mail::send(new BlockedAccountMail($user, $ip, $url));
+    }
+
     public function render(): View
     {
-        return view('livewire.auth.login-register');
+        return view('livewire.auth.login-register', [
+            'googleConfigured' => $this->googleConfigured(),
+        ]);
     }
 }
