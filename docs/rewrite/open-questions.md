@@ -203,3 +203,12 @@ Unresolved historical behavior, consolidated from the archaeology pass across `d
 - Sources inspected: exhaustive grep of `route_search-page` / `route_create-project-page` across the entire `web-nusszopf` source tree, plus `HowToSection.js`/`StepCard.js`.
 - Resolution: `route_search-page` **Confirmed** to live in `HowToSection.js` (see `docs/design/screens.md`/`docs/journeys/README.md` Journey 1). `route_create-project-page` **does not exist anywhere in this checkout** — not CMS data, not an unopened container, genuinely absent from the source tree at the studied commit. This is now treated as a confirmed stale/dead E2E assertion (the test may have already been broken at this historical commit), not an evidence gap to keep investigating. See `docs/journeys/README.md` Journey 1 for the corrected treatment.
 - Date resolved: 2026-09-18
+
+### Account deletion and orphaned external state
+
+- Status: **Resolved** (resolved by design, not by new archaeology)
+- Area: Domain / Account deletion
+- Sources inspected: `be-nusszopf/hasura/metadata/tables.yaml` (`clean_up_deleted_user` event trigger), `docs/domain/workflows.md` ("Workflow: account deletion"), re-confirmed during slice 8.
+- Historical evidence: the `users` row was deleted immediately (a Hasura mutation); an async webhook (`clean_up_deleted_user`) was relied on to delete the Auth0 identity and the stored avatar file afterwards, with 3 retries/10 s/60 s timeout and no dead-letter queue. Once that webhook gave up, the row that would have driven a retry was already gone, so a failure there was silent and permanent — real risk of an orphaned Auth0 identity or a stored file surviving after the Nusszopf-side account no longer existed.
+- Decision: Nusszopf 2 has no external identity provider to leak (no Auth0), so only the search index and the local avatar file are the equivalent "external" state. Rather than reproduce the async-webhook shape, `App\Support\AccountDeleter` deletes each owned `Project` one at a time through Eloquent (not a raw DB cascade), which fires the same `deleting`/`deleted` model events `App\Models\Project::booted()` already uses to de-index the project and its requests — a raw `ON DELETE CASCADE` raises no events and would silently orphan those search documents. The avatar file and the `users` row are removed last, inside one transaction, so a failure before that point leaves the account fully intact and safe to retry instead of partially deleted. Full reasoning in `App\Support\AccountDeleter`'s class docblock.
+- Date resolved: 2026-09-23 (slice 8)

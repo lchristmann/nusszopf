@@ -43,6 +43,7 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 | BUG-028 | Domain / request title length               | Trivial  | Preserve                            | Decided — third slice (2026-09-21): the field caps at 30, validation allows 40           |
 | BUG-029 | Security / search hit rendering             | Medium   | Fix                                 | Implemented — fourth slice (2026-09-21); ratified by the maintainer as an intentional Fix (2026-09-22) |
 | BUG-030 | Auth / no e-mail verification               | Low      | Fix (product change, decision A-3)  | Implemented — seventh slice (2026-09-22)                                                                |
+| BUG-031 | Security / avatar upload server-side trust  | Medium   | Fix                                  | Implemented — eighth slice (2026-09-23)                                                                 |
 
 ---
 
@@ -574,3 +575,33 @@ directly from `web-nusszopf/projects/webapp/src/containers/user/ProjectForm/*` a
   and `ProjectWizardTest.php` ("Persönlich" gating), `tests/Feature/Auth/GoogleLoginTest.php`.
 - Full spec: `docs/rewrite/intentional-changes.md` → "E-mail verification, gating only the personal
   contact and the future newsletter subscription (BUG-030)".
+
+---
+
+### BUG-031 — Avatar upload trusts the client's crop/compress step entirely
+
+- Affected area: Profile, avatar upload (`pages/api/upload.js`, `AvatarDialog.js`)
+- Historical behavior: the upload endpoint issues an S3 presigned POST constrained only by
+  `content-length-range: [0, 1048576]` (≤1 MB) and a fixed key/ACL — nothing server-side ever
+  decodes, re-encodes, or re-crops the uploaded bytes. The 150×150 round crop and JPEG compression
+  are entirely client-side (`react-easy-crop` + `compressorjs`); a request built by hand rather than
+  through the real dialog could upload any file under 1 MB with a `.jpeg`-shaped key, whatever its
+  actual content or dimensions.
+- Evidence: `pages/api/upload.js`, `containers/user/AvatarDialog/AvatarDialog.js`, `stories/organisms/
+  Cropper/utils/index.js` — all read in full for slice 8.
+- Severity/impact: Medium — not a known historical incident, but a real, demonstrable gap: nothing
+  server-side confirms the stored file is actually a decodable image, or that it is square/bounded, and
+  a project rendering it via a plain `<img>` tag has no independent size/content guarantee.
+- Classification: **Fix**
+- Intended Nusszopf 2 behavior: the server still accepts whatever the client crops and uploads, but
+  `App\Support\AvatarUploader` decodes every upload with GD, rejects anything that doesn't decode as a
+  raster image, center-crops it to a square, caps it at 512×512, and re-encodes it as a fresh JPEG
+  before it is ever stored or served — independent of what the client claimed.
+- Implementation consequence: Livewire's built-in temporary-upload mechanism replaces the historical
+  two-step signed-POST dance (register B8 — local disk, not S3); the 1 MB cap becomes a Livewire
+  validation rule (`image`, `max:5120` pre-re-encode, generous because the server re-encodes
+  regardless of input size) rather than an S3 bucket-policy condition.
+- Regression test: `tests/Feature/Profile/AvatarUploadTest.php` — a non-image file with an `image/jpeg`
+  content-type is rejected; an oversized/non-square source image is still stored as a bounded square.
+- Full spec: `docs/rewrite/intentional-changes.md` → "Avatar uploads are re-validated and re-encoded
+  server-side (BUG-031)".

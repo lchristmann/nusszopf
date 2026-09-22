@@ -92,7 +92,8 @@ Items with **no** historical basis are listed separately in 2.2 so they are not 
 18. `VisitorCounter` and server-controlled view counting (BUG-001). Historical: once per browser via
     `localStorage`, owner excluded.
 19. "Projekt melden" `mailto:` report link with the project id in the subject.
-20. Author avatar image (currently initial-on-grey scaffold, see 2.3).
+20. Author avatar image — implemented in slice 8; the initial-on-grey circle remains the fallback for
+    an account without a picture (see 2.3).
 21. `ContactDialog` → server-sent email when contact is "Über Nusszopf"; `Reply-To` (BUG-005),
     validation/sanitization (BUG-010), rate limiting (Preserve), copy fix (BUG-006 applies to newsletter).
 
@@ -100,8 +101,9 @@ Items with **no** historical basis are listed separately in 2.2 so they are not 
 
 22. Avatar dialog: crop, upload (≤1 MB JPEG, versioned filename `…nz_vN.jpeg`), replace, old-file cleanup.
 23. Newsletter subsection (subscribe with privacy checkbox / unsubscribe with native confirm).
-24. Sponsoring subsection and two `InfoCard`s (contact document link, support `mailto:`) — copy is CMS
-    data not yet transcribed (Unknown: literal text/targets).
+24. Sponsoring subsection and two `InfoCard`s (contact document link, support `mailto:`) — copy
+    transcribed verbatim in slice 8 (`profile.data.js`); the contact-document `InfoCard` itself is not
+    reproduced (`docs/rewrite/intentional-changes.md`).
 25. Delete account: native confirm → cascade → logout → success toast; external cleanup (avatar file).
 
 **Newsletter**
@@ -261,7 +263,7 @@ Slice sizes: S = a few days of focused work, M = about a week, L = more than a w
 - **Parity**: the auth screens' `NavHeader mode="external"` and `Footer variant="auth0"` variants (Confirmed live).
 - **Human approval**: no (A-3 decided; only the intentional-changes entry needs recording).
 
-### Slice 8 — Profile, avatars and account deletion — **L**
+### Slice 8 — Profile, avatars and account deletion — **L** — ✅ implemented 2026-09-23 (`docs/rewrite/eighth-slice.md`)
 
 - **Covers**: 20, 22–25.
 - **Scope**: `/user/profile` (skeleton, two-column layout); avatar dialog with crop (client crop, server
@@ -391,7 +393,7 @@ nothing historical requires them and self-hosting principles say to avoid unnece
 | B-5 | MJML porting approach | Compile committed MJML to HTML at build time into Blade mail views (keeps the historical source of truth); no runtime Node in production images |
 | B-6 | Google login when credentials are unset | Button hidden and route disabled (dependency-dropped category; same pattern as `LOCATIONIQ_KEY`); record in `intentional-changes.md` |
 | B-7 | Throttle thresholds, whether lockout sends the "IP blocked" email | Documented default (register B12); send the notice only to the account owner when lockout is per-account; document |
-| B-8 | Avatar storage layout and serving path | Local disk, versioned names, served by Laravel or by mounting the volume read-only into `web` (see §6) |
+| B-8 | Avatar storage layout and serving path | **Decided (slice 8): local disk, versioned names, `web` mounts `laravel-storage` read-only and serves `/storage/...` directly via nginx** (see §6, `docs/deployment/README.md` "Avatar storage and serving") |
 | B-9 | Newsletter duplicate-subscribe behavior (historical HTTP 500 is clearly a defect, not a feature) | Classify as new BUG entry (Fix): idempotent, resend confirmation; needs `bugs.md`/`intentional-changes.md` entries first |
 | B-10 | Search page size and debounce values | Read from `search.service.js`, do not guess |
 | B-11 | Health endpoint content, backup script layout (Tier 1, register B2), reindex command name, version exposure | As already adopted |
@@ -418,7 +420,7 @@ the small items each slice must handle:
 | Redis / queues | Yes | queue-worker exists; mail and index sync ride on it; failure/retry must be *tested* (BUG-009) |
 | Scheduler | Yes, currently unused | Nothing periodic is historically required |
 | Scout / Meilisearch | Yes | A second searchable model (`ProjectRequest`) and grouped queries; extend `scout:sync-index-settings`; reindex command to document |
-| Storage | **Needs one concrete decision** | `compose.prod.yaml`'s `web` (nginx) service has no storage volume while uploads will live in `laravel-storage`; avatars would 404 unless nginx mounts the volume or Laravel serves them. Decide in slice 8 (B-8). Not an architecture change, a wiring fix |
+| Storage | **Resolved (slice 8, B-8)** | `web` now mounts `laravel-storage` read-only and serves `/storage/...` directly (`docker-compose.yaml`, `docker/nginx/default.conf`); `docker/php/Dockerfile` bakes the `public/storage` symlink into both images at build time. Not an architecture change, a wiring fix |
 | Mail | Yes | SMTP is the universal path (B5); needs a dev/CI mail catcher service in `compose.dev.yaml` |
 | Authentication | Yes | Add Socialite (new dependency) and password-broker views; Laravel-native reset tokens replace Auth0 |
 | Image handling | Yes | GD is already in the CI PHP extension list; a client-side crop needs one small JS dependency — the rule "smallest client-side solution" applies; evaluate in slice 8 |

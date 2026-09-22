@@ -454,6 +454,113 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 
 ---
 
+### Avatar uploads are re-validated and re-encoded server-side (BUG-031)
+
+- Status: Approved (roadmap-authorized, "server validation/re-encode ≤1 MB" — `docs/rewrite/master-roadmap.md`, "Slice 8"); recorded 2026-09-23
+- Date: 2026-09-23
+- Historical behavior: `pages/api/upload.js` issues an S3 presigned POST constrained only by a ≤1 MB `content-length-range`
+  condition; nothing server-side decodes or re-validates the uploaded bytes — the round 150×150 crop/compress is entirely
+  client-side (`AvatarDialog.js`, `react-easy-crop` + `compressorjs`).
+- Why it is defective/incomplete or why change is required: a request built by hand rather than through the real crop
+  dialog can upload any ≤1 MB file with a `.jpeg`-shaped key, of any actual content, format or dimensions — a real,
+  demonstrable server-side trust gap (`.claude/rules/05-engineering-quality.md`: do not trust the client crop).
+- New behavior: `App\Support\AvatarUploader` decodes every upload with GD, rejects anything that does not decode as a
+  raster image, center-crops it to a square, caps it at 512×512, and re-encodes it as a fresh JPEG before it is ever stored
+  or served — independent of what the client claimed. The historical outcome (a small, square, JPEG avatar) is unchanged;
+  only the trust boundary moves server-side.
+- Affected screens: Profile (avatar dialog).
+- Affected domain: `User.picture`.
+- Affected workflows: "profile picture replacement" (`docs/domain/workflows.md`).
+- Migration implications: none.
+- Tests: `tests/Feature/Profile/AvatarUploadTest.php` — a non-image file with a spoofed `image/jpeg` content-type is
+  rejected; an oversized/non-square source image is still stored bounded and square.
+- Approval: Approved (roadmap-authorized; see `docs/rewrite/master-roadmap.md`, "Slice 8", "Human approval: no").
+
+---
+
+### Avatar storage moves to the local disk, with a version counter instead of a parsed filename
+
+- Status: Approved (register B4 "local disk in v1", B8 "storage layout and serving path"); recorded 2026-09-23
+- Date: 2026-09-23
+- Historical behavior: avatars are stored in DigitalOcean Spaces (S3-compatible object storage) under a key that encodes its
+  own version, `{userId}|nz_v{n}.jpeg` — the *next* version is recovered by parsing that string back out of the previous
+  `picture` value on every upload (`pages/api/upload.js`'s `createFilename`).
+- Why it changes: register decision B4 (no object storage in v1) already settled *where* avatars live; **B8** is settled
+  here — `laravel-storage`'s local `public` disk (`docs/deployment/README.md`, "Avatar storage and serving"). A dedicated
+  `users.avatar_version` counter, rather than parsing the counter back out of a stored string, is the same category as
+  BUG-007's `visibility` CHECK constraint: pure robustness hardening with no product-visible difference (old versions are
+  still replaced, not accumulated, and the served URL still changes on every upload).
+- New behavior: `avatars/{user}-v{n}.jpg` on the `public` disk; `docker/php/Dockerfile` bakes a `public/storage` symlink
+  into both production images, `web` mounts `laravel-storage` read-only so nginx serves `/storage/...` directly (the real
+  `compose.prod.yaml` gap the roadmap flagged, §6 "Architecture audit"); the previous file is deleted only after the new
+  one is written successfully.
+- Affected screens: Profile, Project detail/My Projects (author avatar).
+- Affected domain: `User.picture`, `User.avatar_version` (new column).
+- Affected workflows: "profile picture replacement" (`docs/domain/workflows.md`).
+- Migration implications: `database/migrations/2026_09_23_090000_add_avatar_version_to_users_table.php` (new column, no
+  existing data affected — no historical rows to import, register A-2).
+- Tests: `tests/Feature/Profile/AvatarUploadTest.php` (version increments, old file removed after a successful replace,
+  a failed upload does not delete the existing file).
+- Approval: Approved (roadmap-authorized; register B4/B8).
+
+---
+
+### Account deletion avoids the historical orphaned-external-state risk
+
+- Status: Approved (roadmap-authorized, "in a way that cannot orphan external state" — `docs/rewrite/master-roadmap.md`,
+  "Slice 8"); recorded 2026-09-23
+- Date: 2026-09-23
+- Historical behavior: the `users` row is deleted immediately (a Hasura mutation, cascading `projects`/`requests`/
+  `projects_analytics` at the DB level); an async webhook (`clean_up_deleted_user`) is relied on to delete the Auth0
+  identity and the stored avatar file afterwards, with only 3 retries/10 s/60 s timeout and no dead-letter queue. Once that
+  webhook gives up, the row that would have driven a retry is already gone, so a failure there is silent and permanent.
+  Full detail: `docs/rewrite/open-questions.md`, "Account deletion and orphaned external state" (resolved there).
+- Why it is defective/incomplete or why change is required: this is a real, demonstrated risk shape (a webhook whose
+  failure is both silent and unrecoverable), not a product behavior worth reproducing — nothing about the product's intent
+  (delete the account and everything it owns) requires the *cleanup mechanism itself* to be fire-and-forget.
+- New behavior: `App\Support\AccountDeleter` deletes each owned `Project` one at a time through Eloquent (`Project::delete()`,
+  not a raw DB cascade), which fires the same `deleting`/`deleted` model events `App\Models\Project::booted()` already uses
+  to de-index the project and its requests — a raw `ON DELETE CASCADE` raises no model events and would silently orphan
+  those search documents. The avatar file and the `users` row are removed last, inside one transaction, so a failure before
+  that point leaves the account fully intact and safe to retry instead of partially deleted. There is no Auth0 identity to
+  clean up (no external auth provider, `docs/authentication/README.md`).
+- Affected screens: Profile (delete-account subsection).
+- Affected domain: `User`, `Project`, `ProjectRequest`, `ProjectAnalytics`.
+- Affected workflows: "account deletion" (`docs/domain/workflows.md`).
+- Migration implications: none (cascade FKs already exist, `docs/rewrite/fifth-slice.md`).
+- Tests: `tests/Feature/Profile/DeleteAccountTest.php` — cascade completeness (projects, requests, analytics), search
+  documents removed, avatar file removed, `UserPolicy` self-only.
+- Approval: Approved (roadmap-authorized; see `docs/rewrite/master-roadmap.md`, "Slice 8").
+
+---
+
+### Profile page's "Kontakt speichern" vCard link is not reproduced
+
+- Status: Approved (extends the sixth-slice mail-footer decision, `resources/views/components/mail/layout.blade.php`);
+  recorded 2026-09-23
+- Date: 2026-09-23
+- Historical behavior: one of Profile's two `InfoCard`s links to a static `nusszopf-vcard.vcf` download — a vCard
+  hardcoding the *original* nusszopf.org's own name, organization and contact addresses, so a visitor can save "Nusszopf"
+  as a phone contact.
+- Why it changes: the sixth slice already established this exact reasoning for the same vCard, reached from the
+  transactional-mail footer: publishing the original operator's own identity as a downloadable contact card from every
+  self-hosted instance would misattribute a stranger's operator identity — the same category `docs/rewrite/master-roadmap.md`
+  schedules as "operator mailbox/identity are configuration" for slice 10. Slice 8 applies the same, already-decided
+  reasoning to the second place the identical link appeared, rather than silently diverging from it.
+- New behavior: the "Kontakt speichern" `InfoCard` is omitted. The other `InfoCard` (the `mail@nusszopf.org` support
+  address) is kept, consistent with `Project::NUSSZOPF_CONTACT`/`MAIL_FROM_ADDRESS` staying as documented defaults "for
+  now" elsewhere in the app (same mail-layout precedent) — a live mailbox address is a lower-stakes default than a
+  downloadable, saveable identity artifact. The Sponsoring subsection's Steady link is likewise kept as a historical
+  default for the same reason (a passive external link, not an artifact vouching for an identity).
+- Affected screens: Profile.
+- Affected domain: none.
+- Affected workflows: none.
+- Migration implications: none.
+- Tests: `tests/Feature/Profile/ProfilePageTest.php` — asserts the support `mailto:` renders and the vCard link does not.
+- Approval: Approved (extends the sixth slice's already-approved decision, `docs/rewrite/sixth-slice.md`).
+
+---
+
 ## Explicitly deferred (not proposed here, need a product decision first — see `docs/rewrite/open-questions.md` / `docs/rewrite/architecture-decisions.md`)
 
 The following were identified during archaeology as *possible* candidates for change but are deliberately **not** proposed above, because reasonable product intent could explain the historical behavior as-is:
