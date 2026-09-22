@@ -35,6 +35,17 @@ export class LoginPage {
         await this.page.getByTestId('btn_login').click();
     }
 
+    async loginExpectingError(emailOrName: string, password: string): Promise<void> {
+        await this.page.getByTestId('input_email-or-name').fill(emailOrName);
+        await this.page.getByTestId('input_login-password').fill(password);
+        await this.page.getByTestId('btn_login').click();
+        await expect(this.page.getByTestId('input_login-password')).toBeVisible();
+    }
+
+    async goToForgotPassword(): Promise<void> {
+        await this.page.getByTestId('btn_forgot-password').click();
+    }
+
     async expectFieldError(testId: string): Promise<void> {
         await expect(this.page.getByTestId(testId)).toBeVisible();
     }

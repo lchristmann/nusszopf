@@ -16,7 +16,7 @@ import { uniqueSuffix } from '../../support/env';
 test('creates, publishes, edits and re-verifies a project through the historical wizard', async ({ page, browser }) => {
     const suffix = uniqueSuffix();
     const title = `Nachbarschaftsgarten ${suffix}`;
-    const user = await registerFreshUser(page);
+    await registerFreshUser(page);
     const wizard = new ProjectWizardPage(page);
     const edit = new ProjectEditPage(page);
     const myProjects = new MyProjectsPage(page);
@@ -87,8 +87,13 @@ test('creates, publishes, edits and re-verifies a project through the historical
     await expect(wizard.stepLabel('Einstellungen')).toBeVisible();
     await expect(wizard.next).toHaveText('Erstellen');
     await expect(page.getByTestId('radio_public_project-visibility')).toBeChecked();
+    // "Persönlich" now requires a verified e-mail address (decision A-3,
+    // docs/rewrite/seventh-slice.md) — a freshly-registered account is not
+    // verified, so this journey keeps the default "Über Nusszopf" contact;
+    // the personal-contact path itself, and the new verification gate, are
+    // covered by tests/Feature/Projects/ProjectWizardTest.php and
+    // tests/Feature/Auth/EmailVerificationTest.php.
     await expect(page.getByTestId('radio_nusszopf_project-contact')).toBeChecked();
-    await wizard.choosePersonalContact();
     await wizard.clickNext();
 
     // --- Created: My Projects, success toast, nothing left of the draft ------------------
@@ -109,7 +114,13 @@ test('creates, publishes, edits and re-verifies a project through the historical
     await expect(page.getByTestId('description_project-detail').locator('ul li')).toHaveText('Beete bauen');
     await expect(page.getByTestId('team_project-detail')).toContainText('Anna und Ben');
     await expect(page.getByTestId('motto_project-detail')).toContainText('Gemeinsam wächst mehr.');
-    await expect(page.getByTestId('btn_contact_project-detail')).toHaveAttribute('href', new RegExp(`^mailto:${user.email}`));
+    // "Über Nusszopf" opens the in-app dialog, not a `mailto:` link (sixth
+    // slice) — the personal-contact `mailto:` rendering itself is covered by
+    // tests/Feature/Projects/ProjectDetailContentTest.php.
+    await page.getByTestId('btn_contact_project-detail').click();
+    await expect(page.getByTestId('contact-dialog')).toBeVisible();
+    await page.getByRole('button', { name: 'Schließen' }).click();
+    await expect(page.getByTestId('contact-dialog')).toBeHidden();
     await expect(page.getByText('So sieht das Projekt für andere Nusszopfer:innen aus.')).toBeVisible();
 
     // --- Edit: entered from the owner banner, loaded with the stored values -------------------

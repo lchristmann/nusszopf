@@ -354,6 +354,19 @@ it('creates the project with every wizard field on the final step, then redirect
     expect(session('toast'))->toBe(['type' => 'success', 'message' => 'Projekt wurde erstellt.']);
 });
 
+// --- Contact e-mail verification (decision A-3, docs/rewrite/decisions-register.md) --------------
+
+it('refuses to create a project with "Persönlich" as the contact for an unverified owner', function () {
+    $user = User::factory()->unverified()->create();
+
+    completeStepOne(wizard($user))->call('next')->call('next')->call('next')
+        ->set('contact', true)
+        ->call('next')
+        ->assertHasErrors(['contact']);
+
+    expect(Project::count())->toBe(0);
+});
+
 it('defaults to a public project reachable through Nusszopf when the last step is left alone', function () {
     $user = User::factory()->create();
 

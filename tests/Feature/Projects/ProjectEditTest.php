@@ -328,3 +328,44 @@ it('cannot delete another user\'s project', function () {
 
     expect(Project::find($project->id))->not->toBeNull();
 });
+
+// --- Contact e-mail verification (decision A-3, docs/rewrite/decisions-register.md) --------------
+
+it('refuses to save "Persönlich" as the contact for an unverified owner', function () {
+    $owner = User::factory()->unverified()->create();
+    $project = fullProject($owner, ['visibility' => 'public', 'contact' => Project::NUSSZOPF_CONTACT]);
+
+    editing($project, $owner)
+        ->call('selectView', 'Einstellungen')
+        ->set('contact', true)
+        ->call('saveSettings')
+        ->assertHasErrors(['contact']);
+
+    expect($project->fresh()->contact)->toBe(Project::NUSSZOPF_CONTACT);
+});
+
+it('lets a verified owner save "Persönlich" as the contact', function () {
+    $owner = User::factory()->create(['email' => 'owner@example.test']);
+    $project = fullProject($owner, ['visibility' => 'public', 'contact' => Project::NUSSZOPF_CONTACT]);
+
+    editing($project, $owner)
+        ->call('selectView', 'Einstellungen')
+        ->set('contact', true)
+        ->call('saveSettings')
+        ->assertHasNoErrors(['contact']);
+
+    expect($project->fresh()->contact)->toBe('owner@example.test');
+});
+
+it('still lets an unverified owner keep or choose "Über Nusszopf"', function () {
+    $owner = User::factory()->unverified()->create();
+    $project = fullProject($owner, ['visibility' => 'public', 'contact' => 'owner@example.test']);
+
+    editing($project, $owner)
+        ->call('selectView', 'Einstellungen')
+        ->set('contact', false)
+        ->call('saveSettings')
+        ->assertHasNoErrors(['contact']);
+
+    expect($project->fresh()->contact)->toBe(Project::NUSSZOPF_CONTACT);
+});
