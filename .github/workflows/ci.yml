@@ -156,6 +156,14 @@ jobs:
           echo "GID=$(id -g)" >> .env
       - name: Generate the application key
         run: sed -i "s|^APP_KEY=.*|APP_KEY=base64:$(openssl rand -base64 32)|" .env
+      # compose.dev.yaml mounts node-modules-cache/vendor-cache at node_modules/vendor,
+      # both inside the bind-mounted checkout. If those directories don't exist yet (a
+      # fresh checkout never has them), Docker creates the mountpoints on the host itself
+      # when the containers start, and it does so as root. The runner's own `npm ci`
+      # further down then hits EACCES trying to write into a root-owned node_modules.
+      # Pre-creating them as the runner user keeps Docker from touching their ownership.
+      - name: Create the volume mountpoints so Docker doesn't create them as root
+        run: mkdir -p node_modules vendor
       - name: Start the real dev stack
         run: docker compose -f compose.dev.yaml up -d --build workspace web php-fpm queue-worker postgres redis meilisearch
       - name: Wait for the app to be healthy
