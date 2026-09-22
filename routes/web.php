@@ -1,8 +1,14 @@
 <?php
 
 use App\Health\HealthChecker;
+use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\LogoutController;
+use App\Http\Controllers\Auth\ResendVerificationController;
+use App\Http\Controllers\Auth\UnblockLoginController;
+use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Livewire\Auth\ForgotPassword;
 use App\Livewire\Auth\LoginRegister;
+use App\Livewire\Auth\ResetPassword;
 use App\Livewire\Projects\MyProjects;
 use App\Livewire\Projects\ProjectDetail;
 use App\Livewire\Projects\ProjectEdit;
@@ -55,10 +61,31 @@ Route::get('/privacy', fn () => view('legal.pending', ['title' => 'Datenschutz']
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', LoginRegister::class)->name('login');
+
+    // "Passwort vergessen" / "Neues Passwort erstellen" (docs/authentication/README.md
+    // §4) — the historical two-app Auth0 split becomes two ordinary routes.
+    Route::get('/password/forgot', ForgotPassword::class)->name('password.request');
+    Route::get('/password/reset/{token}', ResetPassword::class)->name('password.reset');
+
+    // Google login (docs/authentication/README.md §3; register B-6) — both
+    // routes 404 while GOOGLE_CLIENT_ID/SECRET are unset
+    // (App\Http\Controllers\Auth\GoogleController::configured()).
+    Route::get('/auth/google/redirect', [GoogleController::class, 'redirect'])->name('google.redirect');
+    Route::get('/auth/google/callback', [GoogleController::class, 'callback'])->name('google.callback');
 });
+
+// The "Das bin ich!" unblock link (App\Mail\BlockedAccountMail) and the
+// e-mail-verification link (App\Mail\VerifyEmailMail, decision A-3) both
+// identify their target entirely through their own signed URL — neither
+// needs (or should require) an active session to work.
+Route::get('/auth/unblock', UnblockLoginController::class)->middleware('signed')->name('login.unblock');
+Route::get('/email/verify/{id}/{hash}', VerifyEmailController::class)->middleware('signed')->name('verification.verify');
 
 Route::middleware('auth')->group(function () {
     Route::post('/logout', LogoutController::class)->name('logout');
+    Route::post('/email/verification-notification', ResendVerificationController::class)
+        ->middleware('throttle:6,1')
+        ->name('verification.send');
 
     Route::get('/user/projects', MyProjects::class)->name('projects.mine');
     Route::get('/user/project/create', ProjectWizard::class)->name('projects.create');
