@@ -61,6 +61,12 @@ There is deliberately no bundled reverse proxy or mail server — see [Reverse p
 
 LCxHolz papers over this with a custom nginx entrypoint that deletes and re-copies assets into the volume on every boot. Nusszopf instead follows **Waffle Dashboard's** structurally simpler approach: build Vite assets once, inside the application image's own multi-stage `Dockerfile` (no separate Node install in the nginx build), then build the nginx image `FROM` the application stage and `COPY --from=php-fpm /var/www/public /var/www/public`. Because both images are produced from the same source tree at the same version, the manifest can never drift, and no shared volume or runtime re-sync step is needed at all. The smoke test checks that a built stylesheet is served.
 
+This reasoning is specific to *build* assets, which are always fully reproducible from the image itself. It does not apply to `laravel-storage` (uploaded avatars, slice 8): that is genuine runtime data with no image to reseed it from, so it is a real named volume shared read-write with `php-fpm` and read-only with `web` — see [Persistent storage](#persistent-storage) and "Avatar storage and serving" below.
+
+### Avatar storage and serving
+
+Avatars (`docs/design/screen-specs.md`, "Profile / account settings") live on the local disk (register B4/B8 — no object storage in v1), under `storage/app/public/avatars`, one versioned file per upload. `docker/php/Dockerfile` bakes a `public/storage → ../storage/app/public` symlink into both images at build time; because it is a *relative* symlink, it resolves correctly in any container that mounts `laravel-storage` at `storage/app`, which is why `web` — unlike the Vite-assets case above — does mount that volume (read-only: `php-fpm` is the only writer). `docker/nginx/default.conf` serves `/storage/...` directly as a static file with a long, immutable cache lifetime (the filename is versioned, so a replaced avatar always gets a new URL) — no PHP round trip for the common case of loading someone's avatar. Deleting the volume deletes every avatar; back it up with the rest of `laravel-storage` (see [Backups, upgrades, recovery](#backups-upgrades-recovery)).
+
 ## Required configuration
 
 `.env.production.example` is the source of truth — every variable with its default or a `REQUIRED` marker (release, `APP_KEY`, `APP_URL`, `DB_PASSWORD`, `MEILISEARCH_KEY`).
@@ -133,7 +139,7 @@ addresses) in `.env`, `APP_URL` with `https://`, and `SESSION_SECURE_COOKIE=true
 Named volumes, one per stateful concern (never one shared "data" volume, so that restoring or wiping one never risks another — this separation is explicit in LCxHolz's backup documentation):
 
 - `postgres-data` — database
-- `laravel-storage` — uploaded files, generated files (invoices, exports — exact contents Unknown pending domain archaeology)
+- `laravel-storage` — uploaded files: avatars (slice 8) are the only confirmed contents so far
 - `meilisearch-data` — search index (Nusszopf-original; rebuildable from Postgres via reindexing, so arguably lower backup priority than the database — see `docs/deployment/operations.md`)
 
 No shared assets volume — see [above](#why-a-dedicated-nginx-image-not-a-shared-assets-volume).

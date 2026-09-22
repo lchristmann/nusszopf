@@ -60,6 +60,10 @@ asset="$(curl -s "$BASE/login" | grep -o '/build/assets/[^"]*\.css' | head -1)"
 [ -n "$asset" ] || fail "the login page links no built stylesheet"
 [ "$(curl -s -o /dev/null -w '%{http_code}' "$BASE$asset")" = "200" ] || fail "the built stylesheet $asset is not served"
 
+step "Uploaded files (avatars) are served by web through the read-only storage mount"
+compose exec -T php-fpm sh -c 'mkdir -p storage/app/public/avatars && echo smoke-test > storage/app/public/avatars/smoke.txt'
+[ "$(curl -s "$BASE/storage/avatars/smoke.txt")" = "smoke-test" ] || fail "web does not serve a file php-fpm wrote to the public disk"
+
 step "Migrations ran and the caches are warm"
 compose exec -T php-fpm php artisan migrate:status | grep -q "Ran" || fail "no migration ran"
 compose exec -T php-fpm sh -c 'test -f bootstrap/cache/config.php && test -f bootstrap/cache/routes-v7.php' || fail "the framework caches were not built"

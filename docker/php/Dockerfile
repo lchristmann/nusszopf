@@ -66,6 +66,13 @@ COPY . .
 RUN composer dump-autoload --optimize --no-dev \
     && php artisan package:discover --ansi
 
+# A relative symlink, so it resolves inside any container that mounts
+# `laravel-storage` at `storage/app` — the `php-fpm`/`queue-worker`/
+# `scheduler` services always do (docker-compose.yaml); `web` mounts it
+# read-only so nginx can serve `/storage/...` (avatars) as a static file
+# without a PHP round trip (docs/deployment/README.md, "Persistent storage").
+RUN ln -sfn ../storage/app/public public/storage
+
 # ---------------------------------------------------------------------------
 FROM node:22-alpine AS frontend
 

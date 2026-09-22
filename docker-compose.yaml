@@ -32,6 +32,12 @@ services:
     restart: unless-stopped
     ports:
       - "${APP_BIND:-0.0.0.0}:${APP_PORT:-8080}:80"
+    # Read-only: `web` only ever serves uploaded files (avatars), never
+    # writes them. Resolves through the `public/storage` symlink baked into
+    # both images at build time (docker/php/Dockerfile) — `php-fpm` is the
+    # only writer (docs/deployment/README.md, "Persistent storage").
+    volumes:
+      - laravel-storage:/var/www/storage/app:ro
     depends_on:
       php-fpm:
         condition: service_healthy
