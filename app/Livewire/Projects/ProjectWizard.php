@@ -249,9 +249,12 @@ class ProjectWizard extends Component
 
     private function create(): void
     {
+        $user = Auth::user();
+
         // `handleSubmit` re-validates steps 1 and 2 at the point of persistence.
         $valid = $this->validateFields($this->stepFields(0), onScreenOnly: false)
-            & $this->validateFields($this->stepFields(1), onScreenOnly: false);
+            & $this->validateFields($this->stepFields(1), onScreenOnly: false)
+            & $this->contactAllowed($user);
 
         $requests = $this->validRequests();
 
@@ -262,8 +265,6 @@ class ProjectWizard extends Component
         }
 
         Gate::authorize('create', Project::class);
-
-        $user = Auth::user();
 
         try {
             // `user_id` comes from the session, never from the form. The project

@@ -10,6 +10,7 @@ use App\Services\LocationSearch;
 use App\Support\ProjectDate;
 use App\Support\RichText;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -254,6 +255,42 @@ trait ManagesProjectFields
             'visibility' => $this->visibility,
             'contact' => $this->contact ? $user->email : Project::NUSSZOPF_CONTACT,
         ];
+    }
+
+    /**
+     * Decision A-3 (docs/rewrite/decisions-register.md): an unverified
+     * address may never become a project's public "Persönlich" contact. Not
+     * a Yup-mirrored client rule (there is no historical equivalent at all —
+     * this is a new gate), so it is checked here rather than in
+     * {@see self::fieldRules()}, which only lists rules with a historical
+     * per-field error copy to reproduce.
+     */
+    protected function contactAllowed(User $user): bool
+    {
+        if (! $this->contact || $user->hasVerifiedEmail()) {
+            return true;
+        }
+
+        $this->addError('contact', 'Bestätige zuerst deine E-Mail-Adresse, um sie als Kontakt zu veröffentlichen.');
+
+        return false;
+    }
+
+    /**
+     * Referenced by the "Persönlich" contact option's own validation error
+     * (docs/rewrite/seventh-slice.md) — lets the owner request another
+     * verification e-mail without leaving the form.
+     */
+    public function resendVerificationEmail(): void
+    {
+        $user = Auth::user();
+
+        if ($user->hasVerifiedEmail()) {
+            return;
+        }
+
+        $user->sendEmailVerificationNotification();
+        $this->dispatch('toast', type: 'success', message: 'Bestätigungs-E-Mail wurde erneut gesendet.');
     }
 
     /**

@@ -182,15 +182,17 @@ class ProjectEdit extends Component
             return;
         }
 
+        $user = Auth::user();
+
         // Not user-facing (the form only offers the two values), but the
         // property is client-writable and `visibility` is constrained in the DB (BUG-007).
-        if (! $this->validateFields(['visibility'], onScreenOnly: false)) {
+        if (! $this->validateFields(['visibility'], onScreenOnly: false) || ! $this->contactAllowed($user)) {
             $this->dispatch('toast', type: 'error', message: 'Sorry, die Änderungen konnten nicht gespeichert werden.');
 
             return;
         }
 
-        $this->persist($this->settingsAttributes(Auth::user()));
+        $this->persist($this->settingsAttributes($user));
     }
 
     /**
