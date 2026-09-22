@@ -60,6 +60,12 @@
                                 <x-text as="span" variant="textSmMedium">Meine Projekte</x-text>
                             </span>
                         </a>
+                        <a href="{{ route('profile') }}" data-test="btn_settings_nav-header" class="block px-4 py-2 hover:bg-steel-300">
+                            <span class="flex items-center">
+                                <span class="w-6 mr-1"><x-icon name="user" :size="21" class="-ml-2" /></span>
+                                <x-text as="span" variant="textSmMedium">{{ \Illuminate\Support\Str::limit(auth()->user()->name, 12, '...') }}</x-text>
+                            </span>
+                        </a>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <button type="submit" data-test="btn_logout_nav-header" class="block w-full text-left px-4 py-2 hover:bg-steel-300">

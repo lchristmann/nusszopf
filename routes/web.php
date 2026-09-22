@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Livewire\Auth\ForgotPassword;
 use App\Livewire\Auth\LoginRegister;
 use App\Livewire\Auth\ResetPassword;
+use App\Livewire\Profile\Profile;
 use App\Livewire\Projects\MyProjects;
 use App\Livewire\Projects\ProjectDetail;
 use App\Livewire\Projects\ProjectEdit;
@@ -87,6 +88,7 @@ Route::middleware('auth')->group(function () {
         ->middleware('throttle:6,1')
         ->name('verification.send');
 
+    Route::get('/user/profile', Profile::class)->name('profile');
     Route::get('/user/projects', MyProjects::class)->name('projects.mine');
     Route::get('/user/project/create', ProjectWizard::class)->name('projects.create');
     Route::get('/user/project/{project}/edit', ProjectEdit::class)->name('projects.edit');
