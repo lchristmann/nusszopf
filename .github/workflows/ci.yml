@@ -165,7 +165,7 @@ jobs:
       - name: Create the volume mountpoints so Docker doesn't create them as root
         run: mkdir -p node_modules vendor
       - name: Start the real dev stack
-        run: docker compose -f compose.dev.yaml up -d --build workspace web php-fpm queue-worker postgres redis meilisearch
+        run: docker compose -f compose.dev.yaml up -d --build workspace web php-fpm queue-worker postgres redis meilisearch mailpit
       - name: Wait for the app to be healthy
         run: |
           timeout 120 sh -c 'until docker compose -f compose.dev.yaml ps php-fpm | grep -q healthy; do sleep 2; done'
@@ -196,6 +196,8 @@ jobs:
           E2E_MEILISEARCH_URL: http://localhost:7700
           E2E_MEILISEARCH_KEY: nusszopf-dev-master-key-change-me
           E2E_REINDEX_COMMAND: docker compose -f compose.dev.yaml exec -T php-fpm php artisan search:reindex
+          # The contact-mail journey checks the message actually arrived, via Mailpit's own JSON API.
+          E2E_MAILPIT_URL: http://localhost:8025
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
