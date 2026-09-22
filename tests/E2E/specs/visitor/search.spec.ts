@@ -199,8 +199,10 @@ test('opens a project from a result, where its owner can be contacted', async ({
     await search.resultLink(rooms).click();
     await expect(page).toHaveURL(/\/projects\/[0-9a-f-]{36}$/);
     await expect(page.getByRole('heading', { name: rooms })).toBeVisible();
-    // The contact path; its final step (the dialog and the mail) is the mail slice's.
-    await expect(page.getByTestId('btn_contact_project-detail')).toBeVisible();
+    // The contact path (BUG-018's third journey): the button opens the dialog; submitting it and
+    // receiving the mail is covered end to end by `visitor/project-detail.spec.ts`'s own contact test.
+    await page.getByTestId('btn_contact_project-detail').click();
+    await expect(page.getByTestId('contact-dialog')).toBeVisible();
 });
 
 test('scrolls back to the top from the floating button', async ({ page }) => {

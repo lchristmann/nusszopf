@@ -3,6 +3,7 @@ import { MyProjectsPage } from '../../pages/MyProjectsPage';
 import { registerFreshUser } from '../../support/session';
 import { createPublicProject } from '../../support/projects';
 import { uniqueSuffix } from '../../support/env';
+import { mailpitUrl, waitForMail } from '../../support/mailpit';
 
 /**
  * The counter renders as four separate digit boxes
@@ -52,4 +53,39 @@ test('counts a visitor once per browser, never the owner', async ({ page, browse
     await guestPage.goto(detailUrl);
     expect(await digits(guestPage)).toBe('0001');
     await guestContext.close();
+});
+
+/**
+ * The "Über Nusszopf" contact path (`ContactDialog.js`, docs/rewrite/sixth-slice.md): the wizard's
+ * default contact ("Über Nusszopf") opens the form instead of a `mailto:` link; a message a visitor
+ * sends is queued, delivered to the owner's own address, and never reveals it to the visitor.
+ */
+test('a visitor contacts a project through the dialog, and the owner receives it', async ({ page, browser }) => {
+    test.skip(!mailpitUrl(), 'Needs E2E_MAILPIT_URL (docs/testing/README.md).');
+    const suffix = uniqueSuffix();
+    const title = `Kontaktprojekt ${suffix}`;
+    const ownerContext = await browser.newContext();
+    const ownerPage = await ownerContext.newPage();
+    const owner = await registerFreshUser(ownerPage);
+    await createPublicProject(ownerPage, { title });
+    const myProjects = new MyProjectsPage(ownerPage);
+    await myProjects.card(title).click();
+    await ownerPage.waitForURL(/\/user\/project\/.+\/edit$/);
+    const editUrl = new URL(ownerPage.url());
+    const detailUrl = new URL(`/projects/${editUrl.pathname.split('/').at(-2)}`, editUrl.origin).toString();
+    await ownerContext.close();
+
+    await page.goto(detailUrl);
+    await page.getByTestId('btn_contact_project-detail').click();
+    const dialog = page.getByTestId('contact-dialog');
+    await expect(dialog).toBeVisible();
+    await dialog.getByTestId('input_contact-email').fill('visitor-e2e@example.test');
+    await dialog.getByTestId('input_contact-msg').fill(`Eine Testnachricht ${suffix}.`);
+    await dialog.getByTestId('btn_send_contact-dialog').click();
+    await expect(page.getByText('Nachricht versendet!')).toBeVisible();
+    await expect(dialog).toBeHidden();
+
+    const html = await waitForMail(owner.email, 'Nusszopf – Kontaktanfrage');
+    expect(html).toContain(title);
+    expect(html).toContain(`Eine Testnachricht ${suffix}.`);
 });

@@ -118,12 +118,14 @@ it('links the contact button to the owner\'s address for a personal contact', fu
         ->assertSee('Teilen');
 });
 
-it('falls back to the Nusszopf address for a contact through Nusszopf, and never shows the owner\'s e-mail', function () {
+it('opens the contact dialog for a contact through Nusszopf, and never shows the owner\'s e-mail', function () {
     $owner = User::factory()->create(['email' => 'geheim@example.test']);
     $project = Project::factory()->for($owner)->public()->create(['contact' => Project::NUSSZOPF_CONTACT]);
 
     $this->get(route('projects.show', $project))
-        ->assertSee('href="mailto:mail@nusszopf.org?', false)
+        ->assertSee('wire:click="openContact" ', false)
+        ->assertSee('data-test="btn_contact_project-detail"', false)
+        ->assertSee('data-test="contact-dialog"', false)
         ->assertDontSee('geheim@example.test');
 });
 

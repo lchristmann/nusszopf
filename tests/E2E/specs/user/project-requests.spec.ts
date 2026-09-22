@@ -108,9 +108,13 @@ test('creates requests in the wizard and shows, edits and deletes them through t
     await expect(view).toBeVisible();
     await expect(view.getByTestId('title_request-dialog')).toHaveText('Baumleitern');
     await expect(view.getByTestId('description_request-dialog')).toContainText(`Wir brauchen ${searchWord}. Bitte bis Mai.`);
-    await expect(view.getByTestId('btn_contact_request-dialog')).toHaveAttribute('href', /^mailto:mail@nusszopf\.org/);
+    // Default wizard contact is "Über Nusszopf" (no personal contact chosen): the button opens the
+    // contact form instead of a mailto link — the mail slice's own journey covers submitting it.
+    await view.getByTestId('btn_contact_request-dialog').click();
+    await expect(page.getByTestId('contact-dialog')).toBeVisible();
+    await expect(page.getByTestId('contact-dialog').getByTestId('input_contact-msg')).toBeVisible();
     await page.keyboard.press('Escape');
-    await expect(view).toBeHidden();
+    await expect(page.getByTestId('contact-dialog')).toBeHidden();
     await requests.card('Baumleitern').click();
     await view.getByRole('button', { name: 'Schließen' }).last().click();
     await expect(view).toBeHidden();
