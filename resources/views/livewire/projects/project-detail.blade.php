@@ -9,7 +9,10 @@
     solution" — the historical dismiss was itself only React component
     state, not persisted either).
 --}}
-<div>
+<div
+    x-data="{ openRequest: null, contactOpen: false }"
+    x-on:keydown.escape.window="openRequest = null; contactOpen = false"
+>
     {{-- Livewire requires exactly one root element — the banner and the
          card below share this wrapping div, not two Blade-root siblings. --}}
     @if (auth()->id() === $project->user_id)
@@ -69,11 +72,23 @@
                         </div>
                     </div>
                     <div class="flex mt-6 mb-2.5 lg:mt-0 lg:w-3/12 lg:mt-2 lg:items-end lg:flex-col lg:mb-0">
-                        {{-- Personal contact: the owner's own mailto, as historically. Contact "über Nusszopf" historically opened a contact form (ContactDialog, out of scope here — docs/rewrite/second-slice.md); until then it is a mailto to the Nusszopf address. --}}
-                        <x-button as="a" href="{{ $mailto }}" data-test="btn_contact_project-detail" color="lilac" size="small" class="mr-5 lg:mr-0 lg:mb-3">
-                            <x-slot:iconLeft><x-icon name="send" :size="21" class="mt-px mr-2 -ml-1" /></x-slot:iconLeft>
-                            Kontaktieren
-                        </x-button>
+                        {{--
+                            `handleContact` (`pages/projects/[id].js`): a personal contact is a plain
+                            `mailto:` to the owner's own address, no app involvement; "Über Nusszopf"
+                            opens the contact form instead (`ContactDialog.js`), the slice-2 mailto
+                            scaffold it replaces.
+                        --}}
+                        @if ($project->hasPersonalContact())
+                            <x-button as="a" href="{{ $mailto }}" data-test="btn_contact_project-detail" color="lilac" size="small" class="mr-5 lg:mr-0 lg:mb-3">
+                                <x-slot:iconLeft><x-icon name="send" :size="21" class="mt-px mr-2 -ml-1" /></x-slot:iconLeft>
+                                Kontaktieren
+                            </x-button>
+                        @else
+                            <x-button type="button" wire:click="openContact" x-on:click="contactOpen = true; openRequest = null" data-test="btn_contact_project-detail" color="lilac" size="small" class="mr-5 lg:mr-0 lg:mb-3">
+                                <x-slot:iconLeft><x-icon name="send" :size="21" class="mt-px mr-2 -ml-1" /></x-slot:iconLeft>
+                                Kontaktieren
+                            </x-button>
+                        @endif
                         <x-button data-test="btn_share_project-detail" size="small" color="lilac" x-on:click="nzShare(@js($shareTitle))">
                             <x-slot:iconLeft><x-icon name="share-2" :size="21" class="mt-px mr-2 -ml-1" /></x-slot:iconLeft>
                             Teilen
@@ -124,8 +139,9 @@
 
                 <x-framed-grid-card.body-col variant="twoCols" class="row-start-1 lg:row-start-auto lg:pl-4 text-stone-800">
                     <x-text class="mb-4" variant="textLg">Projektgesuche</x-text>
-                    {{-- Each request is a card opening its dialog; `openRequest` is the id of the one shown. --}}
-                    <div x-data="{ openRequest: null }" x-on:keydown.escape.window="openRequest = null">
+                    {{-- Each request is a card opening its dialog; `openRequest` is the id of the one shown
+                         (state lives on the root element, shared with the contact dialog below). --}}
+                    <div>
                         @forelse ($requests as $request)
                             <x-request-card
                                 variant="view"
@@ -139,6 +155,7 @@
                                 :request="$request"
                                 :created-at="$request->created_at->format('j.n.Y')"
                                 :contact-href="$mailto"
+                                :has-personal-contact="$project->hasPersonalContact()"
                                 :open="'openRequest === \''.$request->id.'\''"
                                 close="openRequest = null"
                             />
@@ -146,6 +163,10 @@
                             <x-info-card class="mt-2">Alles zopfig! Derzeit gibt es keine Gesuche.</x-info-card>
                         @endforelse
                     </div>
+
+                    @unless ($project->hasPersonalContact())
+                        <x-contact-dialog :project="$project" open="contactOpen" close="contactOpen = false" />
+                    @endunless
 
                     {{-- Avatar, `project` variant. The initial-on-grey circle replaces the historical ui-avatars.com image (an external service), same colors. --}}
                     <div class="flex items-center mt-16 lg:mt-14">

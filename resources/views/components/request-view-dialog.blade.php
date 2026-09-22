@@ -1,4 +1,4 @@
-@props(['request', 'createdAt', 'contactHref', 'open', 'close'])
+@props(['request', 'createdAt', 'contactHref', 'hasPersonalContact', 'open', 'close'])
 
 {{--
     RequestDialog.js (+ RequestDialog.theme.js): a request in full — its
@@ -38,7 +38,13 @@
         <div class="mt-8 text-lg" data-test="description_request-dialog">{!! \App\Support\RichText::toHtml($request->description_template, $link) !!}</div>
     </div>
     <div class="mt-10 space-x-4 text-center">
-        <x-button as="a" href="{{ $contactHref }}" color="stone" :class="$button" data-test="btn_contact_request-dialog">Kontaktieren</x-button>
+        @if ($hasPersonalContact)
+            <x-button as="a" href="{{ $contactHref }}" color="stone" :class="$button" data-test="btn_contact_request-dialog">Kontaktieren</x-button>
+        @else
+            {{-- `onContact` from a request's dialog (`RequestDialog.js`, `handleContact`): switches to the
+                 contact form, carrying this request so the mail names it. --}}
+            <x-button wire:click="openContact('{{ $request->id }}')" x-on:click="contactOpen = true; {{ $close }}" color="stone" :class="$button" data-test="btn_contact_request-dialog">Kontaktieren</x-button>
+        @endif
         <x-button color="stone" x-on:click="{{ $close }}">Schließen</x-button>
     </div>
 </x-dialog>
