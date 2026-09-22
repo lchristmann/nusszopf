@@ -60,7 +60,7 @@ Every historical bug knowingly fixed during the rewrite ships with a regression 
 ## Search and mail testing
 
 - Search: fake Scout/Meilisearch in most Feature tests for speed; a smaller number of tests (`@group meilisearch`, `tests/Helpers/search.php` for the shared helpers) exercise real Meilisearch indexing/query behavior to catch configuration and ranking drift — including `applyIndexSettings()`, which applies the checked-in settings to the test index first (the filter needs `req_type` filterable). See `docs/search/README.md` for the search semantics being verified.
-- Mail: use Laravel's mail fake for asserting triggers/recipients/content in Feature tests; verify actual rendering (subject, links, branding) against the historical templates (`../historical/emails-nusszopf`) separately — see `docs/email/README.md`.
+- Mail: use Laravel's mail fake for asserting triggers/recipients/content in Feature tests; verify actual rendering (subject, links, branding) against the historical templates (`../historical/emails-nusszopf`) separately — see `docs/email/README.md`. The dev/CI stack runs a Mailpit catcher (`compose.dev.yaml`, `MAIL_HOST=mailpit`/`MAIL_PORT=1025`) so Playwright specs can assert a mail actually arrived through its JSON API (`http://mailpit:8025/api/v1/...` inside the stack, `E2E_MAILPIT_URL` — the host-published port — for Playwright itself, which runs outside the stack); never used in production (`docs/rewrite/sixth-slice.md`).
 
 ### Isolation from the development stack
 

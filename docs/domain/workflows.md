@@ -45,6 +45,16 @@ Evidence base: `../historical/be-nusszopf/hasura/metadata/tables.yaml` (`event_t
 - Side effects: `sync_projects_search` fires on the project insert; `sync_requests_search` fires on each request insert; both reindex into Meilisearch regardless of the project's `visibility` at that moment (the trigger fires unconditionally on insert — filtering by visibility, if it happens at all, must happen on the search-indexing side, not in Hasura). This is an important detail for the search archaeology: private projects' requests may still be sent to the indexer, relying on the indexer or a query-time filter to keep them out of public search results — see `docs/search/README.md`.
 - Failure/recovery: no visible transactionality across the two inserts — a client could create a project and fail to create requests, leaving a valid project with zero requests (apparently a normal, allowed state; nothing in the schema requires a project to have at least one request).
 
+## Workflow: contact a project
+
+- Actors: any visitor (anonymous or `user`) reaching a public project's detail page or one of its request dialogs; the project owner as recipient.
+- Preconditions: the project is visible to the caller (`Project::scopeVisible`); read-only otherwise, no authentication required to contact.
+- Steps: the visitor clicks "Kontaktieren" on the project header or on a request's dialog. If `project.contact` is the owner's own e-mail address ("Persönlich"), this is a plain `mailto:` link with no app involvement (Confirmed, `ContactDialog.js`/`[id].js` `handleContact`). If `project.contact` is the Nusszopf sentinel value ("Über Nusszopf"), a form dialog opens instead, asking for the visitor's own e-mail address and a message; submitting it (rate-limited, validated) queues a mailable to the project owner's private e-mail address, `Reply-To` set to the visitor's address, with the message escaped in the rendered mail. The dialog optionally carries the specific request that was open when "Kontaktieren" was clicked, and the mail's subject line names it ("`<project title>` / `<request title>`") — Confirmed, `contact.mjml`.
+- Side effects: one queued mail send; no persisted record of the contact attempt (historically there was no `ProjectAnalytics.contactRequests` increment either — see BUG-017's resolution).
+- Validation: visitor e-mail required and a valid address (max 100 characters); message required (max 2000 characters) — Confirmed, `contact-dialog.data.js`'s Yup schema. Historically these were **not** re-validated server-side (BUG-010) — Nusszopf 2 validates server-side too, not just in the dialog's own client-side schema.
+- Failure/recovery: queued (`ShouldQueue`), the worker's standard retry/backoff; a permanently-failed send lands in `failed_jobs` (BUG-009's fix) rather than silently vanishing — the historical Node handler had no queue at all and relied on SendGrid's own delivery retries.
+- Never exposes the owner's actual e-mail address to the visitor on this path — the whole point of "Über Nusszopf" (`docs/security/authorization-matrix.md`, "Contact actions").
+
 ## Workflow: account deletion
 
 - Actors: the account owner (`user` role) — no separate admin-initiated deletion path exists (no admin role).

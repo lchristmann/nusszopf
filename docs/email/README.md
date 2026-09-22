@@ -147,6 +147,8 @@ These four are triggered directly by `web-nusszopf`'s Next.js API routes calling
 
 ### 5. Project contact message (`sendgrid/contact.mjml`)
 
+**Implemented** in the sixth slice as `App\Mail\ContactMail` — `docs/rewrite/sixth-slice.md`.
+
 - **Trigger (Confirmed):** `web-nusszopf/projects/webapp/src/pages/api/contact.js`, called
   from `web-nusszopf/projects/webapp/src/containers/projects/ContactDialog/ContactDialog.js`
   — i.e. a visitor uses the "contact" dialog on a project page to message the project owner.
@@ -275,11 +277,16 @@ These four are triggered directly by `web-nusszopf`'s Next.js API routes calling
 - **Branding assets:** the logo image is hosted on SendGrid's own asset CDN
   (`cdn.mcauto-images-production.sendgrid.net`), not on `nusszopf.org` — this is an
   ESP-hosted asset that will need to be re-hosted (e.g. under the app's own domain/storage)
-  since the rewrite will not use SendGrid.
+  since the rewrite will not use SendGrid. **Done in the sixth slice**: the app's own
+  `nusszopf-header-logo` SVG is inlined directly in the shared mail layout — no external
+  request at all, not even to the app's own domain (`docs/rewrite/sixth-slice.md`, decision 2).
 - **vCard link:** every footer links to `https://nusszopf.org/contact/nusszopf-vcard.vcf`,
   a static downloadable contact card — confirm in `docs/design` whether this file is served
   from `web-nusszopf/projects/webapp/public/contact/nusszopf-vcard.vcf` (Confirmed: that file
-  exists at that path) and needs to be reproduced as a static asset in the rewrite.
+  exists at that path) and needs to be reproduced as a static asset in the rewrite. **Not yet
+  reproduced** (sixth slice, decision 5): the file hardcodes the *original* project's own
+  contact addresses, which is operator-identity content, not a static brand asset — deferred to
+  slice 10 alongside `Project::NUSSZOPF_CONTACT` becoming configuration.
 - **No attachments, no retry/failure-handling logic** are visible in any template or in the
   two API handlers beyond a generic `handleError` catch — SendGrid's own delivery retries
   are relied upon. The rewrite should use Laravel's queued-mail retry/backoff instead and
@@ -299,11 +306,13 @@ These four are triggered directly by `web-nusszopf`'s Next.js API routes calling
    payload. This means hitting "Reply" in a mail client replies to `noreply@nusszopf.org`
    instead of the visitor. This looks like a usability defect worth correcting in the rewrite
    (set `Reply-To` to the visitor's address) while documenting the historical behavior.
+   **BUG-005, Fixed in the sixth slice** (`docs/rewrite/sixth-slice.md`).
 3. **No input validation/escaping on contact-form fields.** `contact.js` passes
    `req.body.email`, `req.body.title`, `req.body.request`, `req.body.msg` straight into the
    dynamic template payload with only rate-limiting in front of it. Whether SendGrid's
    dynamic-template engine HTML-escapes these by default is Unknown from this repo alone;
    flag for security review in the rewrite regardless.
+   **BUG-010, Fixed in the sixth slice** (`docs/rewrite/sixth-slice.md`).
 4. **`username` variable passed but apparently unused** in both newsletter subscribe and
    unsubscribe static templates — Unknown whether the actual SendGrid-hosted dynamic
    templates (edited via SendGrid's UI, not necessarily kept in sync with this repo) use it

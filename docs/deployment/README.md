@@ -45,7 +45,7 @@ value pins the release, so an upgrade is one line (see `docs/deployment/operatio
 |---|---|---|
 | `web` | `ghcr.io/lchristmann/nusszopf-web` — nginx built `FROM` the application image's own assets | HTTP; serves static assets, passes PHP to `php-fpm`. The only published port (`APP_BIND`:`APP_PORT`) |
 | `php-fpm` | `ghcr.io/lchristmann/nusszopf-php-fpm` (PHP 8.5-FPM, Laravel 13, Livewire 4, non-root) | Request handling. Its entrypoint refuses to start without `APP_KEY`, runs `migrate --force --isolated`, then warms the config, route, view and event caches |
-| `queue-worker` | same application image | `queue:work --tries=5 --backoff=10,30,60,120`: background jobs (search indexing today, mail later). Healthy while it processes the scheduler's heartbeat job |
+| `queue-worker` | same application image | `queue:work --tries=5 --backoff=10,30,60,120`: background jobs (search indexing, contact-form mail). Healthy while it processes the scheduler's heartbeat job |
 | `scheduler` | same application image | `schedule:work`. Its only tasks are the two heartbeats (`routes/console.php`) — the historical product had no periodic work. Healthy while its heartbeat is fresh |
 | `postgres` | `postgres:16-alpine` | Primary datastore |
 | `redis` | `redis:alpine` | Sessions, cache, queue |
@@ -66,7 +66,7 @@ LCxHolz papers over this with a custom nginx entrypoint that deletes and re-copi
 `.env.production.example` is the source of truth — every variable with its default or a `REQUIRED` marker (release, `APP_KEY`, `APP_URL`, `DB_PASSWORD`, `MEILISEARCH_KEY`).
 `install.sh` generates the secrets. Notable choices: `APP_ENV=production`, `APP_DEBUG=false`; sessions, cache and queue on Redis; `SCOUT_QUEUE=true` so search sync is a retried
 job, never fire-and-forget (BUG-009); `LOG_CHANNEL=stderr` so `docker compose logs` shows the application's log; `SESSION_LIFETIME=480`, the historical 8-hour rolling session;
-`TRUSTED_PROXIES`, `APP_BIND`, `APP_PORT` for the proxy setup below; `HEALTH_TOKEN` for `/health` details; `MAIL_*` (used from the mail slice on, `docs/email/README.md`).
+`TRUSTED_PROXIES`, `APP_BIND`, `APP_PORT` for the proxy setup below; `HEALTH_TOKEN` for `/health` details; `MAIL_*`, an operator-supplied SMTP relay for the project contact form (`docs/email/README.md`; the dev/CI stack uses a bundled Mailpit catcher instead, never production).
 
 ### Location search (`LOCATIONIQ_KEY`)
 

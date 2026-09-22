@@ -223,7 +223,7 @@ Slice sizes: S = a few days of focused work, M = about a week, L = more than a w
 - **Done when**: `ProjectAnalytics` exists as its own model (register B8) with no client-writable path.
 - **Human approval**: no.
 
-### Slice 6 — Mail foundation and project contact — **M**
+### Slice 6 — Mail foundation and project contact — **M** — ✅ implemented 2026-09-22 (`docs/rewrite/sixth-slice.md`)
 
 - **Covers**: 21 and the shared mail infrastructure.
 - **Scope**: a mail layout reproducing the shared template anatomy; port of the MJML templates (approach B-5);

@@ -101,16 +101,21 @@ Actual search behavior in the historical product is exercised **only incidentall
 
 **Playwright coverage this journey should get:** a spec driving the public-form path end-to-end (submit → assert email queued/sent via `Mail::fake()` → simulate the token click → assert `hasConfirmed`), and a spec for the unsubscribe path (token-based and email-only, per `docs/design/screen-specs.md`'s newsletter screens). This closes a real historical E2E gap (BUG item for "no E2E coverage of newsletter flows" — add to `docs/rewrite/bugs.md` if not already tracked there), it does not reproduce one.
 
-## Journey 7 — Contact a project owner (Inferred — no E2E evidence)
+## Journey 7 — Contact a project owner — **implemented, sixth slice** (`docs/rewrite/sixth-slice.md`)
 
 **Actors:** anonymous or authenticated visitor, project owner (as email recipient). **Source:** `docs/design/screens.md` (Project detail), `docs/email/README.md` §5.
 
 1. Visitor opens a project's detail page, clicks **Contact**.
-2. If the project's `contact` field routes through Nusszopf's own inbox: `ContactDialog` opens (message field, visitor's reply email); submitting sends the "project contact message" email to the owner's private email, with the visitor's message and reply address in the body (and, per BUG-005's fix, as a real `Reply-To` header in Nusszopf 2 — historically only in body copy).
+2. If the project's `contact` field is the "Über Nusszopf" sentinel (mediated first contact — the mail
+   is delivered straight to the owner's own private address, never to a Nusszopf-operated inbox as
+   such; see `docs/security/authorization-matrix.md`'s "Contact actions"): `ContactDialog` opens
+   (message field, visitor's reply email); submitting sends the "project contact message" email to the
+   owner's private email, with the visitor's message and reply address in the body and, per BUG-005's
+   fix, as a real `Reply-To` header in Nusszopf 2 — historically only in body copy.
 3. If the project's `contact` field is set to the owner's own address: **Contact** instead opens the visitor's mail client directly via `mailto:` — no in-app dialog, no server involvement.
 4. Optionally, the visitor picks a specific `Request` first (via `RequestDialog`), and the outgoing message's subject reflects "`<project title>` / `<request title>`" rather than just the project title.
 
-**Playwright coverage this journey should get:** both contact paths (in-app dialog vs. `mailto:`), asserted via `Mail::fake()` for the in-app path. This is new coverage, not a port — no historical E2E exercised this at all.
+**Playwright coverage:** `tests/E2E/specs/visitor/project-detail.spec.ts` drives the in-app dialog path end-to-end and asserts the mail actually arrives (recipient, subject, body) via the dev/CI Mailpit catcher's own API, not just `Mail::fake()`; the `mailto:` path is asserted at the Feature-test level (`tests/Feature/Projects/ProjectDetailContentTest.php`) and via `tests/E2E/specs/user/project-journey.spec.ts`'s existing `href` assertion. This was new coverage, not a port — no historical E2E exercised this at all.
 
 ## Journey 8 — Avatar upload / crop (Inferred — no E2E evidence)
 

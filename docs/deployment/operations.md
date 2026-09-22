@@ -38,7 +38,7 @@ so a freshly started stack reports `degraded` for up to a minute — that is the
 ## Queue worker and scheduler
 
 The historical product had no scheduled work (its cron triggers were empty), so the scheduler runs exactly two heartbeats and nothing else; new scheduled work is added only with the slice that needs it.
-The queue carries search indexing now and will carry mail. The worker runs `queue:work --tries=5 --backoff=10,30,60,120 --max-time=3600`: a failing job is tried again after 10 s, 30 s, 1 min and 2 min,
+The queue carries search indexing and mail (`App\Mail\ContactMail` since the sixth slice). The worker runs `queue:work --tries=5 --backoff=10,30,60,120 --max-time=3600`: a failing job is tried again after 10 s, 30 s, 1 min and 2 min,
 then kept in the `failed_jobs` table — the historical webhooks gave up silently after three tries (BUG-009).
 
 ```bash
@@ -59,7 +59,7 @@ Verified on the production stack (2026-09-22) by stopping each service, working,
 | **Meilisearch** | Pages work; search shows no hits ("Verzopft…" — the historical behavior for a failed query); a project saved meanwhile is not searchable yet | `/health` → 503 with `search` failing. Index jobs fail and retry at +10 s, +30 s, +1 min, +2 min; after five attempts (about 3½ minutes) the job lands in `failed_jobs` | Start Meilisearch. The retry that follows finds it; give it up to a minute (the worker's DNS cache). Jobs already in `failed_jobs`: `queue:retry all`, or simply `search:reindex` |
 | **Redis** | Every page is a 500 (sessions live in Redis); `/up` stays 200 | `/health` → 503 (it needs no session, so it still answers); the queue worker crash-loops and Docker restarts it; nothing is lost that was queued before | Start Redis; everything resumes by itself, no manual step |
 | **PostgreSQL** | Pages that read data fail; the search page shell still renders | `/health` → 503 with `database` failing; `php-fpm` stays "healthy" (its check is PHP-FPM's own ping) | Start PostgreSQL; resumes by itself |
-| **SMTP** | — | Not applicable yet: nothing sends mail before the mail slice, whose jobs will use this same queue and retry policy | Verified again with that slice |
+| **SMTP** | Contact form: submitting still succeeds (the mail is queued, not sent inline) | Queued mailables (`App\Mail\ContactMail implements ShouldQueue`) ride the same queue and retry/backoff policy as search indexing; an unreachable mail server fails and retries the same way, landing in `failed_jobs` after five attempts. Verified at the Feature-test level (`tests/Feature/Mail/ContactMailTest.php`, "leaves a failed contact send in failed_jobs instead of losing it"), not yet with a live production-stack drill the way the three rows above were | `queue:retry all` once SMTP is reachable again |
 
 A saved change is never lost when search is down: the database is written first and the index job is retried; `search:reindex` repairs whatever still went wrong.
 
