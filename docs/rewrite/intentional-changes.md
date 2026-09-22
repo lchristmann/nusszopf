@@ -70,7 +70,7 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 
 ### Contact-form email sets `Reply-To` to the visitor's address
 
-- Status: Proposed
+- Status: Approved — implemented in the sixth slice (2026-09-22)
 - Date: 2026-09-18
 - Historical behavior: `webapp/src/pages/api/contact.js` places the visitor's email only in the rendered body copy, never as a `Reply-To` header — replying in a mail client goes to `noreply@nusszopf.org`, not the visitor. Confirmed in `docs/email/README.md` ("Suspected historical issues" #2).
 - Why it is defective/incomplete or why change is required: this is a plain usability defect with no conceivable intended purpose — a contact form exists specifically so the recipient can respond to the sender.
@@ -80,13 +80,13 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 - Affected workflows: contact-form submission (`docs/email/README.md`).
 - Migration implications: none.
 - Tests: Feature/unit test asserting the outgoing Mailable's `replyTo` matches the submitted email.
-- Approval: pending.
+- Approval: Approved (the maintainer's approval of the master roadmap, 2026-09-21, which schedules it as slice 6). `tests/Feature/Mail/ContactMailTest.php`.
 
 ---
 
 ### Newsletter email copy typo fix ("Bestätigte" → "Bestätige")
 
-- Status: Proposed
+- Status: Proposed — not yet implemented; the templates this applies to (newsletter subscribe/unsubscribe) belong to slice 9, not slice 6
 - Date: 2026-09-18
 - Historical behavior: `newsletter/subscribe.mjml` and `newsletter/unsubscribe.mjml` both open with "Bestätigte deine..." (past tense/participle) where German grammar calls for the imperative "Bestätige deine...". Confirmed in `docs/email/README.md` ("Suspected historical issues" #1).
 - Why it is defective/incomplete or why change is required: this is a plain grammatical error (not a stylistic choice — the identical mistake in two independent templates suggests a copy-paste of the same typo), not a deliberate brand-voice decision (the brand voice elsewhere, e.g. "Nusszopfer:in", is playful but grammatically correct).
@@ -96,7 +96,23 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 - Affected workflows: newsletter double opt-in / unsubscribe confirmation (`docs/email/README.md`).
 - Migration implications: none.
 - Tests: a snapshot/content test on the compiled template asserting the corrected string.
-- Approval: pending.
+- Approval: Approved in principle (the maintainer's approval of the master roadmap, 2026-09-21, which schedules the newsletter templates as slice 9) — implementation deferred to that slice, since building the newsletter subscribe/unsubscribe mailables now would pull slice 9 forward.
+
+---
+
+### Contact-form fields get server-side validation, and their output is escaped
+
+- Status: Approved — implemented in the sixth slice (2026-09-22)
+- Date: 2026-09-22
+- Historical behavior: `webapp/src/pages/api/contact.js` passes `req.body.email`, `title`, `request`, `msg` straight into the SendGrid dynamic-template payload with only IP rate-limiting (10 requests/15 min, `express-rate-limit`) in front of it — no format validation, no length limits, and no confirmed HTML-escaping (SendGrid's dynamic-template escaping behavior is itself unconfirmed from this evidence). Confirmed in `docs/email/README.md` ("Suspected historical issues" #3) and `docs/rewrite/bugs.md` BUG-010.
+- Why it is defective/incomplete or why change is required: malformed or oversized input reaches an outgoing email unchecked, and the escaping behavior of the historical pipeline cannot be confirmed as safe — this is a real, not merely theoretical, gap the rewrite must close rather than silently inherit.
+- New behavior: the contact form (`App\Livewire\Projects\ProjectDetail::submitContact()`) validates the visitor's e-mail (required, valid format, historical 100-character cap from `ContactDialog.js`'s `maxLength={100}`) and message (required, historical 2000-character cap) with Livewire's own `$this->validate()` — the idiomatic equivalent of a Form Request in a Livewire component, not a separate HTTP-routed endpoint as historically (`api/contact.js` was a Next.js API route; here the same screen's Livewire component both renders the dialog and handles its submission, so there is no separate route to attach a Form Request to) — before the Mailable is ever built. The historical validation copy is reproduced verbatim (`docs/email/README.md`, `contact-dialog.data.js`: "Gib eine valide E-Mail-Adresse ein" / "Gib eine E-Mail-Adresse ein" / "Maximal 2000 Zeichen" / "Bitte schreibe eine Nachricht"). Output safety: the mail Blade view uses `{{ }}` (not `{!! !!}`) for every visitor-supplied and project field, so Blade's default HTML-escaping applies to the rendered e-mail exactly as it does to any other view.
+- Affected screens: Project detail's "Kontaktieren" dialog (only screen this touches).
+- Affected domain: none (no persisted model — the message is sent, not stored).
+- Affected workflows: "Workflow: contact a project" (`docs/domain/workflows.md`).
+- Migration implications: none.
+- Tests: `tests/Feature/Projects/ContactFormTest.php` — rejects a missing/malformed email and an empty/over-length message with the historical copy, no mail sent (`Mail::fake()`) on a validation failure; `tests/Feature/Mail/ContactMailTest.php` — a message containing HTML/script-like text renders escaped in the outgoing mail, not raw.
+- Approval: Approved (the maintainer's approval of the master roadmap, 2026-09-21, which schedules it as slice 6, and `docs/rewrite/bugs.md` BUG-010's own note that this needed an entry "before implementation" — this entry is that prerequisite).
 
 ---
 

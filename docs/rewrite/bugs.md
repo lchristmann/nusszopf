@@ -17,12 +17,12 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 | BUG-002 | Authorization / Request visibility          | High     | Fix                                 | Implemented — third slice (2026-09-21)                                                  |
 | BUG-003 | Auth / route protection                     | Medium   | Fix                                 | Implemented — first vertical slice (2026-09-18)                                         |
 | BUG-004 | Auth / avatar sync                          | Low      | Fix                                 | Spec'd — `intentional-changes.md`                                                       |
-| BUG-005 | Email / contact form                        | Medium   | Fix                                 | Spec'd — `intentional-changes.md`                                                       |
-| BUG-006 | Email / copy                                | Trivial  | Fix                                 | Spec'd — `intentional-changes.md`                                                       |
+| BUG-005 | Email / contact form                        | Medium   | Fix                                 | Implemented — sixth slice (2026-09-22)                                                  |
+| BUG-006 | Email / copy                                | Trivial  | Fix                                 | Spec'd — `intentional-changes.md`; the affected templates (newsletter subscribe/unsubscribe) are slice 9's, not slice 6's |
 | BUG-007 | Domain / `visibility` constraint            | Low      | Fix                                 | Implemented — first vertical slice (2026-09-18)                                         |
 | BUG-008 | Search / operations                         | Medium   | Fix                                 | Implemented — first vertical slice (2026-09-18); extended to requests and completed with `search:reindex` — fourth slice (2026-09-21) |
 | BUG-009 | Background jobs / operations                | Medium   | Fix                                 | Implemented (search-sync path) — first vertical slice (2026-09-18); failed-job regression test incl. requests — fourth slice (2026-09-21) |
-| BUG-010 | Email / contact form validation             | Medium   | Fix                                 | Needs an `intentional-changes.md` entry                                                 |
+| BUG-010 | Email / contact form validation             | Medium   | Fix                                 | Implemented — sixth slice (2026-09-22)                                                  |
 | BUG-011 | Newsletter / consent asymmetry              | Medium   | Fix                                 | Decided 2026-09-21 (GDPR): double opt-in on every path — needs an `intentional-changes.md` entry before slice 9 |
 | BUG-012 | Auth / Apple social login                   | Low      | Replace (drop)                      | Decided — do not implement                                                              |
 | BUG-013 | Design / destructive-action confirmation    | Low      | Preserve                            | Decided — register B10 (native `confirm()`), reconciled 2026-09-21                      |
@@ -185,13 +185,17 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
   dynamic-template engine escapes HTML by default is itself Unknown from this evidence, so this
   should be treated as a real gap rather than assumed-safe.
 - Classification: **Fix**
-- Intended Nusszopf 2 behavior: standard Laravel Form Request validation (required, `email:rfc`,
-  max lengths) before the Mailable is even built; Blade's default escaping handles output safety.
-- Implementation consequence: a `ContactRequest` Form Request class; a Feature test asserting
-  invalid input is rejected with a 422/validation error, not silently forwarded.
+- Intended Nusszopf 2 behavior: server-side validation (required, `email:rfc`, historical length
+  caps) before the Mailable is even built; Blade's default escaping handles output safety.
+- Implementation consequence: since the historical `api/contact.js` route is replaced by a
+  Livewire action on the project-detail screen (not a separate HTTP endpoint), the validation is
+  Livewire's own `$this->validate()` — the idiomatic equivalent of a Form Request in that
+  architecture — rather than a standalone Form Request class; a Feature test asserts invalid input
+  is rejected with the historical copy and no mail sent.
 - Regression test: submit malformed/oversized input and assert rejection + no mail sent
   (`Mail::fake()`).
-- Needs a matching `docs/rewrite/intentional-changes.md` entry before implementation.
+- Implemented — sixth slice (2026-09-22). Full spec: `docs/rewrite/intentional-changes.md` →
+  "Contact-form fields get server-side validation, and their output is escaped".
 
 ### BUG-011 — Newsletter opt-in has two different consent guarantees for the same intent
 
