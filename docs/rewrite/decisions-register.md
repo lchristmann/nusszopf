@@ -50,6 +50,9 @@ These are established and should not be silently re-litigated by a future contri
   (recorded as an intentional change, since the historical design removes outlines). Colour-contrast
   failures inherited from the historical palette are measured and documented, and each proposed fix is a
   separate bug entry the maintainer approves or waives; no palette change without that approval.
+  Addendum (maintainer, 2026-09-24, closing P-3): a listening pass with a real screen reader (NVDA/VoiceOver) is
+  not a release blocker. It is a documented post-1.0 manual verification opportunity; none has been performed
+  (`docs/release/parity/P-03-accessibility.md`). Contrast decisions: BUG-042–044 fixed, BUG-045 waived.
 - Legal pages and branding (decided by the maintainer 2026-09-21; A-4/A-5):
   - **Rights**: confirmed. The Nusszopf name, logos, og-image and the historical German copy may be used
     (the maintainer is an original author or has their agreement).

@@ -80,6 +80,7 @@ by name. That review found, and this pass fixed:
 - the identical menu names;
 - the label mismatches.
 
-**Not satisfied by this review:** A-7's screen-reader requirement needs a listening pass with a real screen
-reader (NVDA or VoiceOver) through the journeys. The maintainer performs it separately, and the result is recorded
-in `docs/release/parity/P-03-accessibility.md`.
+**No real screen-reader listening pass has been performed.** This review of the accessibility tree does not
+replace one. The maintainer closed P-3 without it (2026-09-24). A listening pass with NVDA or VoiceOver through
+Journeys 2, 3, 5 and 7 is a post-1.0 manual verification opportunity, not a release blocker
+(`docs/release/parity/P-03-accessibility.md`).

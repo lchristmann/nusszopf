@@ -41,10 +41,15 @@ It found five problems, all fixed:
 - the card menus had identical names;
 - the label mismatches above.
 
-**Not satisfied yet — pending (maintainer):** this review is not the screen-reader pass A-7 requires. The
-maintainer performs a listening pass with a real screen reader (NVDA on Windows or VoiceOver on macOS/iOS) through
-the journeys, separately. Suggested scope: Journey 2 (register, log in), Journey 3 (create a project with a
-request), Journey 5 (search and filter), Journey 7 (contact dialog). Record the result here.
+**No screen-reader listening pass was performed.** The review above only reads the accessibility tree; it is not
+a pass with a real screen reader. On 2026-09-24 the maintainer closed P-3 without one. The listening pass (NVDA on
+Windows or VoiceOver on macOS/iOS) is a **post-1.0 manual verification opportunity, not a release blocker**. Suggested
+journeys, kept for whoever does it:
+
+- Journey 2: register, log in;
+- Journey 3: create a project with a request;
+- Journey 5: search and filter;
+- Journey 7: the contact dialog.
 
 ## Bug protocol
 
@@ -80,6 +85,14 @@ waived toasts fails the run. Restoring the old "Ausloggen" colour was confirmed 
 
 ## Status
 
-**Done except the screen-reader pass.** The axe run, the keyboard pass and the bug protocol, including the
-maintainer's contrast decisions, are complete. **Open (maintainer):** the real NVDA/VoiceOver listening pass through
-the journeys. P-3 is complete only once it is recorded here.
+**Done — closed by the maintainer on 2026-09-24.** The evidence:
+
+- the axe run with the colour-contrast gate;
+- the label-in-name check;
+- the keyboard and focus pass on three engines;
+- the error association;
+- the headings;
+- the bug protocol, including the maintainer's contrast decisions;
+- the full browser and visual regression runs.
+
+Documented limitation: no real screen-reader listening pass was performed; it is a post-1.0 opportunity (above).
