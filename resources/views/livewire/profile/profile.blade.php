@@ -56,11 +56,9 @@
 
                         {{--
                             Sponsoring: the historical Steady funding page
-                            stays the literal historical URL for now, the
-                            same "self-hosting operational default, not yet
-                            an operator setting" gap already recorded for
-                            NUSSZOPF_CONTACT/the Instagram link
-                            (resources/views/components/mail/layout.blade.php).
+                            stays the literal historical brand URL, like the
+                            Instagram link and Home's own "Werde
+                            Fördermitglied!" button (decision A-5).
                         --}}
                         <div id="sponsoring" class="mt-12 text-center sm:text-left">
                             <x-text variant="textMd" class="mb-2 text-left">Fördermitgliedschaft</x-text>
@@ -92,19 +90,14 @@
                             >Löschen</x-button>
                         </div>
 
-                        {{--
-                            The historical "Kontakt speichern" vCard InfoCard
-                            is not reproduced — same reasoning as the mail
-                            footer's own omission of it
-                            (resources/views/components/mail/layout.blade.php):
-                            it hardcodes the *original* nusszopf.org's own
-                            contact identity, which would misattribute a
-                            stranger's operator identity from every
-                            self-hosted instance.
-                        --}}
+                        {{-- `profile.data.js` `info.contact`/`info.support`: two `InfoCard`s with `livid` links. --}}
+                        <x-info-card class="text-gray-700 bg-gray-200 mt-14 lg:ml-16">
+                            Füge den Nusszopf zu deinen Kontakten hinzu, damit unsere E-Mails dich sicher erreichen:
+                            <a href="{{ route('contact.vcard') }}" data-test="link_vcard_settings-page" title="Nusszopf als Kontakt speichern" aria-label="Nusszopf als Kontakt speichern" class="border-b-2 cursor-pointer nz-text-sm nz-link-livid">Kontakt speichern</a>
+                        </x-info-card>
                         <x-info-card class="mt-5 text-gray-700 bg-gray-200 lg:ml-16">
                             Bei Fragen kannst Du dich immer unter
-                            <a href="mailto:{{ \App\Models\Project::NUSSZOPF_CONTACT }}" title="E-Mail an Nusszopf senden" aria-label="E-Mail an Nusszopf senden" class="underline">{{ \App\Models\Project::NUSSZOPF_CONTACT }}</a>
+                            <a href="mailto:{{ config('nusszopf.contact_email') }}" title="E-Mail an Nusszopf senden" aria-label="E-Mail an Nusszopf senden" class="border-b-2 cursor-pointer nz-text-sm nz-link-livid">{{ config('nusszopf.contact_email') }}</a>
                             bei uns melden!
                         </x-info-card>
                     </x-framed-grid-card.body-col>

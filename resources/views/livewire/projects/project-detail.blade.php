@@ -178,8 +178,8 @@
     <x-frame class="pt-4 pb-16 text-center lg:pb-20 lg:text-right bg-steel-100">
         <a
             href="{{ $reportMailto }}"
-            title="Projekt {{ \App\Models\Project::NUSSZOPF_CONTACT }} melden"
-            aria-label="Projekt {{ \App\Models\Project::NUSSZOPF_CONTACT }} melden"
+            title="Projekt {{ config('nusszopf.contact_email') }} melden"
+            aria-label="Projekt {{ config('nusszopf.contact_email') }} melden"
             data-test="link_report_project-detail"
             class="inline-flex items-center underline lg:pr-2.5"
         >

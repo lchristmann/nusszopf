@@ -117,7 +117,7 @@ it('is throttled to 10 attempts per 15 minutes per IP (Preserve)', function () {
         subscribeViaForm("n{$i}@example.com")->assertDispatched('toast', type: 'success');
     }
 
-    subscribeViaForm('eleven@example.com')->assertDispatched('toast', type: 'error', message: SubscribeForm::ERROR);
+    subscribeViaForm('eleven@example.com')->assertDispatched('toast', type: 'error', message: SubscribeForm::error());
     expect(Lead::where('email', 'eleven@example.com')->exists())->toBeFalse();
 
     $this->travel(15)->minutes();
@@ -127,7 +127,7 @@ it('is throttled to 10 attempts per 15 minutes per IP (Preserve)', function () {
 it('shows the historical error toast when the subscription cannot be stored', function () {
     Lead::saving(fn () => throw new RuntimeException('database down'));
 
-    subscribeViaForm()->assertDispatched('toast', type: 'error', message: SubscribeForm::ERROR);
+    subscribeViaForm()->assertDispatched('toast', type: 'error', message: SubscribeForm::error());
     Mail::assertNothingQueued();
 });
 

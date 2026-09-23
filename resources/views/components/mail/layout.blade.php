@@ -13,14 +13,11 @@
     product-fidelity requirement in itself, the same relationship Tailwind has
     to the historical UI (CLAUDE.md).
 
-    Two historical footer links are **not** reproduced yet: "Nusszopf als
-    Kontakt speichern" (a vCard hardcoding the *original* nusszopf.org's own
-    contact addresses — publishing that from every self-hosted instance would
-    misattribute a stranger's operator identity, the same category of gap
-    `docs/rewrite/master-roadmap.md` schedules as "operator mailbox/identity
-    are configuration" for slice 10) and the Instagram/"Zum Nusszopf" targets
-    stay the literal historical URLs for now, alongside `Project::NUSSZOPF_CONTACT`
-    and `MAIL_FROM_ADDRESS` — see docs/rewrite/sixth-slice.md, "Remaining gaps".
+    Footer links follow this instance's identity (decision A-5, slice 10):
+    the mail icon uses `config('nusszopf.contact_email')` and "Nusszopf als
+    Kontakt speichern" downloads the vCard generated from it
+    (`App\Support\Operator::vcard()`). Instagram stays the literal historical
+    brand URL.
     "Zum Nusszopf" and "Datenschutzerklärung" link to this instance's own URLs
     (`url('/')` / `route('privacy')`), not the historical nusszopf.org — the
     historical target is the wrong destination for a self-hosted copy of the
@@ -58,12 +55,17 @@
                         <a href="https://www.instagram.com/nuss.zopf/" title="Zu Instagram" target="_blank" style="text-decoration:none; display:inline-block; margin:0 8px;">
                             <x-icon name="instagram" :size="22" style="color:#263238;" />
                         </a>
-                        <a href="mailto:{{ \App\Models\Project::NUSSZOPF_CONTACT }}" title="E-Mail schreiben" style="text-decoration:none; display:inline-block; margin:0 8px;">
+                        <a href="mailto:{{ config('nusszopf.contact_email') }}" title="E-Mail schreiben" style="text-decoration:none; display:inline-block; margin:0 8px;">
                             <x-icon name="mail" :size="22" style="color:#263238;" />
                         </a>
                         <a href="{{ url('/') }}" title="Zum Nusszopf" target="_blank" style="text-decoration:none; display:inline-block; margin:0 8px;">
                             <x-icon name="link" :size="22" style="color:#263238;" />
                         </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="center" style="padding:0 24px 4px 24px; font-family:'Barlow',Arial,sans-serif; font-weight:500; font-size:12px; line-height:18px;">
+                        <a href="{{ route('contact.vcard') }}" target="_blank" style="color:#263238; text-decoration:underline;">Nusszopf als Kontakt speichern</a>
                     </td>
                 </tr>
                 <tr>

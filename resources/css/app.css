@@ -172,7 +172,7 @@
         @apply text-base;
     }
 
-    /* Link.css — the colors the Slice 2 screens use (rich-text links, OSM location link). */
+    /* Link.css (`Link.theme.js` `LinkColor`). */
     .nz-link-current {
         @apply text-current border-current;
     }
@@ -181,6 +181,15 @@
     }
     .nz-link-lilac {
         @apply bg-lilac-200 text-lilac-800 border-lilac-800;
+    }
+    .nz-link-red {
+        @apply bg-red-200 border-steel-700 text-steel-700;
+    }
+    .nz-link-livid {
+        @apply bg-livid-100 text-livid-800 border-livid-800;
+    }
+    .nz-link-warning {
+        @apply bg-warning-100 text-stone-800 border-stone-800;
     }
 
     /* Link.theme.js `stone-*`: the links inside a request's rich text, per category. */

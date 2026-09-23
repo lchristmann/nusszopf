@@ -5,6 +5,7 @@ namespace App\Livewire\Newsletter;
 use App\Livewire\Newsletter\Concerns\ThrottlesNewsletter;
 use App\Models\Lead;
 use App\Support\Newsletter;
+use App\Support\Operator;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 use Throwable;
@@ -19,7 +20,11 @@ class SubscribeForm extends Component
 {
     use ThrottlesNewsletter;
 
-    public const ERROR = 'Sorry, es ist ein Fehler aufgetreten. Bitte versuche es erneut oder melde dich bei mail@nusszopf.org.';
+    /** `newsletterData.subscribe.notify.error`, with this instance's mailbox (decision A-5). */
+    public static function error(): string
+    {
+        return 'Sorry, es ist ein Fehler aufgetreten. Bitte versuche es erneut oder melde dich bei '.Operator::contactEmail().'.';
+    }
 
     public string $name = '';
 
@@ -43,7 +48,7 @@ class SubscribeForm extends Component
         ]);
 
         if (! $this->attemptNewsletterAction()) {
-            $this->dispatch('toast', type: 'error', message: self::ERROR);
+            $this->dispatch('toast', type: 'error', message: self::error());
 
             return;
         }
@@ -52,7 +57,7 @@ class SubscribeForm extends Component
             Newsletter::subscribe(trim($this->email), trim($this->name), Lead::SOURCE_FORM);
         } catch (Throwable $e) {
             report($e);
-            $this->dispatch('toast', type: 'error', message: self::ERROR);
+            $this->dispatch('toast', type: 'error', message: self::error());
 
             return;
         }

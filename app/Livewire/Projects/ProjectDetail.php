@@ -5,6 +5,7 @@ namespace App\Livewire\Projects;
 use App\Mail\ContactMail;
 use App\Models\Project;
 use App\Models\ProjectAnalytics;
+use App\Support\Operator;
 use App\Support\ProjectDate;
 use App\Support\RichText;
 use Illuminate\Contracts\View\View;
@@ -218,7 +219,7 @@ class ProjectDetail extends Component
             'mailto' => 'mailto:'.$project->contact.'?subject='.rawurlencode('Nusszopf – Nussige Nachricht'),
             // `project.data.js` `report.href`: the id is appended to the
             // already-built mailto URL exactly as historically, unencoded.
-            'reportMailto' => 'mailto:'.Project::NUSSZOPF_CONTACT.'?subject=Projekt melden (ID: '.$project->id.')',
+            'reportMailto' => 'mailto:'.Operator::contactEmail().'?subject=Projekt melden (ID: '.$project->id.')',
             'views' => $project->analytics()->value('views'),
             // `requests(order_by: { created_at: desc })`, through the BUG-002 scope like every read.
             'requests' => $project->requests()->visible()->orderByDesc('created_at')->orderByDesc('id')->get(),

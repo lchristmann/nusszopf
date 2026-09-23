@@ -35,3 +35,6 @@ Thumbs.db
 # Coverage reports
 /coverage
 /build/logs
+
+# Operator legal texts (config nusszopf.legal_path, docs/deployment/README.md)
+/legal/

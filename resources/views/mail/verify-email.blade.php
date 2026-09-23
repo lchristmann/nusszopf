@@ -10,6 +10,6 @@
     <x-mail.button :href="$url">E-Mail-Adresse bestätigen</x-mail.button>
     <p style="margin:24px 0 0 0; padding:12px; background-color:#FFF3E0; color:#37474F; font-size:14px; font-weight:500; line-height:20px;">
         Falls Du diese Anfrage nicht gestellt hast, kontaktiere uns bitte via
-        <a href="mailto:{{ \App\Models\Project::NUSSZOPF_CONTACT }}" style="color:#37474F; text-decoration:underline;">{{ \App\Models\Project::NUSSZOPF_CONTACT }}</a>.
+        <a href="mailto:{{ config('nusszopf.contact_email') }}" style="color:#37474F; text-decoration:underline;">{{ config('nusszopf.contact_email') }}</a>.
     </p>
 </x-mail.layout>

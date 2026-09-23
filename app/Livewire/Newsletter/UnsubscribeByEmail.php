@@ -37,7 +37,7 @@ class UnsubscribeByEmail extends Component
         ]);
 
         if (! $this->attemptNewsletterAction()) {
-            $this->dispatch('toast', type: 'error', message: SubscribeForm::ERROR);
+            $this->dispatch('toast', type: 'error', message: SubscribeForm::error());
 
             return;
         }
@@ -46,7 +46,7 @@ class UnsubscribeByEmail extends Component
             Newsletter::requestUnsubscribe(trim($this->email));
         } catch (Throwable $e) {
             report($e);
-            $this->dispatch('toast', type: 'error', message: SubscribeForm::ERROR);
+            $this->dispatch('toast', type: 'error', message: SubscribeForm::error());
 
             return;
         }

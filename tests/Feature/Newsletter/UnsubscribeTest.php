@@ -75,5 +75,5 @@ it('shares one throttle budget with the sign-up form (Preserve)', function () {
     Livewire::test(UnsubscribeByEmail::class)
         ->set('email', 'n1@example.com')
         ->call('unsubscribe')
-        ->assertDispatched('toast', type: 'error', message: SubscribeForm::ERROR);
+        ->assertDispatched('toast', type: 'error', message: SubscribeForm::error());
 });

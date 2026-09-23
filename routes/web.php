@@ -17,6 +17,7 @@ use App\Livewire\Projects\ProjectDetail;
 use App\Livewire\Projects\ProjectEdit;
 use App\Livewire\Projects\ProjectWizard;
 use App\Livewire\Search\Search;
+use App\Support\Operator;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Http\Request;
 use Illuminate\Session\Middleware\StartSession;
@@ -68,6 +69,13 @@ Route::get('/newsletter/unsubscribe/lead', UnsubscribeByEmail::class)->name('new
 Route::get('/newsletter/unsubscribe/{token}', [ConfirmationController::class, 'unsubscribe'])->name('newsletter.unsubscribe.confirm');
 
 Route::get('/privacy', fn () => view('legal.pending', ['title' => 'Datenschutz']))->name('privacy');
+
+// `public/contact/nusszopf-vcard.vcf`, generated from this instance's own
+// addresses (App\Support\Operator, decision A-5).
+Route::get('/contact/nusszopf-vcard.vcf', fn () => response(Operator::vcard(), 200, [
+    'Content-Type' => 'text/vcard; charset=utf-8',
+    'Content-Disposition' => 'attachment; filename="nusszopf-vcard.vcf"',
+]))->name('contact.vcard');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', LoginRegister::class)->name('login');
