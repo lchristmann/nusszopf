@@ -108,3 +108,24 @@ forgot-password screen end to end.
 - Playwright coverage for these journeys (reset via Mailpit, login lockout, Google via a provider
   stub) is not yet part of the `tests/E2E` suite — tracked for the parity/E2E pass (P-1), not blocking
   this slice's Feature-test-level verification.
+
+## Corrections from the finish-line visual parity audit (P-2, 2026-09-23)
+
+Comparing the screens with the running historical `auth-login`/`auth-password` apps
+(`docs/testing/visual-regression.md`) found drift that this slice had not noticed:
+
+- The screens now sit in the `FramedCard` with the big logo (`SVGNusszopfLogoBig`) on the apps' own page
+  colours (`bg-white sm:bg-steel-100`). The submit buttons are `bg-steel-100`, and the spacing is the
+  forms' own (`mt-4` between fields, `mt-5`/`mt-6` before the buttons).
+- Feedback is by toast, as in `handleLogin`/`handleSignup`/`handleChangePassword`/`handleSavePassword`:
+  - loading toasts: "Du wirst einloggt.", "Du wirst registriert und eingeloggt.",
+    "Deine Anfrage wird geknetet.", "Dein Passwort wird geändert.";
+  - a failed login or reset shows the generic error toast "Sorry, da lief etwas schief.", not a message
+    under the password field;
+  - a taken username shows the distinguished toast "Der Username existiert leider schon.";
+  - a taken e-mail address shows the generic toast. The invented field message "Diese E-Mail-Adresse
+    wird bereits verwendet." is gone.
+- "Passwort vergessen" answers "E-Mail verschickt!" as a toast and keeps the form, instead of replacing
+  it with an inline confirmation.
+- Unchanged, because they are new rather than historical: the lock and throttle notices under the field.
+

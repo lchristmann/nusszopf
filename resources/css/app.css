@@ -340,7 +340,8 @@
  * `list-disc pl-6` lists, `steel` links with the medium underline.
  */
 .nz-legal {
-    @apply text-lg;
+    /* The historical pages set every paragraph through Text.atom, which hyphenates. */
+    @apply text-lg hyphens-auto;
 }
 .nz-legal :is(h2, h3, h4) {
     @apply mb-3 text-xl font-semibold leading-snug;
@@ -370,7 +371,9 @@
     @apply border-b-2 cursor-pointer border-steel-700 bg-steel-100 text-steel-700;
 }
 .nz-legal em {
+    /* Plain italics: the reset's semibold `em` below is the search highlight, not operator emphasis. */
     @apply italic;
+    font-weight: inherit !important;
 }
 .nz-legal strong {
     @apply font-semibold;

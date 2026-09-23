@@ -89,3 +89,68 @@ window.nzShare = async function nzShare(title) {
         await copy();
     }
 };
+
+/**
+ * `Masonry.organism.js` (react-masonry-css): cards are dealt round-robin into columns — card i
+ * goes to column i mod n, each column stacking its cards — so the reading order runs left to right.
+ * `breakpoints` is its `breakpointCols` ({ default, <max width>: n }, against the window width) and
+ * `gap` the pixel gap between columns and rows. The cards are positioned absolutely instead of being
+ * moved into column elements, so Livewire keeps morphing the list it rendered. Without JavaScript the
+ * container's own CSS columns stay in effect. The container carries `data-nz-masonry`; once Livewire
+ * removes it or morphs that attribute away, the layout lets go of the element.
+ */
+window.nzMasonry = function nzMasonry(el, breakpoints, gap) {
+    const columnCount = () => {
+        const limits = Object.keys(breakpoints).filter((key) => key !== 'default').map(Number).sort((a, b) => a - b);
+        const limit = limits.find((max) => window.innerWidth <= max);
+        return limit === undefined ? breakpoints.default : breakpoints[limit];
+    };
+
+    let writing = false;
+    let mutations;
+    const resize = new ResizeObserver(() => { if (!writing) layout(); });
+    const teardown = () => {
+        resize.disconnect();
+        mutations.disconnect();
+        window.removeEventListener('resize', layout);
+        el.style.removeProperty('columns');
+        el.style.removeProperty('position');
+        el.style.removeProperty('height');
+        [...el.children].forEach((card) => ['position', 'width', 'margin', 'left', 'top'].forEach((property) => card.style.removeProperty(property)));
+    };
+    function layout() {
+        if (!el.isConnected || !el.hasAttribute('data-nz-masonry')) {
+            teardown();
+            return;
+        }
+        writing = true;
+        const cards = [...el.children];
+        const columns = columnCount();
+        const width = (el.clientWidth - gap * (columns - 1)) / columns;
+        el.style.columns = 'auto';
+        el.style.position = 'relative';
+        cards.forEach((card) => Object.assign(card.style, { position: 'absolute', width: `${width}px`, margin: '0' }));
+        const heights = new Array(columns).fill(0);
+        cards.forEach((card, index) => {
+            const column = index % columns;
+            card.style.left = `${column * (width + gap)}px`;
+            card.style.top = `${heights[column]}px`;
+            heights[column] += card.offsetHeight + gap;
+        });
+        el.style.height = `${Math.max(0, ...heights.map((height) => height - gap))}px`;
+        el.dataset.masonry = String(columns);
+        queueMicrotask(() => { writing = false; });
+    }
+
+    const watch = () => [...el.children].forEach((card) => resize.observe(card));
+    mutations = new MutationObserver(() => {
+        if (writing) return;
+        watch();
+        layout();
+    });
+    mutations.observe(el, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class', 'data-nz-masonry'] });
+    window.addEventListener('resize', layout);
+    document.fonts?.ready.then(layout);
+    watch();
+    layout();
+};

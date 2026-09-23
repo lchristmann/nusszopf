@@ -18,7 +18,8 @@ use Livewire\Component;
  * identical strength policy as registration), different plumbing per
  * `docs/authentication/README.md` §7's migration mapping.
  */
-#[Layout('components.layout')]
+// The Auth0-hosted apps' own `Page`: `bg-white sm:bg-steel-100`, footer alike.
+#[Layout('components.layout', ['mainClass' => 'bg-white sm:bg-steel-100', 'footerBg' => 'bg-white sm:bg-steel-100'])]
 class ResetPassword extends Component
 {
     public string $token = '';
@@ -41,6 +42,9 @@ class ResetPassword extends Component
             'password' => 'Passwort',
         ]);
 
+        // auth-password `handleSavePassword`: loading toast, then the success or the generic error toast.
+        $this->dispatch('toast', type: 'loading', message: 'Dein Passwort wird geändert.');
+
         $status = Password::reset(
             ['email' => $this->email, 'password' => $this->password, 'token' => $this->token],
             function (User $user) {
@@ -49,7 +53,7 @@ class ResetPassword extends Component
         );
 
         if ($status !== Password::PASSWORD_RESET) {
-            $this->addError('password', 'Sorry, da lief etwas schief.');
+            $this->dispatch('toast', type: 'error', message: 'Sorry, da lief etwas schief.');
 
             return;
         }

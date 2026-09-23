@@ -56,7 +56,7 @@ it('rejects a password that fails the historical 5-rule policy', function () {
         ->assertHasErrors(['registerPassword']);
 });
 
-it('shows the distinguished duplicate-username error', function () {
+it('shows the distinguished duplicate-username error toast', function () {
     User::factory()->create(['name' => 'nussknacker']);
 
     Livewire::test(LoginRegister::class)
@@ -66,7 +66,47 @@ it('shows the distinguished duplicate-username error', function () {
         ->set('registerPassword', 'Str0ng!Pass')
         ->set('privacy', true)
         ->call('register')
-        ->assertHasErrors(['username']);
+        ->assertHasNoErrors()
+        ->assertDispatched('toast', type: 'error', message: 'Der Username existiert leider schon.');
+
+    expect(User::where('email', 'someone-else@example.com')->exists())->toBeFalse();
+});
+
+it('answers a taken e-mail address with the generic error toast, as Auth0 did', function () {
+    User::factory()->create(['email' => 'vergeben@example.com']);
+
+    Livewire::test(LoginRegister::class)
+        ->set('tab', 'register')
+        ->set('username', 'neuling')
+        ->set('email', 'vergeben@example.com')
+        ->set('registerPassword', 'Str0ng!Pass')
+        ->set('privacy', true)
+        ->call('register')
+        ->assertHasNoErrors()
+        ->assertDispatched('toast', type: 'error', message: 'Sorry, da lief etwas schief.');
+
+    expect(User::where('name', 'neuling')->exists())->toBeFalse();
+    $this->assertGuest();
+});
+
+it('shows the historical loading toasts once the form is valid', function () {
+    Livewire::test(LoginRegister::class)
+        ->set('tab', 'register')
+        ->set('username', 'neuling')
+        ->set('email', 'neuling@example.com')
+        ->set('registerPassword', 'Str0ng!Pass')
+        ->set('privacy', true)
+        ->call('register')
+        ->assertDispatched('toast', type: 'loading', message: 'Du wirst registriert und eingeloggt.');
+
+    auth()->logout();
+    Livewire::test(LoginRegister::class)
+        ->set('emailOrName', 'neuling')
+        ->set('loginPassword', 'Str0ng!Pass')
+        ->call('login')
+        ->assertDispatched('toast', type: 'loading', message: 'Du wirst einloggt.');
+
+    Livewire::test(LoginRegister::class)->call('login')->assertNotDispatched('toast');
 });
 
 it('rejects a username containing whitespace', function () {

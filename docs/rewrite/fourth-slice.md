@@ -36,7 +36,7 @@ journey ends at the detail page's `mailto:` scaffold until then), My Projects (s
 | 4 | `search:reindex`, uncapped paging (`maxTotalHits`) | **Fix** (BUG-008) | historically no recovery; Meilisearch 1.x caps hits at 1000 by default |
 | 5 | A failed query shows the no-hits state | **Preserve** | the exception is now reported to the log |
 | 6 | The 500 ms throttle is not reproduced | **Replace** | Livewire sends one request at a time per component; the icon spins while it runs |
-| 7 | Masonry is CSS columns: cards read top-to-bottom per column | **Deviation (visual)** | `react-masonry-css` deals cards out left-to-right; achieving that server-side needs a column count at render time. Breakpoints, gap and card look are identical. Flagged for the parity audit (P-1/P-2) |
+| 7 | ~~Masonry is CSS columns: cards read top-to-bottom per column~~ — closed in P-2: `nzMasonry` deals the cards left to right; CSS columns remain the no-JavaScript fallback | **Deviation (visual)** → fixed | `react-masonry-css` deals cards out left-to-right; achieving that server-side needs a column count at render time. Breakpoints, gap and card look are identical. Flagged for the parity audit (P-1/P-2) |
 | 8 | The query stays deep-linkable (`?q=`), and the filter is too (`?f[]=`) | **Addition** (slice 3 for `q`) | historically neither was in the URL; the screen spec left the shape Unknown |
 | 9 | The page opens on the skeleton and then loads (`wire:init`) | **Replace** | historically a client-side fetch; nothing indexable is lost, the search screen was never server-rendered |
 | 10 | Filter popover, closed by Escape/outside click, scales in over 100 ms | **Preserve** | same as reakit's `Popover` (`animated: 100`) |
@@ -71,7 +71,7 @@ journey ends at the detail page's `mailto:` scaffold until then), My Projects (s
 
 ## Remaining gaps
 
-- Masonry ordering (decision 7), to be judged in the parity audit.
+- ~~Masonry ordering (decision 7), to be judged in the parity audit.~~ Fixed in P-2 (`docs/testing/visual-regression.md`).
 - ~~The contact-from-result journey ends at the `mailto:` scaffold until slice 6.~~ Closed in slice 6.
 - The recovery E2E needs the reindex command and Meilisearch's URL in the environment (CI sets them; locally it is skipped
   unless `E2E_REINDEX_COMMAND`/`E2E_MEILISEARCH_URL` are given, `docs/testing/README.md`).

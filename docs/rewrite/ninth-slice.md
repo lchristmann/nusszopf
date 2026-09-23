@@ -77,6 +77,6 @@ against the historical `FramedCard` layout (big logo, headings, copy, buttons).
 - The throttle budget is per IP and shared, as historically; many visitors behind one NAT share it.
 - Confirming via GET means a mail scanner that prefetches links could confirm a subscription — the same
   property as the historical flow; not changed without a product decision.
-- Pre-existing, unrelated: `tests/E2E/specs/visitor/password-reset.spec.ts` fails reproducibly on Firefox in the
-  local dev stack (the e-mail is still empty when "Senden" is clicked), also on the slice 8 commit; CI was green.
-  Not touched here (slice 7's spec).
+- ~~Pre-existing: `password-reset.spec.ts` fails on Firefox locally (the e-mail is still empty when "Senden" is
+  clicked).~~ Fixed in P-1: the spec filled the field before the page had loaded and Livewire had bound
+  `wire:model`; `LoginPage.goToForgotPassword()` now waits for the load.

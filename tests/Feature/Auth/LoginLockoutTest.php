@@ -30,7 +30,7 @@ it('locks the specific account after 5 failed attempts and e-mails only its owne
             ->set('emailOrName', $user->email)
             ->set('loginPassword', 'wrong-password')
             ->call('login')
-            ->assertHasErrors(['loginPassword']);
+            ->assertDispatched('toast', type: 'error', message: 'Sorry, da lief etwas schief.');
     }
 
     RateLimiter::clear('login:127.0.0.1');
@@ -56,7 +56,7 @@ it('never locks or e-mails for attempts against an unknown account', function ()
             ->set('emailOrName', 'nobody@example.com')
             ->set('loginPassword', 'whatever123')
             ->call('login')
-            ->assertHasErrors(['loginPassword']);
+            ->assertDispatched('toast', type: 'error', message: 'Sorry, da lief etwas schief.');
     }
 
     Mail::assertNothingQueued();

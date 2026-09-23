@@ -1,4 +1,5 @@
-<div wire:init="load">
+{{-- A flex column, so the frames stay flex items of <main> as in pages/search.js (`flex-1`, no margin collapse). --}}
+<div wire:init="load" class="flex flex-col flex-1">
     {{--
         pages/search.js: <Frame size="large" className="py-6 md:pt-12 md:pb-10 bg-moss-300
         text-moss-800"> holding the title and SearchInput.
@@ -125,8 +126,8 @@
                 </div>
             </div>
         @elseif (count($this->results->hits) > 0)
-            {{-- Masonry: 3 columns, 2 below 1024px, 1 below 640px (`breakpointCols`), gap 5. --}}
-            <div class="columns-1 sm:columns-2 lg:columns-3 gap-5" data-test="search-results">
+            {{-- Masonry: 3 columns, 2 below 1024px, 1 below 640px (`breakpointCols`), gap 5, dealt left to right (`nzMasonry`). --}}
+            <div class="columns-1 sm:columns-2 lg:columns-3 gap-5" data-test="search-results" wire:key="search-results" data-nz-masonry x-data x-init="nzMasonry($el, { default: 3, 1023: 2, 639: 1 }, 20)">
                 @foreach ($this->results->hits as $hit)
                     {{-- HitCard.js --}}
                     <a
@@ -153,7 +154,7 @@
             </div>
         @else
             {{-- NoHitsSection.js --}}
-            <div class="max-w-3xl mx-auto break-normal mt-4" data-test="no-hits">
+            <div class="max-w-3xl mx-auto break-normal mt-4" data-test="no-hits" wire:key="no-hits">
                 <div class="px-6 py-8 rounded-lg sm:px-8 lg:p-12 bg-livid-300 text-livid-800">
                     <x-text class="-mt-1.5">Verzopft, wir konnten leider nichts zu deiner Suche finden!</x-text>
                     <x-text variant="textSm" class="mt-3">Versuch es noch einmal mit anderen oder weniger Begriffen oder erstelle dein Traumprojekt in ein paar Schritten einfach selbst.</x-text>

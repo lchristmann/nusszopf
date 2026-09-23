@@ -17,19 +17,19 @@ use Livewire\Livewire;
  * mechanics are new to this slice; the request/set-new-password screens
  * themselves have no historical 1:1 route (docs/design/screen-specs.md).
  */
-it('always shows the same "sent" state whether or not the address exists', function () {
+it('always toasts "E-Mail verschickt!" whether or not the address exists', function () {
     Mail::fake();
     User::factory()->create(['email' => 'nussknacker@example.com']);
 
     Livewire::test(ForgotPassword::class)
         ->set('email', 'nussknacker@example.com')
         ->call('send')
-        ->assertSet('sent', true);
+        ->assertDispatched('toast', type: 'success', message: 'E-Mail verschickt!');
 
     Livewire::test(ForgotPassword::class)
         ->set('email', 'nobody@example.com')
         ->call('send')
-        ->assertSet('sent', true);
+        ->assertDispatched('toast', type: 'success', message: 'E-Mail verschickt!');
 
     Mail::assertQueued(ChangePasswordMail::class, 1);
 });
@@ -79,7 +79,7 @@ it('resets the password with the historical strength policy and invalidates the 
         ->set('email', $user->email)
         ->set('password', 'AnotherStr0ng!Pass')
         ->call('save')
-        ->assertHasErrors(['password']);
+        ->assertDispatched('toast', type: 'error', message: 'Sorry, da lief etwas schief.');
 
     expect(Hash::check('NewStr0ng!Pass', $user->fresh()->password))->toBeTrue();
 });
@@ -91,7 +91,7 @@ it('rejects a tampered or unknown reset token', function () {
         ->set('email', $user->email)
         ->set('password', 'NewStr0ng!Pass')
         ->call('save')
-        ->assertHasErrors(['password']);
+        ->assertDispatched('toast', type: 'error', message: 'Sorry, da lief etwas schief.');
 });
 
 it('reads the token from the route and the e-mail from the query string', function () {

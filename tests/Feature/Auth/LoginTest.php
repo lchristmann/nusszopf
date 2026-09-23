@@ -32,14 +32,15 @@ it('logs in with the username instead of the email', function () {
     $this->assertAuthenticatedAs($user);
 });
 
-it('rejects an incorrect password without revealing which field was wrong', function () {
+it('rejects an incorrect password with the generic error toast, never a field message', function () {
     $user = User::factory()->create(['password' => 'Str0ng!Pass']);
 
     Livewire::test(LoginRegister::class)
         ->set('emailOrName', $user->email)
         ->set('loginPassword', 'totally-wrong')
         ->call('login')
-        ->assertHasErrors(['loginPassword']);
+        ->assertDispatched('toast', type: 'error', message: 'Sorry, da lief etwas schief.')
+        ->assertHasNoErrors();
 
     $this->assertGuest();
 });
@@ -49,7 +50,8 @@ it('rejects login for an unknown account', function () {
         ->set('emailOrName', 'nobody@example.com')
         ->set('loginPassword', 'whatever123')
         ->call('login')
-        ->assertHasErrors(['loginPassword']);
+        ->assertDispatched('toast', type: 'error', message: 'Sorry, da lief etwas schief.')
+        ->assertHasNoErrors();
 
     $this->assertGuest();
 });

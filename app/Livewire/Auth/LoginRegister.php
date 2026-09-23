@@ -23,7 +23,8 @@ use Throwable;
  * The historical combined Login/Register screen (docs/authentication/README.md
  * §2-3) — one screen, tab-switched, not two separate routes.
  */
-#[Layout('components.layout')]
+// The Auth0-hosted apps' own `Page`: `bg-white sm:bg-steel-100`, footer alike.
+#[Layout('components.layout', ['mainClass' => 'bg-white sm:bg-steel-100', 'footerBg' => 'bg-white sm:bg-steel-100'])]
 class LoginRegister extends Component
 {
     /**
@@ -80,6 +81,10 @@ class LoginRegister extends Component
             'loginPassword.required' => 'Bitte gib ein Passwort ein',
         ]);
 
+        // auth-login `handleLogin`: a loading toast once the form is valid; any failure is the generic
+        // error toast (`cms.notify.error[0]`), never a field message that would tell the fields apart.
+        $this->dispatch('toast', type: 'loading', message: 'Du wirst einloggt.');
+
         $user = User::where('email', $this->emailOrName)
             ->orWhere('name', $this->emailOrName)
             ->first();
@@ -107,7 +112,7 @@ class LoginRegister extends Component
                 }
             }
 
-            $this->addError('loginPassword', 'Sorry, da lief etwas schief.');
+            $this->dispatch('toast', type: 'error', message: 'Sorry, da lief etwas schief.');
 
             return;
         }
@@ -150,21 +155,35 @@ class LoginRegister extends Component
                 'string',
                 'max:15',
                 'regex:/^\S*$/',
-                'unique:users,name',
             ],
-            'email' => ['required', 'email', 'unique:users,email'],
+            'email' => ['required', 'email'],
             'registerPassword' => ['required', new PasswordPolicy],
             'privacy' => ['accepted'],
         ], [
             'username.required' => 'Gib einen Username ein',
             'username.regex' => 'Keine Leerzeichen',
             'username.max' => 'Maximal 15 Zeichen',
-            'username.unique' => 'Der Username existiert leider schon.',
             'email.required' => 'Gib eine E-Mail-Adresse ein',
             'email.email' => 'Keine valide E-Mail-Adresse',
-            'email.unique' => 'Diese E-Mail-Adresse wird bereits verwendet.',
             'privacy.accepted' => 'Stimme den Datenschutzbestimmungen zu',
         ]);
+
+        // auth-login `handleSignup`: the loading toast, then Auth0's answer. A taken username was its one
+        // distinguished error (HTTP 400, `cms.notify.error[1]`); anything else, a taken address included,
+        // the generic one.
+        $this->dispatch('toast', type: 'loading', message: 'Du wirst registriert und eingeloggt.');
+
+        if (User::where('name', $this->username)->exists()) {
+            $this->dispatch('toast', type: 'error', message: 'Der Username existiert leider schon.');
+
+            return;
+        }
+
+        if (User::where('email', $this->email)->exists()) {
+            $this->dispatch('toast', type: 'error', message: 'Sorry, da lief etwas schief.');
+
+            return;
+        }
 
         RateLimiter::hit($ipKey, decaySeconds: 900);
 

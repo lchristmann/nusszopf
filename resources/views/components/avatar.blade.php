@@ -31,7 +31,7 @@
             />
         @else
             <div
-                class="flex items-center justify-center w-14 h-14 uppercase"
+                class="flex items-center justify-center w-14 h-14 uppercase {{ $editable ? 'opacity-30' : '' }}"
                 {{-- ui-avatars.com `size=128&font-size=0.6`: the initial is 0.6 of the circle, regular weight. --}}
                 style="background-color: #cfd8dc; color: #37474f; font-size: 33.6px; line-height: 1"
                 aria-hidden="true"

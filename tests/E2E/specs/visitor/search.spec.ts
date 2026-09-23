@@ -277,3 +277,28 @@ test('search recovery: after the index is wiped, the documented command brings e
         await search.expectResults([rooms, materials, plain]);
     }).toPass({ timeout: 60_000 });
 });
+
+/**
+ * `Masonry.organism.js` (react-masonry-css) deals the cards left to right: at three columns the first three hits
+ * share the top row. The layout must let go of the list when a search turns it into the no-hits section, and pick
+ * up again for the next hits (finish-line visual parity audit, P-2).
+ */
+test('deals the hits left to right, and lays out no hits and new hits again after a search', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const search = new SearchPage(page);
+    await search.goto();
+    await search.search(word);
+    await search.expectResults([rooms, materials, plain]);
+    const tops = await search.cards.evaluateAll((cards) => cards.map((card) => Math.round(card.getBoundingClientRect().top)));
+    expect(new Set(tops).size).toBe(1);
+
+    await search.search(`Zq${suffix}xy`);
+    await expect(search.noHits).toBeVisible();
+    const box = await search.noHits.boundingBox();
+    expect(box!.width).toBeGreaterThan(600);
+
+    await search.search(word);
+    await search.expectResults([rooms, materials, plain]);
+    const again = await search.cards.evaluateAll((cards) => cards.map((card) => Math.round(card.getBoundingClientRect().top)));
+    expect(new Set(again).size).toBe(1);
+});

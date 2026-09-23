@@ -6,12 +6,14 @@
     on the very first request.
 --}}
 <div wire:init="load">
-    <x-framed-grid-card>
-        {{-- pages/user/projects.js: headerColor="bg-steel-200 lg:bg-steel-100", not lilac. --}}
-        <x-frame class="bg-steel-200 rounded-t-lg">
-            <x-framed-grid-card.header>
+    {{-- pages/user/projects.js: `FramedGridCard className="lg:mb-20 lg:mt-12"`, header `bg-steel-200` on a
+         `bg-steel-200 lg:bg-steel-100` frame, body `bg-white` on `bg-white lg:bg-steel-100`; the header shows the
+         owner's `Avatar` (name and e-mail) — no page title. --}}
+    <x-framed-grid-card class="lg:mb-20 lg:mt-12">
+        <x-frame class="bg-steel-200 lg:bg-steel-100">
+            <x-framed-grid-card.header class="bg-steel-200">
                 <div class="flex flex-col lg:flex-row sm:justify-between lg:items-center">
-                    <x-text as="h1" variant="titleMd">Meine Projekte</x-text>
+                    <x-avatar :user="auth()->user()" variant="profile" />
                     {{-- The button component always sets `inline-flex` itself, which would otherwise beat a plain `hidden` utility on source order — wrapped instead. --}}
                     <div class="hidden lg:block">
                         <x-button
@@ -29,8 +31,8 @@
             </x-framed-grid-card.header>
         </x-frame>
 
-        <x-frame class="bg-white rounded-b-lg">
-            <x-framed-grid-card.body gap="medium">
+        <x-frame class="bg-white lg:bg-steel-100">
+            <x-framed-grid-card.body gap="medium" class="bg-white">
                 <x-framed-grid-card.body-col variant="oneCol" class="text-center lg:hidden">
                     <x-button
                         as="a"
@@ -74,20 +76,12 @@
                         </div>
                     @else
                         {{--
-                            Masonry.js's own default `breakpointCols`
-                            ({ default: 2, 1023: 1 }), since `pages/user/projects.js`
-                            passes none of its own — 2 columns from `lg`, 1 below,
-                            unlike Search's explicit 3/2/1 override. CSS columns
-                            (`search.blade.php`'s own pattern: `gap-*` on the
-                            container, `break-inside-avoid(-column) mb-*` per
-                            card), not a literal translation of the historical
-                            flexbox gap object (`wrap: '-ml-4', col: 'pl-4'`) —
-                            that pairing doesn't apply to `columns-*` and was
-                            previously copied in by mistake, overflowing the
-                            left column 16px past the frame (verification pass,
-                            2026-09-22).
+                            Masonry.js's default `breakpointCols` ({ default: 2, 1023: 1 }) — 2 columns from `lg` —
+                            with `pages/user/projects.js`'s own `gap={{ wrap: '-ml-5 -mb-5', col: 'pl-5', row: 'mb-5' }}`
+                            (20px). `nzMasonry` deals the cards left to right like react-masonry-css; the CSS
+                            columns are only the no-JavaScript fallback (finish-line parity audit, P-2).
                         --}}
-                        <div class="columns-1 lg:columns-2 gap-4">
+                        <div class="columns-1 lg:columns-2 gap-5" wire:key="projects-grid" data-nz-masonry x-data x-init="nzMasonry($el, { default: 2, 1023: 1 }, 20)">
                             @foreach ($projects as $project)
                                 @php
                                     $menuItems = [
@@ -105,7 +99,7 @@
                                 @endphp
                                 <div
                                     wire:key="project-{{ $project->id }}"
-                                    class="w-full mb-4 break-inside-avoid-column relative flex border border-lilac-300 text-lilac-800 rounded-lg cursor-pointer bg-lilac-200 ring-1 ring-transparent hover:ring-lilac-300"
+                                    class="w-full mb-5 break-inside-avoid-column relative flex border border-lilac-300 text-lilac-800 rounded-lg cursor-pointer bg-lilac-200 ring-1 ring-transparent hover:ring-lilac-300"
                                     data-test="route_edit-project_projects-page"
                                 >
                                     <a href="{{ route('projects.edit', $project) }}" class="flex-1 p-4 text-left md:p-5 focus:outline-none">

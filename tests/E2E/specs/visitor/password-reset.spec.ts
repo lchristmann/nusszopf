@@ -26,7 +26,9 @@ test('resets a forgotten password via the mailed link, then logs in with it', as
 
     await page.getByTestId('input_forgot-password-email').fill(user.email);
     await page.getByTestId('btn_send-reset-link').click();
-    await expect(page.getByTestId('text_reset-link-sent')).toBeVisible();
+    // ChangePasswordForm: a toast answers, and the form stays.
+    await expect(page.getByText('E-Mail verschickt!')).toBeVisible();
+    await expect(page.getByTestId('input_forgot-password-email')).toHaveValue(user.email);
 
     const html = await waitForMail(user.email, 'Nusszopf – Neues Passwort erstellen');
     const [, resetUrl] = html.match(/href="([^"]*\/password\/reset\/[^"]*)"/) ?? [];

@@ -43,15 +43,26 @@ export class LoginPage {
         await this.page.getByTestId('btn_login').click();
     }
 
+    /**
+     * A wrong password answers with the generic error toast (`handleLogin`); a locked account or a throttled
+     * address with its notice under the field. Either way the form stays.
+     */
     async loginExpectingError(emailOrName: string, password: string): Promise<void> {
         await this.page.getByTestId('input_email-or-name').fill(emailOrName);
         await this.page.getByTestId('input_login-password').fill(password);
         await this.page.getByTestId('btn_login').click();
+        await expect(this.page.getByText(/Sorry, da lief etwas schief\.|vorübergehend gesperrt|Zu viele Versuche/).last()).toBeVisible();
         await expect(this.page.getByTestId('input_login-password')).toBeVisible();
     }
 
+    /**
+     * A full page load: wait for it to finish, or a field filled before Livewire has bound `wire:model`
+     * loses its value (seen on Firefox, docs/rewrite/ninth-slice.md "Remaining gaps").
+     */
     async goToForgotPassword(): Promise<void> {
         await this.page.getByTestId('btn_forgot-password').click();
+        await this.page.waitForURL(/\/password\/forgot$/);
+        await this.page.waitForLoadState('load');
     }
 
     async expectFieldError(testId: string): Promise<void> {

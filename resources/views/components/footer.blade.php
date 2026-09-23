@@ -30,6 +30,7 @@
             </div>
         </div>
     @else
-        <div class="py-6"><div class="h-[27px]"></div></div>
+        {{-- 33px: the badge's inline-block link line box, measured against the running historical app (P-2). --}}
+        <div class="py-6"><div class="h-[33px]"></div></div>
     @endif
 </x-frame>
