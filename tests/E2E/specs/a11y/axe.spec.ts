@@ -12,7 +12,7 @@ import { uniqueSuffix } from '../../support/env';
 
 /**
  * Decision A-7 (docs/rewrite/decisions-register.md): an axe scan of every reachable screen and state, with
- * zero critical or serious violations; colour contrast is measured and reported, not gated
+ * zero critical or serious violations; colour contrast is gated except for its two documented exceptions
  * (docs/testing/accessibility.md). Every scan's full result goes to test-results/a11y/<state>.json.
  * The DOM is the same in every engine, so the scan runs in Chromium only.
  */
@@ -23,7 +23,9 @@ const OUT = 'test-results/a11y';
 
 async function scan(page: Page, state: string): Promise<void> {
     await page.mouse.move(0, 0);
-    // Let opening transitions finish: a popover caught mid fade-in measures a false contrast failure.
+    // Let opening transitions finish: a popover caught mid fade-in measures a false contrast failure. Alpine starts
+    // a transition a frame after the click, so let two frames pass before collecting the running ones.
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     await page.evaluate(() => Promise.all(document.getAnimations()
         .filter((animation) => animation.effect?.getTiming().iterations !== Infinity)
         .map((animation) => animation.finished.catch(() => null))));
@@ -45,6 +47,15 @@ async function scan(page: Page, state: string): Promise<void> {
             .map(({ name, visible }) => `"${name}" does not contain "${visible}"`);
     });
     expect.soft(mismatches, `label in name on "${state}"`).toEqual([]);
+    // Contrast: fixed where the maintainer approved it (BUG-042–044), so any failure now is a regression — except the
+    // two documented ones: labels of disabled inputs (`opacity-50`, exempt under WCAG 1.4.3) and older toasts,
+    // which are dimmed historically (BUG-045, waived).
+    const contrast = results.violations
+        .filter((violation) => violation.id === 'color-contrast')
+        .flatMap((violation) => violation.nodes)
+        .filter((node) => !node.html.includes('opacity-50') && !node.target.join(' ').startsWith('#nz-toasts'))
+        .map((node) => `${node.target.join(' ')}: ${node.any[0]?.data?.contrastRatio}`);
+    expect.soft(contrast, `colour contrast on "${state}"`).toEqual([]);
     const blocking = results.violations
         .filter((violation) => (violation.impact === 'critical' || violation.impact === 'serious') && violation.id !== 'color-contrast')
         .map((violation) => `${violation.id} (${violation.impact}): ${violation.nodes.map((node) => node.target.join(' ')).join(' | ')}`);

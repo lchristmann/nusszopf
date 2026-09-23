@@ -41,10 +41,10 @@ It found five problems, all fixed:
 - the card menus had identical names;
 - the label mismatches above.
 
-**Pending (human):** a listening pass with a real screen reader (NVDA on Windows or VoiceOver on macOS/iOS)
-through the journeys. This environment cannot run one. Suggested scope: Journey 2 (register, log in), Journey 3
-(create a project with a request), Journey 5 (search and filter), Journey 7 (contact dialog). Record the result
-here.
+**Not satisfied yet — pending (maintainer):** this review is not the screen-reader pass A-7 requires. The
+maintainer performs a listening pass with a real screen reader (NVDA on Windows or VoiceOver on macOS/iOS) through
+the journeys, separately. Suggested scope: Journey 2 (register, log in), Journey 3 (create a project with a
+request), Journey 5 (search and filter), Journey 7 (contact dialog). Record the result here.
 
 ## Bug protocol
 
@@ -53,26 +53,33 @@ here.
 | BUG-039 names, labels, error association | Fix (A-7) | Implemented |
 | BUG-040 keyboard operability, focus indicator | Fix (A-7) | Implemented |
 | BUG-041 headings | Fix (A-7) | Implemented |
-| BUG-042 contrast: messages on the contact dialog, 4.20:1 | Proposed Fix | **Awaiting the maintainer's approval or waiver** |
-| BUG-043 contrast: Home newsletter button, 4.42:1 | Proposed Fix | **Awaiting the maintainer's approval or waiver** |
-| BUG-044 contrast: "Ausloggen", 2.10:1 | Proposed Fix | **Awaiting the maintainer's approval or waiver** |
-| BUG-045 contrast: dimmed older toasts, ≈2.1:1 | Proposed Fix | **Awaiting the maintainer's approval or waiver** |
+| BUG-042 contrast: messages on the contact dialog, 4.20:1 | Fix, approved by the maintainer 2026-09-23 | Implemented: `warning-750`, 4.6:1 |
+| BUG-043 contrast: Home newsletter button, 4.42:1 | Fix, approved by the maintainer 2026-09-23 | Implemented: `steel-800` text, 6.0:1 |
+| BUG-044 contrast: "Ausloggen", 2.10:1 | Fix, approved by the maintainer 2026-09-23 | Implemented: `warning-900`, 4.6:1 |
+| BUG-045 contrast: dimmed older toasts, ≈2.1:1 | Preserve, waived by the maintainer 2026-09-23 | Historical dimming kept |
 
 The labels of the disabled period inputs (2.72:1) are exempt under WCAG 1.4.3 (inactive components) and are
-documented, not filed. The single intentional-change entry for BUG-039–041 is in `docs/rewrite/intentional-changes.md`.
+documented, not filed. Each fix keeps the historical hue: the two warning tones are the lightest shades of
+`warning-700`'s own hue that reach 4.6:1 on their background. `docs/rewrite/intentional-changes.md` has one entry for
+BUG-039–041 and one for the three colours.
+
+Since the contrast decisions, the axe spec gates colour contrast: any failure except the disabled labels and the
+waived toasts fails the run. Restoring the old "Ausloggen" colour was confirmed to fail it.
 
 ## Other evidence
 
 - `lang="de"` on every page and every e-mail.
 - The visual baselines are pixel-identical after all the fixes: the only visible change is the focus outline
   during keyboard use.
-- The complete E2E suite passed three times in a row. The last run, on everything as committed, had
-  159 passed, 0 failed, and 12 skipped by design (6 search runs gated on environment variables, and the axe
-  spec's Firefox/WebKit runs). Pest: 557 passed. Pint and Larastan are clean.
+- The complete E2E suite passed three times in a row before the contrast fixes, and again after them
+  (2026-09-24): 159 passed, 0 failed, and 12 skipped by design (6 search runs gated on environment variables,
+  and the axe spec's Firefox/WebKit runs). The visual suite passed 69 of 69 at the stricter threshold, with only
+  the Home baselines rebaselined for BUG-043. Pest: 557 passed. Pint and Larastan are clean.
 - Also fixed on the way, test-only: races in the E2E page objects that the complete reruns exposed
   (`docs/testing/README.md`, "Finish-line conventions").
 
 ## Status
 
-**Done (automated part).** Pending: the maintainer's decisions on BUG-042–045, and the real screen-reader
-listening pass.
+**Done except the screen-reader pass.** The axe run, the keyboard pass and the bug protocol, including the
+maintainer's contrast decisions, are complete. **Open (maintainer):** the real NVDA/VoiceOver listening pass through
+the journeys. P-3 is complete only once it is recorded here.

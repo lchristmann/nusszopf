@@ -24,7 +24,8 @@
         <x-button
             type="submit"
             size="large"
-            class="mt-10 bg-blue-400 sm:mt-12"
+            {{-- BUG-043: steel-800 text on the blue-400 fill (6.0:1; steel-700 was 4.42:1). --}}
+            class="mt-10 bg-blue-400 sm:mt-12 !text-steel-800"
             data-test="btn_newsletter-subscribe"
             wire:loading.attr="disabled"
             wire:target="subscribe"

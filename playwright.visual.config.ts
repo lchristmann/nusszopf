@@ -13,7 +13,9 @@ export default defineConfig({
     forbidOnly: !!process.env.CI,
     reporter: [['list'], ['html', { outputFolder: 'playwright-report-visual', open: 'never' }]],
     snapshotPathTemplate: '{testDir}/baselines/{arg}{ext}',
-    expect: { toHaveScreenshot: { maxDiffPixels: 0, animations: 'disabled', caret: 'hide' } },
+    // Per-pixel colour threshold 0.05 (default 0.2): the default let a steel-700 → steel-800 text change through,
+    // while 0 trips over sub-pixel anti-aliasing of the same text between runs.
+    expect: { toHaveScreenshot: { maxDiffPixels: 0, threshold: 0.05, animations: 'disabled', caret: 'hide' } },
     use: {
         baseURL: process.env.VISUAL_TARGET === 'historical'
             ? (process.env.VISUAL_HISTORICAL_URL ?? 'http://hist-web:3000')

@@ -28,6 +28,13 @@
     --color-warning-200: #fdd1b9;
     --color-warning-300: #f8a87c;
     --color-warning-700: #b84405;
+    /*
+     * Not historical: darker shades of warning-700's own hue, approved by the maintainer for contrast
+     * (docs/rewrite/bugs.md BUG-042, BUG-044). warning-750 = the lightest shade reaching 4.6:1 on lilac-200;
+     * warning-900 = the same on steel-400.
+     */
+    --color-warning-750: #ae4005;
+    --color-warning-900: #612403;
 
     --color-steel-50: #f1f6f9;
     --color-steel-100: #eceff1;

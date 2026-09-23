@@ -12,13 +12,14 @@ target, so this is new. A release blocks unless all of the following hold:
 - keyboard focus shows a visible `:focus-visible` indicator.
 
 Contrast failures inherited from the historical palette are measured and documented. Each proposed fix is a
-bug entry that the maintainer approves or waives, and the palette changes only with that approval.
+bug entry that the maintainer approves or waives, and the palette changes only with that approval (done:
+BUG-042–045).
 
 ## The automated checks
 
 | Check | Where | Runs |
 |---|---|---|
-| axe on 45 screens and states; fails on any critical/serious violation except contrast | `tests/E2E/specs/a11y/axe.spec.ts` | Chromium, in the E2E job |
+| axe on 45 screens and states; fails on any critical/serious violation, and on any contrast failure except the two documented exceptions (disabled inputs' labels, dimmed older toasts) | `tests/E2E/specs/a11y/axe.spec.ts` | Chromium, in the E2E job |
 | "Label in Name" (WCAG 2.5.3): every `aria-label` contains its element's visible text (axe's own rule is experimental) | same spec | Chromium |
 | Keyboard: trap, Escape and focus return for every dialog and popover; the menu pattern; the request editor's Escape; the eye toggle; the focus outline; error association | `tests/E2E/specs/a11y/keyboard.spec.ts` | Chromium, Firefox, WebKit |
 | `aria-invalid`/`aria-describedby` rendered on the server | `tests/Feature/Views/FieldErrorTest.php` | Pest |
@@ -52,18 +53,20 @@ The 45 states:
     `aria-describedby` while `$errors` has their field (their `name`, their `wire:model`, or `error-for`).
   - The rich-text editor follows the message in the DOM.
 
-## Colour contrast (measured 2026-09-23, not gated)
+## Colour contrast (measured and decided 2026-09-23)
 
-| Where | Colours | Ratio | Entry |
+| Where | Before | Decision | Now |
 |---|---|---|---|
-| Validation messages in the contact dialog | warning-700 on lilac-200 | 4.20:1 | BUG-042 |
-| Home newsletter button | steel-700 on blue-400 | 4.42:1 | BUG-043 |
-| "Ausloggen" in the nav menu | warning-700 on steel-400 | 2.10:1 | BUG-044 |
-| Older toasts (dimmed to 50 %) | — | ≈2.1:1 | BUG-045 |
-| Labels of the disabled period inputs ("Von", "Bis", the place hint) | 50 % opacity | 2.72:1 | exempt: WCAG 1.4.3 excludes inactive components |
+| Validation messages in the contact dialog | warning-700 on lilac-200, 4.20:1 | BUG-042, fixed | `warning-750`, 4.6:1 |
+| Home newsletter button | steel-700 on blue-400, 4.42:1 | BUG-043, fixed | `steel-800`, 6.0:1 |
+| "Ausloggen" in the nav menu | warning-700 on steel-400, 2.10:1 | BUG-044, fixed | `warning-900`, 4.6:1 |
+| Older toasts (dimmed to 50 %) | ≈2.1:1 | BUG-045, waived (historical, transient) | unchanged |
+| Labels of the disabled period inputs ("Von", "Bis", the place hint) | 50 % opacity, 2.72:1 | exempt: WCAG 1.4.3 excludes inactive components | unchanged |
 
-All four entries await the maintainer's approval or waiver. Everything else measured passes, for example
-body text on every background, the popovers (livid-800 on livid-300, 7.54:1) and messages on white (4.85:1).
+The maintainer approved the three fixes, each keeping the historical hue. The two new warning tones are theme tokens
+in `resources/css/app.css`. Since then the axe spec gates colour contrast: anything but the two exceptions above fails.
+Everything else measured passes, for example body text on every background, the popovers (livid-800 on
+livid-300, 7.54:1) and messages on white (4.85:1).
 
 ## Screen-reader review
 
@@ -77,5 +80,6 @@ by name. That review found, and this pass fixed:
 - the identical menu names;
 - the label mismatches.
 
-A listening pass with a real screen reader (NVDA or VoiceOver) through the journeys was not possible in this
-environment. It is recorded as pending in `docs/release/parity/P-03-accessibility.md`.
+**Not satisfied by this review:** A-7's screen-reader requirement needs a listening pass with a real screen
+reader (NVDA or VoiceOver) through the journeys. The maintainer performs it separately, and the result is recorded
+in `docs/release/parity/P-03-accessibility.md`.

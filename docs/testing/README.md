@@ -85,7 +85,7 @@ as an operator would (`install.sh` against the repository's own `docker-compose.
 
 ## Visual parity
 
-Because visual fidelity is a hard requirement (`CLAUDE.md`, `.claude/rules/02-visual-fidelity.md`), every screen is compared with the running historical app. The suite is `docs/testing/visual-regression.md`: Playwright `toHaveScreenshot` (register B9), 23 screens × phone/tablet/desktop, exact baselines in `tests/Visual/baselines/` compared in CI (the `visual` job), and reference captures of the historical webapp from `tests/Visual/historical-harness/`. Zero differing pixels are tolerated, because the screenshots always come from the same pinned Playwright image.
+Because visual fidelity is a hard requirement (`CLAUDE.md`, `.claude/rules/02-visual-fidelity.md`), every screen is compared with the running historical app. The suite is `docs/testing/visual-regression.md`: Playwright `toHaveScreenshot` (register B9), 23 screens × phone/tablet/desktop, exact baselines in `tests/Visual/baselines/` compared in CI (the `visual` job), and reference captures of the historical webapp from `tests/Visual/historical-harness/`. Zero differing pixels are tolerated (per-pixel colour threshold 0.05), because the screenshots always come from the same pinned Playwright image.
 
 ## Regression coverage
 

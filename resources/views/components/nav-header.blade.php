@@ -82,7 +82,8 @@
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <button type="submit" data-test="btn_logout_nav-header" class="block w-full text-left px-4 py-2 hover:bg-steel-300">
-                                <x-text as="span" variant="textSmMedium" class="text-warning-700">Ausloggen</x-text>
+                                {{-- BUG-044: warning-700 on the menu's steel-400 is 2.1:1; warning-900 is the same hue at 4.6:1. --}}
+                                <x-text as="span" variant="textSmMedium" class="text-warning-900">Ausloggen</x-text>
                             </button>
                         </form>
                     @else

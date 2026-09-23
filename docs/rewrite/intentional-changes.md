@@ -735,6 +735,27 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 
 ---
 
+### Three colours darkened to meet the contrast minimum (BUG-042, BUG-043, BUG-044)
+
+- Status: Approved by the maintainer on 2026-09-23 (decision A-7: every contrast fix needs the maintainer's
+  approval); implemented in P-3. BUG-045 (dimmed toasts) was waived instead.
+- Date: 2026-09-23
+- Historical behavior: the contact dialog's validation messages are 4.20:1, the Home newsletter button's text
+  4.42:1, and the menu's "Ausloggen" 2.10:1. The WCAG AA minimum is 4.5:1.
+- New behavior, the historical hue kept in every case:
+  - messages in the contact dialog use `warning-750` (#ae4005);
+  - the Home newsletter button's text is `steel-800`;
+  - "Ausloggen" is `warning-900` (#612403).
+
+  The two warning tones are new theme tokens, each the lightest shade of `warning-700`'s hue that reaches 4.6:1 on its
+  background.
+- Affected screens: project page (contact dialog), Home, the signed-in nav menu. Domain and migrations: none.
+- Tests: `tests/E2E/specs/a11y/axe.spec.ts` (colour contrast is gated now, with two documented exceptions); the Home
+  visual baselines.
+- Approval: Approved (maintainer, 2026-09-23).
+
+---
+
 ## Explicitly deferred (not proposed here, need a product decision first — see `docs/rewrite/open-questions.md` / `docs/rewrite/architecture-decisions.md`)
 
 The following were identified during archaeology as *possible* candidates for change but are deliberately **not** proposed above, because reasonable product intent could explain the historical behavior as-is:

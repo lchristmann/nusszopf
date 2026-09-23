@@ -54,10 +54,10 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 | BUG-039 | Accessibility / names, labels, error association | Medium | Fix (decision A-7)                  | Implemented — P-3 (2026-09-23) |
 | BUG-040 | Accessibility / keyboard operability        | Medium   | Fix (decision A-7)                  | Implemented — P-3 (2026-09-23) |
 | BUG-041 | Accessibility / heading structure           | Low      | Fix (decision A-7)                  | Implemented — P-3 (2026-09-23) |
-| BUG-042 | Accessibility / contrast: error text in dialogs | Low  | Proposed Fix — maintainer approves or waives (A-7) | Awaiting maintainer decision; no palette change made |
-| BUG-043 | Accessibility / contrast: Home newsletter button | Trivial | Proposed Fix — maintainer approves or waives (A-7) | Awaiting maintainer decision; no palette change made |
-| BUG-044 | Accessibility / contrast: "Ausloggen" in the menu | Low | Proposed Fix — maintainer approves or waives (A-7) | Awaiting maintainer decision; no palette change made |
-| BUG-045 | Accessibility / contrast: dimmed older toasts | Trivial  | Proposed Fix — maintainer approves or waives (A-7) | Awaiting maintainer decision; no palette change made |
+| BUG-042 | Accessibility / contrast: error text in dialogs | Low  | Fix (maintainer-approved 2026-09-23) | Implemented — P-3 (`warning-750` in the contact dialog, 4.6:1) |
+| BUG-043 | Accessibility / contrast: Home newsletter button | Trivial | Fix (maintainer-approved 2026-09-23) | Implemented — P-3 (`steel-800` text, 6.0:1) |
+| BUG-044 | Accessibility / contrast: "Ausloggen" in the menu | Low | Fix (maintainer-approved 2026-09-23) | Implemented — P-3 (`warning-900`, 4.6:1) |
+| BUG-045 | Accessibility / contrast: dimmed older toasts | Trivial  | Preserve (waived by the maintainer 2026-09-23) | Decided — historical dimming kept |
 
 ---
 
@@ -795,29 +795,38 @@ directly from `web-nusszopf/projects/webapp/src/containers/user/ProjectForm/*` a
 - Historical behavior: messages are `text-warning-700` (#b84405). On white that is 4.85:1 (passes); on the contact
   dialog's `bg-lilac-200` (#e5e1e9) it is **4.20:1**, below the 4.5:1 WCAG AA minimum for 16px text. The request
   editor's `bg-stone-200` (#f2f2f2) measures 4.85:1 and passes.
-- Proposed fix: use a darker warning tone for messages on tinted dialog backgrounds only (e.g. `warning-800`),
-  leaving every other use of `warning-700` unchanged.
-- Classification: **Proposed Fix — the maintainer approves or waives** (A-7: no palette change without approval).
-- Status: awaiting the maintainer's decision. Nothing changed.
+- Classification: **Fix**, approved by the maintainer on 2026-09-23 ("adjust the error colour to meet the required
+  contrast while preserving the historical visual intent").
+- Corrected behavior: the contact dialog's messages use `warning-750` (#ae4005). That is the lightest shade of
+  `warning-700`'s own hue that reaches 4.6:1 on `lilac-200`, and hardly distinguishable from the original. Every other
+  use of `warning-700`, which passes on white and stone, is unchanged.
+- Regression test: `tests/E2E/specs/a11y/axe.spec.ts` now gates colour contrast (state `contact-dialog-errors`).
 
 ### BUG-043 — The Home newsletter button's text is just below the contrast minimum
 
 - Measured: `text-steel-700` (#37474f) on `bg-blue-400` (#87b2ed), **4.42:1** (AA minimum 4.5:1, 18px text) —
   state `home`.
-- Proposed fix: a darker text (`steel-800`) on this one button, or waive as 0.08 below the line.
-- Classification: **Proposed Fix — the maintainer approves or waives** (A-7). Status: awaiting decision; nothing changed.
+- Classification: **Fix**, approved by the maintainer on 2026-09-23 ("adjust the text/foreground colour … preserving the
+  historical visual intent").
+- Corrected behavior: the button's text is `steel-800` (#263238), the next shade of the same historical palette:
+  6.0:1. The fill and border are unchanged.
+- Regression test: the axe contrast gate (state `home`) and the Home visual baselines (rebaselined for this change).
 
 ### BUG-044 — "Ausloggen" in the nav menu has low contrast
 
 - Measured: `text-warning-700` (#b84405) on the menu's `bg-steel-400` (#90a4ae), **2.10:1** (AA minimum 4.5:1) —
   state `nav-menu-user`. Historical (`NavHeader.organism.js`, warning-coloured logout item).
-- Proposed fix: a much darker warning tone for this item (e.g. `warning-900`), keeping it recognisably warning-coloured.
-- Classification: **Proposed Fix — the maintainer approves or waives** (A-7). Status: awaiting decision; nothing changed.
+- Classification: **Fix**, approved by the maintainer on 2026-09-23 ("adjust the colour … preserving the historical
+  visual intent").
+- Corrected behavior: the item is `warning-900` (#612403), the lightest shade of `warning-700`'s hue that reaches 4.6:1
+  on the menu's `steel-400` (6.2:1 on its `steel-300` hover), so it stays recognisably warning-coloured.
+- Regression test: the axe contrast gate (state `nav-menu-user`), shown to fail when the old colour is restored.
 
 ### BUG-045 — Older toasts are dimmed below the contrast minimum
 
 - Historical behavior (Confirmed, `Toasts.service.js`): every toast but the newest is `opacity-50`; a dimmed
   toast's text measures about **2.1:1** (state `newsletter-unsubscribe-lead-errors`). Toasts vanish after 3s.
-- Proposed fix: waive (transient, superseded by the newest toast, which passes), or dim to `opacity-75`.
-- Classification: **Proposed Fix — the maintainer approves or waives** (A-7). Status: awaiting decision; nothing changed.
+- Classification: **Preserve**. The maintainer waived the fix on 2026-09-23: the toasts are transient, the newest one
+  passes, and the dimming is historical.
+- Regression test: the axe contrast gate exempts only the toast container (`#nz-toasts`) for this reason.
 

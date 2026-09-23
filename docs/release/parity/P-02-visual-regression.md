@@ -63,6 +63,14 @@ and accepted the result, including the accepted differences listed in
 `docs/testing/visual-regression.md`. The magenta box in the screenshots is the mask over the visitor
 counter, which changes with every visit.
 
+## After the review
+
+- **2026-09-23 (P-3):** the approved contrast fix BUG-043 changed the Home newsletter button's text to `steel-800`.
+  The three Home baselines were rebaselined for exactly that 76×11px label; nothing else changed.
+- The same change showed that Playwright's default per-pixel colour threshold (0.2) was too lenient, because it let
+  that colour change through. The suite now uses 0.05. At 0.05 the 66 other baselines still match in three
+  consecutive runs, so the approved result is unchanged.
+
 ## Status
 
 **Done.**

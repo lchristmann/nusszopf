@@ -5,7 +5,9 @@ every screen at three widths against the **running historical app**, not against
 description. It has two parts:
 
 - **Baselines** (`tests/Visual/baselines/`): screenshots of Nusszopf 2, reviewed against the
-  historical app. CI compares every run with them pixel for pixel. A difference fails the build.
+  historical app. CI compares every run with them pixel for pixel, with a per-pixel colour threshold of 0.05. A
+  difference fails the build. Playwright's default threshold of 0.2 let a `steel-700` → `steel-800` text change
+  through; 0 trips over sub-pixel anti-aliasing of the same text between runs.
 - **Reference captures** (`tests/Visual/reference/`): the same screens taken from the historical
   webapp. Use them to review a baseline before committing it.
 
