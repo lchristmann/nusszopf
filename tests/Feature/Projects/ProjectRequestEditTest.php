@@ -15,7 +15,7 @@ use Livewire\Livewire;
  */
 function requestsView(Project $project, ?User $as = null): Testable
 {
-    return Livewire::actingAs($as ?? $project->user)->test(ProjectEdit::class, ['project' => $project])->call('selectView', 'Gesuche');
+    return Livewire::actingAs($as ?? $project->user)->test(ProjectEdit::class, ['project' => $project])->call('load')->call('selectView', 'Gesuche');
 }
 
 function editDialogInput(Testable $view, string $title, string $category, string $text): Testable

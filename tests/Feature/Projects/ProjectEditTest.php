@@ -22,7 +22,10 @@ function editDoc(string $text): array
 
 function editing(Project $project, ?User $as = null): Testable
 {
-    return Livewire::actingAs($as ?? $project->user)->test(ProjectEdit::class, ['project' => $project]);
+    $test = Livewire::actingAs($as ?? $project->user)->test(ProjectEdit::class, ['project' => $project]);
+
+    // A non-owner's mount already answered 404; there is no page to load.
+    return $as && $as->isNot($project->user) ? $test : $test->call('load');
 }
 
 function fullProject(User $owner, array $overrides = []): Project
@@ -51,8 +54,25 @@ it('renders the edit screen for the owner, public or private', function (string 
     $owner = User::factory()->create();
     $project = Project::factory()->for($owner)->create(['visibility' => $visibility, 'title' => 'Mein Projekt']);
 
-    $this->actingAs($owner)->get(route('projects.edit', $project))->assertOk()->assertSee('Mein Projekt');
+    $this->actingAs($owner)->get(route('projects.edit', $project))->assertOk()->assertSee('data-test="select_view_edit-project-page"', false);
+    editing($project)->assertSee('Mein Projekt');
 })->with(['public', 'private']);
+
+it('opens on SkeletonView under the header, then shows the view once loaded', function () {
+    $project = fullProject(User::factory()->create());
+
+    $this->actingAs($project->user)->get(route('projects.edit', $project))
+        ->assertSee('wire:init="load"', false)
+        ->assertSee('data-test="skeleton_edit-project"', false)
+        ->assertSee('data-test="select_view_edit-project-page"', false)
+        ->assertDontSee('data-test="btn_save_project-view"', false)
+        ->assertDontSee('Nachbarschaftsgarten</h1>', false);
+
+    editing($project)
+        ->assertDontSeeHtml('data-test="skeleton_edit-project"')
+        ->assertSeeHtml('data-test="btn_save_project-view"')
+        ->assertSee('Nachbarschaftsgarten');
+});
 
 it('404s a non-owner, public or private, never a 403', function (string $visibility) {
     $project = Project::factory()->create(['visibility' => $visibility]);

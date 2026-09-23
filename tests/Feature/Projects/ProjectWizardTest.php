@@ -302,6 +302,9 @@ it('offers the two visibility options and the two contact options, with the owne
     completeStepOne(wizard($user))->call('next')->call('next')->call('next')
         ->assertSet('step', 3)
         ->assertSee('Sichtbarkeit')
+        // BUG-025: "Peronen" corrected.
+        ->assertSee('nur für bestimmte Personen sichtbar sein?')
+        ->assertDontSee('Peronen')
         ->assertSee('Öffentlich')
         ->assertSee('Privat')
         ->assertSee('Kontaktmöglichkeit')

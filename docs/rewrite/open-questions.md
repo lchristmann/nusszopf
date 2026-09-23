@@ -110,7 +110,7 @@ Unresolved historical behavior, consolidated from the archaeology pass across `d
 
 ### `be-nusszopf` apparent staleness relative to `web-nusszopf`
 
-- Status: Unknown
+- Status: **Closed — working assumption (a) held** (finish-line check 2026-09-23: ten slices built against both repositories found no domain/permission fact in `be-nusszopf` contradicted by later `web-nusszopf` behavior). Original status: Unknown
 - Area: General / Evidence quality
 - Sources inspected: `git log -1` on both repositories (see `docs/rewrite/source-map.md`)
 - Historical evidence: `be-nusszopf`'s last commit is dated 2021-05-20; `web-nusszopf`'s last commit is dated 2023-08-30 — a 2.3-year gap.
@@ -122,7 +122,7 @@ Unresolved historical behavior, consolidated from the archaeology pass across `d
 
 ### SendGrid dashboard template drift risk
 
-- Status: Unknown
+- Status: **Closed — accepted residual risk, owned by the maintainer** (finish-line check 2026-09-23: the committed MJML is the copy source for both newsletter mails, slice 9; no further evidence can exist without the defunct SendGrid account; listed in the parity report's residual risks). Original status: Unknown
 - Area: Email
 - Sources inspected: `emails-nusszopf/src/sendgrid/newsletter/{subscribe,unsubscribe}.mjml`
 - Historical evidence: both templates pass a `username` template variable that the static MJML source never renders anywhere.
@@ -142,7 +142,7 @@ Unresolved historical behavior, consolidated from the archaeology pass across `d
 
 ### Native `window.confirm()` for every destructive action — gap or deliberate simplicity?
 
-- Status: Unknown (leaning: unfinished, not deliberate — see `docs/design/states.md`)
+- Status: **Resolved — Preserve** (register B10, BUG-013; native `confirm()` everywhere, pinned by the E2E specs' dialog assertions). Original status: Unknown (leaning: unfinished, not deliberate — see `docs/design/states.md`)
 - Area: Design / States
 - Sources inspected: every delete/unsubscribe/discard-changes call site across `webapp/src/pages/**`
 - Historical evidence: a fully custom, animated, on-brand `Dialog` organism exists and is used for several non-destructive flows, but literally zero destructive-action confirmations use it.
@@ -154,7 +154,7 @@ Unresolved historical behavior, consolidated from the archaeology pass across `d
 
 ### Login always returns to `/user/projects`, never the referring page
 
-- Status: Confirmed (historical behavior) / Unknown (whether intentional)
+- Status: **Resolved — Preserve** (register B11, BUG-015; `LoginTest`). Original status: Confirmed (historical behavior) / Unknown (whether intentional)
 - Area: Authentication / Navigation
 - Sources inspected: `webapp/src/pages/api/login.js` (hardcoded `returnTo: '/user/projects'`)
 - Historical evidence: every login, regardless of trigger location (nav menu, landing-page CTA, etc.), lands on the same fixed destination.
@@ -166,7 +166,7 @@ Unresolved historical behavior, consolidated from the archaeology pass across `d
 
 ### Slate rich-text-editor field-order workaround
 
-- Status: Confirmed (historical bug existed) / Unknown (relevance to the replacement editor)
+- Status: **Resolved** (second slice, see Decision below). Original status: Confirmed (historical bug existed) / Unknown (relevance to the replacement editor)
 - Area: Design / Project creation
 - Sources inspected: `e2e/cypress/integration/_projects.spec.js` (source comment + linked upstream issue)
 - Historical evidence: a documented upstream `slate` bug required the description rich-text field to be interacted with before other fields, or project creation would fail.
@@ -178,7 +178,7 @@ Unresolved historical behavior, consolidated from the archaeology pass across `d
 
 ### Search E2E coverage gap
 
-- Status: Confirmed (gap exists) — not a historical-behavior ambiguity, listed here as a testing-debt flag
+- Status: **Resolved** (BUG-018, fourth slice: `tests/E2E/specs/visitor/search.spec.ts`). Original status: Confirmed (gap exists) — a testing-debt flag
 - Area: Testing / Journeys
 - Sources inspected: `e2e/cypress/integration/_search.spec.js` (`xcontext`, three no-op stub tests)
 - Historical evidence: no real E2E coverage of search querying, filtering, or contacting a project owner from a search result ever existed.

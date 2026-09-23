@@ -21,12 +21,13 @@
         },
     }"
     x-on:form-saved.window="$nextTick(() => baseline = fields())"
+    wire:init="load"
 >
     <x-framed-grid-card class="lg:mb-20 lg:mt-12">
         <x-frame class="bg-lilac-300 lg:bg-steel-100">
             <x-framed-grid-card.header class="bg-lilac-300">
                 <div class="flex flex-col justify-between lg:items-center lg:flex-row">
-                    <x-text as="h1" variant="textLg" class="mb-4 hyphens-auto lg:mb-0">{{ $project->title }}</x-text>
+                    <x-text as="h1" variant="textLg" class="mb-4 hyphens-auto lg:mb-0">{{ $ready ? $project->title : '' }}</x-text>
                     <x-select
                         color="lilac"
                         class="flex-shrink-0 w-56 mb-2 lg:ml-12 lg:mb-0"
@@ -43,7 +44,29 @@
         </x-frame>
 
         <x-frame class="bg-white lg:bg-steel-100">
-            @if ($view === 'Beschreibung')
+            @if (! $ready)
+                {{-- EditProjectViews/SkeletonView.js, for every view; the header and view selector render meanwhile. --}}
+                <x-framed-grid-card.body gap="medium" class="grid-flow-row bg-white" wire:key="view-skeleton" data-test="skeleton_edit-project">
+                    <x-framed-grid-card.body-col variant="twoCols" class="lg:pr-4 lg:col-start-2">
+                        <div aria-label="loading" class="animate-pulse box-content rounded-lg h-4 max-w-xs bg-lilac-200 w-36"></div>
+                        <div aria-label="loading" class="animate-pulse box-content rounded-lg w-full h-10 mt-3 bg-lilac-200"></div>
+                        <div aria-label="loading" class="animate-pulse box-content rounded-lg h-4 max-w-xs mt-10 bg-lilac-200 w-36"></div>
+                        <div aria-label="loading" class="animate-pulse box-content rounded-lg w-full mt-3 bg-lilac-200 h-18"></div>
+                        <div aria-label="loading" class="animate-pulse box-content rounded-lg h-4 max-w-xs mt-10 bg-lilac-200 w-36"></div>
+                        <div aria-label="loading" class="animate-pulse box-content rounded-lg w-full h-32 mt-3 bg-lilac-200"></div>
+                        <div aria-label="loading" class="animate-pulse box-content rounded-lg h-4 max-w-xs mt-10 bg-lilac-200 w-36"></div>
+                        <div aria-label="loading" class="animate-pulse box-content rounded-lg w-full mt-3 bg-lilac-200 h-18"></div>
+                    </x-framed-grid-card.body-col>
+                    <x-framed-grid-card.body-col variant="twoCols" class="lg:pl-4">
+                        <div aria-label="loading" class="animate-pulse box-content rounded-lg h-4 max-w-xs bg-lilac-200 w-36"></div>
+                        <div aria-label="loading" class="animate-pulse box-content rounded-lg w-full h-32 mt-3 bg-lilac-200"></div>
+                        <div aria-label="loading" class="animate-pulse box-content rounded-lg h-4 max-w-xs mt-10 bg-lilac-200 w-36"></div>
+                        <div aria-label="loading" class="animate-pulse box-content rounded-lg w-full h-32 mt-3 bg-lilac-200"></div>
+                        <div aria-label="loading" class="animate-pulse box-content rounded-lg h-4 max-w-xs mt-10 bg-lilac-200 w-36"></div>
+                        <div aria-label="loading" class="animate-pulse box-content rounded-lg w-full h-32 mt-3 bg-lilac-200"></div>
+                    </x-framed-grid-card.body-col>
+                </x-framed-grid-card.body>
+            @elseif ($view === 'Beschreibung')
                 <form wire:submit="saveProject" novalidate wire:key="view-project">
                     <x-framed-grid-card.body gap="medium" class="grid-flow-row bg-white text-lilac-800">
                         <x-framed-grid-card.body-col variant="twoCols" class="lg:pr-4 lg:col-start-2">

@@ -46,6 +46,18 @@ class ProjectEdit extends Component
 
     public string $view = 'Beschreibung';
 
+    /**
+     * `SkeletonView` while the historical screen fetched the project
+     * client-side — the same `wire:init="load"` round trip as My Projects
+     * (`app/Livewire/Projects/MyProjects.php`) and Search.
+     */
+    public bool $ready = false;
+
+    public function load(): void
+    {
+        $this->ready = true;
+    }
+
     public function mount(Project $project): void
     {
         // 404, not 403 (BUG-021, docs/rewrite/bugs.md): a non-owner must

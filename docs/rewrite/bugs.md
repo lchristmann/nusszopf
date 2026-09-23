@@ -28,10 +28,10 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 | BUG-013 | Design / destructive-action confirmation    | Low      | Preserve                            | Decided — register B10 (native `confirm()`), reconciled 2026-09-21                      |
 | BUG-014 | Design / Button "filled" variant            | Trivial  | Preserve (dead vocabulary)          | Decided 2026-09-21 — the never-used `filled` variant is not implemented; the two ad hoc filled looks stay as they are |
 | BUG-015 | Navigation / `login` return destination     | Low      | Preserve                            | Decided — register B11 (always `/user/projects`), reconciled 2026-09-21                 |
-| BUG-016 | Security / Meilisearch CORS configuration   | Medium   | Unknown                             | Needs more evidence or a fresh decision                                                 |
-| BUG-017 | Domain / `ProjectAnalytics.contactRequests` | Low      | Unknown                             | Needs more evidence                                                                     |
+| BUG-016 | Security / Meilisearch CORS configuration   | Low      | Replace (moot)                      | Resolved — pre-implementation review pass, 2026-09-18 (summary row reconciled 2026-09-23) |
+| BUG-017 | Domain / `ProjectAnalytics.contactRequests` | Low      | Fix (do not reproduce)              | Resolved — pre-implementation review pass, 2026-09-18 (summary row reconciled 2026-09-23) |
 | BUG-018 | Testing / historical search E2E coverage    | Medium   | Fix (close the gap)                 | Implemented — fourth slice (2026-09-21): `tests/E2E/specs/visitor/search.spec.ts`; the contact-from-result journey completed in the sixth slice (2026-09-22) |
-| BUG-019 | Design / rich-text editor field-order bug   | Low      | N/A — tied to architecture decision | Moot once Slate is replaced; verify the new editor doesn't reintroduce an analogous bug |
+| BUG-019 | Design / rich-text editor field-order bug   | Low      | Replace (moot)                      | Verified — every E2E journey fills title and goal before the description and submits (`ProjectWizardPage.fillStepOne`) |
 | BUG-020 | Security / SSR Apollo client shared state   | Low      | Replace (moot)                      | Resolved — pre-implementation review pass, 2026-09-18                                   |
 | BUG-021 | Authorization / Project edit screen access  | Low      | Fix                                 | Implemented — first-slice verification pass (2026-09-19)                                |
 | BUG-022 | Domain / Project period validation          | Low      | Fix                                 | Implemented — second slice (2026-09-19)                                                 |
@@ -260,7 +260,7 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 - Evidence: `docs/design/states.md`.
 - Severity/impact: Low — a visual/UX inconsistency, not a functional defect (the confirm still
   works; it just looks like the browser, not the product).
-- Classification: **Unknown** — 100%-consistent patterns can be either "never got to it" or a
+- Classification: ~~Unknown~~ → **Preserve**, decided (register B10; summary row). Original note: 100%-consistent patterns can be either "never got to it" or a
   deliberate choice (native dialogs can't be visually spoofed by injected page content the way a
   custom one theoretically could). Not recoverable from source; needs a human product decision.
 - Recommended default if undecided: preserve native `confirm()` exactly (product-fidelity default,
@@ -278,7 +278,7 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 - Evidence: `docs/design/visual-language.md`, `docs/rewrite/open-questions.md`.
 - Severity/impact: Trivial — a design-system naming/implementation inconsistency, not a functional
   defect.
-- Classification: **Unknown** — whether other call sites do the same ad hoc override, and whether
+- Classification: ~~Unknown~~ → **Preserve (dead vocabulary)**, decided 2026-09-21 (master-roadmap B-1; summary row). Original note: whether other call sites do the same ad hoc override, and whether
   a real "filled" design language was ever intended, needs a full call-site audit (see
   `docs/rewrite/open-questions.md`) before Nusszopf 2's Blade component library decides whether to
   implement a real filled variant or drop the unused name entirely.
@@ -293,7 +293,7 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 - Evidence: `docs/design/navigation.md`, `docs/rewrite/open-questions.md`.
 - Severity/impact: Low — a visitor who clicked "create project" while logged out loses that intent
   after logging in and has to navigate again.
-- Classification: **Unknown** — could be deliberate simplicity (there is essentially one meaningful
+- Classification: ~~Unknown~~ → **Preserve**, decided (register B11; summary row). Original note: could be deliberate simplicity (there is essentially one meaningful
   authenticated landing screen in this product) or an unaddressed gap.
 - Recommended default if undecided: preserve as historically observed (product-fidelity default);
   this is observable behavior, not an obvious defect, per `CLAUDE.md`.
