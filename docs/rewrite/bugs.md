@@ -47,6 +47,8 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 | BUG-032 | Newsletter / duplicate subscribe            | Low      | Fix                                  | Implemented — ninth slice (2026-09-23), `docs/rewrite/ninth-slice.md` |
 | BUG-033 | Newsletter / unsubscribe-by-email enumeration | Low    | Fix                                  | Implemented — ninth slice (2026-09-23), `docs/rewrite/ninth-slice.md` |
 | BUG-034 | Newsletter / confirm link for a vanished lead | Trivial | Fix                                 | Implemented — ninth slice (2026-09-23), `docs/rewrite/ninth-slice.md` |
+| BUG-035 | SEO / sitemap and robots host               | Low      | Fix                                 | Proposed — tenth slice, `docs/rewrite/tenth-slice.md` |
+| BUG-036 | SEO / `og:url` and Twitter placeholders     | Trivial  | Fix                                 | Proposed — tenth slice, `docs/rewrite/tenth-slice.md` |
 
 ---
 
@@ -655,3 +657,28 @@ directly from `web-nusszopf/projects/webapp/src/containers/user/ProjectForm/*` a
   the visitor asked for is true.)
 - Regression test: `tests/Feature/Newsletter/ConfirmationPagesTest.php`.
 
+### BUG-035 — Sitemap and `robots.txt` hard-code `https://nusszopf.org`
+
+- Affected area: SEO, `pages/api/sitemap.js`, `public/robots.txt`
+- Historical behavior: `SitemapStream({ hostname: 'https://nusszopf.org' })` and
+  `Sitemap: https://nusszopf.org/sitemap.xml` are literals, not derived from `DOMAIN`.
+- Evidence: `pages/api/sitemap.js`, `public/robots.txt` (while `Page.js` builds the canonical URL from
+  `process.env.DOMAIN`, so the historical code already knew the host was configuration).
+- Severity/impact: Low — every other deployment (the historical dev/staging hosts, and every self-hosted
+  instance) advertises another site's URLs to search engines.
+- Classification: **Fix**
+- Intended Nusszopf 2 behavior: both use `APP_URL`, as the canonical URL does.
+- Regression test: `tests/Feature/Seo/SitemapTest.php`.
+
+### BUG-036 — `og:url` is a bare path; Twitter handles are next-seo placeholders
+
+- Affected area: SEO, `components/Page/Page.js`
+- Historical behavior: `openGraph.url` is `router.asPath` (e.g. `/projects/…`), while the Open Graph
+  protocol requires an absolute URL; `twitter.handle`/`site` are `@handle`/`@site`, the example values
+  from next-seo's documentation, rendered into every page.
+- Evidence: `components/Page/Page.js`.
+- Severity/impact: Trivial — link previews resolve the wrong URL or none; two meaningless meta tags.
+- Classification: **Fix**
+- Intended Nusszopf 2 behavior: `og:url` equals the canonical URL; the two placeholder tags are omitted
+  (the `twitter:card` type stays).
+- Regression test: `tests/Feature/Seo/SeoTagsTest.php`.

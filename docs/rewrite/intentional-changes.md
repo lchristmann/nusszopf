@@ -659,6 +659,24 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 
 ---
 
+### Sitemap, `robots.txt` and Open Graph URLs use this instance's own address (BUG-035, BUG-036)
+
+- Status: Approved — roadmap-authorized (`docs/rewrite/master-roadmap.md`, "Slice 10"); implemented in slice 10
+- Date: 2026-09-23
+- Historical behavior: the sitemap and `robots.txt` name `https://nusszopf.org` literally; `og:url` is the
+  bare request path; `twitter:creator`/`twitter:site` are `@handle`/`@site` placeholders.
+- Why it changes: see `docs/rewrite/bugs.md` BUG-035/BUG-036 — wrong host for every other deployment,
+  an invalid relative `og:url`, and documentation placeholders shipped as data.
+- New behavior: sitemap, `robots.txt`, canonical and `og:url` are built from `APP_URL`; the two
+  placeholder Twitter tags are not rendered. Everything else (the three static URLs plus public projects,
+  `lastmod`, the 10 / 15 min throttle, title/description truncation, `de_DE`) is unchanged.
+- Affected screens: none visible; `/sitemap.xml`, `/robots.txt`, every page's `<head>`.
+- Affected domain/workflows: none. Migration implications: none.
+- Tests: `tests/Feature/Seo/SitemapTest.php`, `tests/Feature/Seo/SeoTagsTest.php`.
+- Approval: Approved (slice 10 scope; A-5's "operator identity becomes configuration").
+
+---
+
 ## Explicitly deferred (not proposed here, need a product decision first — see `docs/rewrite/open-questions.md` / `docs/rewrite/architecture-decisions.md`)
 
 The following were identified during archaeology as *possible* candidates for change but are deliberately **not** proposed above, because reasonable product intent could explain the historical behavior as-is:
