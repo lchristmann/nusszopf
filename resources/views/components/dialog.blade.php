@@ -12,6 +12,7 @@
     edit dialog historically had none.
 --}}
 <div
+    x-init="nzDialogFocus($el)"
     {{ $attributes->except('class')->class(['fixed top-0 bottom-0 left-0 right-0 z-30 w-screen overflow-auto animate-opacity-fade']) }}
     style="background: hsla(0, 0%, 0%, 0.2)"
 >

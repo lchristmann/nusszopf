@@ -5,6 +5,8 @@
     `bg-steel-100`. The Auth0 app's page is `bg-white sm:bg-steel-100` (`LoginRegister`'s layout).
 --}}
 <x-framed-card class="bg-white">
+    {{-- Decision A-7 ("sensible headings"): the historical screen has no heading; this one is for assistive technology only. --}}
+    <h1 class="sr-only">{{ $tab === 'register' ? 'Registrieren' : 'Einloggen' }}</h1>
     <x-newsletter-logo />
     {{-- Tab.organism.js: a sliding pill toggle, `mt-12` under the logo. --}}
     <div class="relative w-full h-12 mt-12 rounded-full border-2 border-steel-700 ring-2 ring-transparent hover:ring-steel-700/25 transition duration-200">
@@ -46,7 +48,7 @@
                     aria-label="E-Mail-Adresse / Username"
                     placeholder="E-Mail-Adresse / Username"
                 />
-                <x-input-error :message="$errors->first('emailOrName')" />
+                <x-input-error for="emailOrName" :message="$errors->first('emailOrName')" />
             </div>
             <div class="mt-4">
                 <x-password-field
@@ -56,7 +58,7 @@
                     aria-label="Passwort"
                     placeholder="Passwort"
                 />
-                <x-input-error :message="$errors->first('loginPassword')" />
+                <x-input-error for="loginPassword" :message="$errors->first('loginPassword')" />
             </div>
             <div class="mt-5 text-center">
                 <x-button type="submit" data-test="btn_login" class="mx-1.5 mb-4 sm:mx-2 bg-steel-100">Einloggen</x-button>
@@ -90,7 +92,7 @@
                     placeholder="Öffentlicher Username"
                     maxlength="15"
                 />
-                <x-input-error :message="$errors->first('username')" />
+                <x-input-error for="username" :message="$errors->first('username')" />
             </div>
             <div class="mt-4">
                 <x-input
@@ -101,7 +103,7 @@
                     aria-label="E-Mail-Adresse"
                     placeholder="E-Mail-Adresse"
                 />
-                <x-input-error :message="$errors->first('email')" />
+                <x-input-error for="email" :message="$errors->first('email')" />
             </div>
             <div class="mt-4">
                 <x-password-field
@@ -111,15 +113,15 @@
                     aria-label="Passwort"
                     placeholder="Passwort"
                 />
-                <x-input-error :message="$errors->first('registerPassword')" />
+                <x-input-error for="registerPassword" :message="$errors->first('registerPassword')" />
             </div>
             <div class="mt-4">
-                <x-checkbox wire:model="privacy" name="privacy" data-test="checkbox_privacy" aria-label="Datenschutzerklärung">
+                <x-checkbox wire:model="privacy" name="privacy" data-test="checkbox_privacy">
                     Ich stimme den
                     <a href="{{ route('privacy') }}" class="underline">Datenschutzbedingungen</a>
                     zu
                 </x-checkbox>
-                <x-input-error :message="$errors->first('privacy')" class="!ml-8" />
+                <x-input-error for="privacy" :message="$errors->first('privacy')" class="!ml-8" />
             </div>
             <div class="mt-2">
                 {{--

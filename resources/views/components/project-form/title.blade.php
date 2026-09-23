@@ -11,4 +11,4 @@
     wire:blur="blurred('title')"
     placeholder="Wie heißt das Projekt?"
 />
-<x-input-error :message="$error" />
+<x-input-error for="title" :message="$error" />

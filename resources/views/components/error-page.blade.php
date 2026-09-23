@@ -19,7 +19,6 @@
                     target="_blank"
                     rel="noopener noreferrer"
                     title="E-Mail an Nusszopf schreiben"
-                    aria-label="E-Mail an Nusszopf schreiben"
                     class="border-b-2 cursor-pointer nz-text-md nz-link-warning"
                 >{{ \App\Support\Operator::contactEmail() }}</a>.
             </x-text>

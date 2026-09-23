@@ -1,4 +1,8 @@
-@props(['color' => 'lilac', 'wrapperClass' => null])
+@props(['errorFor' => null, 'color' => 'lilac', 'wrapperClass' => null])
+@php
+    // Decision A-7: an error message is tied to its field (App\Support\FieldError).
+    $attributes = $attributes->merge(\App\Support\FieldError::attributes(\App\Support\FieldError::field($attributes, $errorFor), $errors ?? null));
+@endphp
 
 {{-- Select.atom.js + Select.css (`nz-select-lilac`). `class` lands on the wrapper (`wrapperClass` is an Alpine `x-bind:class` expression for it); everything else on the <select>. --}}
 <div @class(['relative rounded-md cursor-pointer', 'nz-select-'.$color, $attributes->get('class')]) @if ($wrapperClass) x-bind:class="{{ $wrapperClass }}" @endif>

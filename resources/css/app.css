@@ -418,3 +418,19 @@
 em {
     font-weight: 600 !important;
 }
+
+/*
+ * Decision A-7 (intentional change, docs/rewrite/intentional-changes.md): a visible keyboard-focus indicator.
+ * The historical design removes every outline (`focus:outline-none`). Keyboard focus (`:focus-visible`, never a
+ * mouse click on a button or link) now draws a 2px outline in the element's own text colour. Text fields keep
+ * their historical focus ring; the visually hidden checkboxes and radios outline their glyph instead.
+ */
+:where(a, button, summary, select, [role='button'], [role='menuitem'], [role='tab'], [tabindex]:not([tabindex='-1'])):focus-visible {
+    outline: 2px solid currentColor !important;
+    outline-offset: 2px !important;
+}
+
+label:has(> input.sr-only[type='file']:focus-visible) {
+    outline: 2px solid currentColor;
+    outline-offset: 4px;
+}

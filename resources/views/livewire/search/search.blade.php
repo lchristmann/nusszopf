@@ -66,7 +66,8 @@
                         data-test="btn_disclosure_filter-popover"
                         aria-haspopup="dialog"
                         x-bind:aria-expanded="open"
-                        x-on:click="open = ! open"
+                        {{-- Moving focus in explicitly as well: WebKit can activate x-trap before the panel is laid out. --}}
+                        x-on:click="open = ! open; if (open) nzFocusInto($refs.filter, 'input')"
                         class="flex font-semibold focus:outline-none"
                     >
                         <div class="flex px-4 py-1 rounded-full bg-moss-450">
@@ -77,6 +78,9 @@
                     <div
                         x-show="open"
                         x-cloak
+                        {{-- Decision A-7: focus moves in, stays in, and returns to the button on close. --}}
+                        x-ref="filter"
+                        x-trap="open"
                         x-transition:enter="transition ease-out duration-100"
                         x-transition:enter-start="opacity-0 scale-[0.85]"
                         x-transition:enter-end="opacity-100 scale-100"
@@ -108,21 +112,22 @@
     <x-frame size="large" class="flex-1 h-full my-8 break-all">
         @if (! $ready)
             {{-- SkeletonHits.js: three columns, the 2nd from sm and the 3rd from lg up. --}}
-            <div class="flex flex-col sm:flex-row" data-test="skeleton_hits">
+            <div class="flex flex-col sm:flex-row" data-test="skeleton_hits" role="status">
+                <span class="sr-only">Wird geladen …</span>
                 <div class="flex-1 sm:mr-2.5">
-                    <div aria-label="loading" class="animate-pulse box-content w-full rounded-lg bg-lilac-200 h-36"></div>
-                    <div aria-label="loading" class="animate-pulse box-content w-full rounded-lg mt-5 bg-lilac-200 h-44"></div>
-                    <div aria-label="loading" class="animate-pulse box-content w-full rounded-lg h-64 mt-5 bg-lilac-200"></div>
+                    <div aria-hidden="true" class="animate-pulse box-content w-full rounded-lg bg-lilac-200 h-36"></div>
+                    <div aria-hidden="true" class="animate-pulse box-content w-full rounded-lg mt-5 bg-lilac-200 h-44"></div>
+                    <div aria-hidden="true" class="animate-pulse box-content w-full rounded-lg h-64 mt-5 bg-lilac-200"></div>
                 </div>
                 <div class="flex-1 hidden mx-2.5 sm:block">
-                    <div aria-label="loading" class="animate-pulse box-content w-full rounded-lg h-64 bg-lilac-200"></div>
-                    <div aria-label="loading" class="animate-pulse box-content w-full rounded-lg mt-5 bg-lilac-200 h-36"></div>
-                    <div aria-label="loading" class="animate-pulse box-content w-full rounded-lg mt-5 bg-lilac-200 h-44"></div>
+                    <div aria-hidden="true" class="animate-pulse box-content w-full rounded-lg h-64 bg-lilac-200"></div>
+                    <div aria-hidden="true" class="animate-pulse box-content w-full rounded-lg mt-5 bg-lilac-200 h-36"></div>
+                    <div aria-hidden="true" class="animate-pulse box-content w-full rounded-lg mt-5 bg-lilac-200 h-44"></div>
                 </div>
                 <div class="flex-1 hidden ml-2.5 lg:block">
-                    <div aria-label="loading" class="animate-pulse box-content w-full rounded-lg bg-lilac-200 h-44"></div>
-                    <div aria-label="loading" class="animate-pulse box-content w-full rounded-lg h-64 mt-5 bg-lilac-200"></div>
-                    <div aria-label="loading" class="animate-pulse box-content w-full rounded-lg mt-5 bg-lilac-200 h-36"></div>
+                    <div aria-hidden="true" class="animate-pulse box-content w-full rounded-lg bg-lilac-200 h-44"></div>
+                    <div aria-hidden="true" class="animate-pulse box-content w-full rounded-lg h-64 mt-5 bg-lilac-200"></div>
+                    <div aria-hidden="true" class="animate-pulse box-content w-full rounded-lg mt-5 bg-lilac-200 h-36"></div>
                 </div>
             </div>
         @elseif (count($this->results->hits) > 0)

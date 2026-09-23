@@ -7,4 +7,4 @@
     label="Projektbeschreibung"
     placeholder="Was muss man über das Projekt wissen?"
 />
-<x-input-error :message="$error" />
+<x-input-error for="description" :message="$error" />

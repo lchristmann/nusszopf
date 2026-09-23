@@ -706,6 +706,35 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 
 ---
 
+### Accessibility to the A-7 bar: focus indicator, Escape, names, error association, headings (BUG-039, BUG-040, BUG-041)
+
+- Status: Approved — decision A-7 (maintainer, 2026-09-21), which names the visible focus indicator as an
+  intentional change; implemented in finish-line phase P-3 (2026-09-23)
+- Date: 2026-09-23
+- Historical behavior:
+  - no visible keyboard focus (`outline-none` everywhere);
+  - the request editor ignores Escape;
+  - names that differ from the visible text, and unnamed controls;
+  - error messages not tied to their fields;
+  - no heading on some pages and paragraphs as section titles.
+
+  See `docs/rewrite/bugs.md` BUG-039–041.
+- New behavior:
+  - keyboard focus (`:focus-visible`) draws a 2px outline in the text colour;
+  - every dialog and popover takes, keeps and returns focus and closes on Escape;
+  - Escape in the request editor is "Abbrechen", including its `confirm()` when the form is dirty; an
+    outside click still does nothing;
+  - accessible names contain the visible text;
+  - messages are referenced by `aria-describedby`/`aria-invalid`;
+  - a hidden `h1` where none existed, and `h2` section titles.
+- Visible change: only the focus outline, and only for keyboard use; the visual baselines are unchanged.
+- Affected screens: every screen. Affected domain/workflows: none. Migration implications: none.
+- Tests: `tests/E2E/specs/a11y/axe.spec.ts`, `tests/E2E/specs/a11y/keyboard.spec.ts`,
+  `tests/Feature/Views/FieldErrorTest.php`, `tests/Feature/Views/TextComponentTest.php`.
+- Approval: Approved (A-7).
+
+---
+
 ## Explicitly deferred (not proposed here, need a product decision first — see `docs/rewrite/open-questions.md` / `docs/rewrite/architecture-decisions.md`)
 
 The following were identified during archaeology as *possible* candidates for change but are deliberately **not** proposed above, because reasonable product intent could explain the historical behavior as-is:

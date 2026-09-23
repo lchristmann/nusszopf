@@ -101,9 +101,23 @@ document.addEventListener('alpine:init', () => {
                         wire.$call(blurAction, property);
                     },
                 });
+
+                // Decision A-7: tie the field's validation message (`x-input-error for=property`, rendered next
+                // to this wire:ignore'd editor) to the textbox, and mark it invalid while the message shows.
+                const errorId = `error-${property.replace(/[.[\]]/g, '-')}`;
+                const textbox = editor.view.dom;
+                textbox.setAttribute('aria-describedby', errorId);
+                const syncInvalid = () => {
+                    if (document.getElementById(errorId)) textbox.setAttribute('aria-invalid', 'true');
+                    else textbox.removeAttribute('aria-invalid');
+                };
+                syncInvalid();
+                this.errorObserver = new MutationObserver(syncInvalid);
+                this.errorObserver.observe(this.$el.parentElement, { childList: true, subtree: true });
             },
 
             destroy() {
+                this.errorObserver?.disconnect();
                 editor?.destroy();
                 editor = null;
             },

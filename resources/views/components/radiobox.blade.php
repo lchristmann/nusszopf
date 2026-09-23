@@ -1,4 +1,8 @@
-@props(['disabled' => false, 'vertical' => true])
+@props(['errorFor' => null, 'disabled' => false, 'vertical' => true])
+@php
+    // Decision A-7: an error message is tied to its field (App\Support\FieldError).
+    $attributes = $attributes->merge(\App\Support\FieldError::attributes(\App\Support\FieldError::field($attributes, $errorFor), $errors ?? null));
+@endphp
 
 {{--
     Radiobox.atom.js: a visually-hidden native radio (kept for keyboard and

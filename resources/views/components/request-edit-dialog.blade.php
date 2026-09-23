@@ -5,9 +5,11 @@
     the create/edit dialog shared by the wizard's step 3 and the edit screen's
     "Gesuche" view. A separate form (never nested in the wizard's), bound to the
     host's `request*` properties (App\Livewire\Concerns\ManagesRequestDialog).
-    It has no overlay/Escape dismissal, as historically (`onDismiss={undefined}`):
+    Historically it had no overlay/Escape dismissal (`onDismiss={undefined}`):
     only the X and "Abbrechen", which ask the native `confirm()` when the form
-    is dirty (Formik `dirty`).
+    is dirty (Formik `dirty`). Decision A-7 requires every dialog to close on
+    Escape, so Escape now does exactly what "Abbrechen" does, confirm included
+    (docs/testing/accessibility.md); an overlay click still does nothing.
 --}}
 <x-dialog
     data-test="edit-request-dialog"
@@ -18,6 +20,7 @@
     <form
         wire:submit="saveRequest"
         novalidate
+        x-on:keydown.escape.prevent="dismiss()"
         x-data="{
             cat: $wire.requestCategory,
             baseline: null,
@@ -52,7 +55,7 @@
             wire:blur="blurredRequest('requestTitle')"
             placeholder="Wer oder was wird gesucht?"
         />
-        <x-input-error :message="$errors->first('requestTitle')" />
+        <x-input-error for="requestTitle" :message="$errors->first('requestTitle')" />
 
         <x-field-title class="mt-6" info="Wähle eine passende Kategorie für das Gesuch aus!">Kategorie*</x-field-title>
         <x-select
@@ -77,7 +80,7 @@
                 <option value="{{ $value }}">{{ $label }}</option>
             @endforeach
         </x-select>
-        <x-input-error :message="$errors->first('requestCategory')" />
+        <x-input-error for="requestCategory" :message="$errors->first('requestCategory')" />
 
         <x-field-title class="mt-6" info="Beschreibe das Gesuch: Was wird gesucht und wozu? Wann wird es gebraucht?">Beschreibung*</x-field-title>
         <x-rich-text-editor
@@ -88,7 +91,7 @@
             blur-action="blurredRequest"
             placeholder="Was muss man über das Gesuch wissen?"
         />
-        <x-input-error :message="$errors->first('requestDescription')" />
+        <x-input-error for="requestDescription" :message="$errors->first('requestDescription')" />
 
         <div class="flex justify-center mt-10 space-x-4">
             <x-button

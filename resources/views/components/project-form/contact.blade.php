@@ -16,7 +16,7 @@
     Decision A-3 (docs/rewrite/decisions-register.md): "Persönlich" needs a
     verified e-mail address — new gate, no historical error copy to mirror.
 --}}
-<x-input-error :message="$errors->first('contact')" />
+<x-input-error for="contact" :message="$errors->first('contact')" />
 @if ($errors->has('contact'))
     <button type="button" wire:click="resendVerificationEmail" data-test="btn_resend-verification" class="mt-1 ml-4 text-sm underline text-steel-700">
         Bestätigungs-E-Mail erneut senden

@@ -7,4 +7,4 @@
     label="Projektteam"
     placeholder="Was muss man über das Projektteam wissen?"
 />
-<x-input-error :message="$error" />
+<x-input-error for="team" :message="$error" />

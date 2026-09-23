@@ -62,7 +62,7 @@
         <div class="absolute top-0 right-0">
             <x-menu
                 data-test="menu_edit-request-card"
-                aria-label="Gesuch Menü"
+                :aria-label="'Gesuch Menü: '.$title"
                 label-class="mx-4 mb-1"
                 inner-class="py-2 mr-3"
                 :color="$color[1]"

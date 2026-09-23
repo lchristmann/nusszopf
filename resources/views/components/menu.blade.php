@@ -36,13 +36,16 @@
             items[(items.indexOf(document.activeElement) + step + items.length) % items.length]?.focus();
         },
     }"
-    x-on:keydown.escape="open = false"
+    {{-- Decision A-7: Escape closes and returns focus to the button; Tab leaves and closes (ARIA menu pattern). --}}
+    x-on:keydown.escape="if (open) { open = false; $refs.trigger.focus(); }"
+    x-on:keydown.tab="open = false"
     x-on:click.outside="open = false"
     x-on:keydown.arrow-down.prevent="open && move(1)"
     x-on:keydown.arrow-up.prevent="open && move(-1)"
     class="relative"
 >
     <button
+        x-ref="trigger"
         type="button"
         aria-haspopup="menu"
         aria-label="{{ $ariaLabel }}"

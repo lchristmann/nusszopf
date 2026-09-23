@@ -33,6 +33,10 @@
             aria-label="Projektort"
             aria-autocomplete="list"
             aria-expanded="{{ count($options) > 0 ? 'true' : 'false' }}"
+            aria-controls="location-suggestions"
+            x-bind:aria-activedescendant="active >= 0 ? 'location-option-' + active : null"
+            :aria-invalid="$searchTermError || $dataError ? 'true' : null"
+            :aria-describedby="implode(' ', array_filter([$searchTermError ? \App\Support\FieldError::id('location.searchTerm') : null, $dataError ? \App\Support\FieldError::id('location.data') : null])) ?: null"
             autocomplete="off"
             color="lilac"
             placeholder="Ort"
@@ -63,10 +67,11 @@
         @if (count($options) > 0 && ! $remote)
             <div class="absolute left-0 right-0 z-10 py-0.5">
                 <div class="text-sm bg-white border-2 rounded-lg shadow-md border-lilac-800">
-                    <ul x-ref="list" role="listbox" class="p-0 m-0 list-none select-none">
+                    <ul x-ref="list" id="location-suggestions" role="listbox" aria-label="Vorschläge für den Projektort" class="p-0 m-0 list-none select-none">
                         @foreach ($options as $index => $option)
                             <li
                                 role="option"
+                                id="location-option-{{ $index }}"
                                 data-test="option_project-location"
                                 aria-selected="false"
                                 x-bind:aria-selected="active === {{ $index }}"
@@ -83,6 +88,6 @@
             </div>
         @endif
     </div>
-    <x-input-error :message="$searchTermError" />
-    <x-input-error :message="$dataError" />
+    <x-input-error for="location.searchTerm" :message="$searchTermError" />
+    <x-input-error for="location.data" :message="$dataError" />
 </div>

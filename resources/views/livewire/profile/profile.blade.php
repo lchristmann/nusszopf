@@ -25,7 +25,7 @@
                         (decision A-1, BUG-011).
                     --}}
                     <div id="newsletter">
-                        <x-text variant="textMd" class="mb-2">Newsletter</x-text>
+                        <x-text as="h2" variant="textMd" class="mb-2">Newsletter</x-text>
                         @if ($newsletterConfirmed)
                             <x-text variant="textSm" class="mb-2">Du möchtest dich vom nussigsten Newsletter aller Zeiten abmelden?</x-text>
                             <x-button
@@ -38,10 +38,10 @@
                         @else
                             <form wire:submit="subscribeNewsletter">
                                 <x-text variant="textSm" class="mb-2">Wir versorgen Dich mit backfrischen Nusszopf­neuigkeiten, inspirierenden Projekten und allem, was uns sonst noch so einfällt.</x-text>
-                                <x-checkbox wire:model="newsletterPrivacy" name="newsletterPrivacy" data-test="checkbox_newsletter_settings-page" aria-label="Datenschutzerklärung" class="whitespace-normal">
-                                    Ich stimme den <a href="{{ route('privacy', ['back' => 'history']) }}" title="Zum Datenschutz" aria-label="Zum Datenschutz" class="italic underline">Datenschutzbedingungen</a> zu
+                                <x-checkbox wire:model="newsletterPrivacy" name="newsletterPrivacy" data-test="checkbox_newsletter_settings-page" class="whitespace-normal">
+                                    Ich stimme den <a href="{{ route('privacy', ['back' => 'history']) }}" title="Zum Datenschutz" class="italic underline">Datenschutzbedingungen</a> zu
                                 </x-checkbox>
-                                <x-input-error :message="$errors->first('newsletterPrivacy')" class="!mt-1 mb-3 !ml-6" />
+                                <x-input-error for="newsletterPrivacy" :message="$errors->first('newsletterPrivacy')" class="!mt-1 mb-3 !ml-6" />
                                 <x-button
                                     type="submit"
                                     data-test="btn_newsletter-subscribe_settings-page"
@@ -61,7 +61,7 @@
                         Fördermitglied!" button (decision A-5).
                     --}}
                     <div id="sponsoring" class="mt-12 text-center sm:text-left">
-                        <x-text variant="textMd" class="mb-2 text-left">Fördermitgliedschaft</x-text>
+                        <x-text as="h2" variant="textMd" class="mb-2 text-left">Fördermitgliedschaft</x-text>
                         <x-text variant="textSm" class="text-left">Passe deine Mitgliedschaft auf unserer Steady-Förderungswebseite an.</x-text>
                         <x-button
                             as="a"
@@ -69,7 +69,6 @@
                             target="_blank"
                             rel="noopener"
                             title="Zur Steady-Förderungswebseite"
-                            aria-label="Zur Steady-Förderungswebseite"
                             class="block mt-6 sm:mt-4 bg-steel-100"
                         >Steady öffnen</x-button>
                     </div>
@@ -77,7 +76,7 @@
 
                 <x-framed-grid-card.body-col variant="twoCols">
                     <div id="delete" class="mt-10 text-warning-700 lg:ml-16 lg:mt-0">
-                        <x-text variant="textMd" class="mb-2">Account löschen</x-text>
+                        <x-text as="h2" variant="textMd" class="mb-2">Account löschen</x-text>
                         <x-text variant="textSm">Nach dem Löschen können deine Daten nicht wieder hergestellt werden.</x-text>
                         <x-button
                             data-test="btn_delete-account_settings-page"
@@ -97,7 +96,7 @@
                     </x-info-card>
                     <x-info-card class="mt-5 text-gray-700 bg-gray-200 lg:ml-16">
                         Bei Fragen kannst Du dich immer unter
-                        <a href="mailto:{{ config('nusszopf.contact_email') }}" title="E-Mail an Nusszopf senden" aria-label="E-Mail an Nusszopf senden" class="border-b-2 cursor-pointer nz-text-sm nz-link-livid">{{ config('nusszopf.contact_email') }}</a>
+                        <a href="mailto:{{ config('nusszopf.contact_email') }}" title="E-Mail an Nusszopf senden" class="border-b-2 cursor-pointer nz-text-sm nz-link-livid">{{ config('nusszopf.contact_email') }}</a>
                         bei uns melden!
                     </x-info-card>
                 </x-framed-grid-card.body-col>

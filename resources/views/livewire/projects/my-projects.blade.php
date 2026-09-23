@@ -6,6 +6,8 @@
     on the very first request.
 --}}
 <div wire:init="load">
+    {{-- Decision A-7 ("sensible headings"): the historical screen has no heading; this one is for assistive technology only. --}}
+    <h1 class="sr-only">Meine Projekte</h1>
     {{-- pages/user/projects.js: `FramedGridCard className="lg:mb-20 lg:mt-12"`, header `bg-steel-200` on a
          `bg-steel-200 lg:bg-steel-100` frame, body `bg-white` on `bg-white lg:bg-steel-100`; the header shows the
          owner's `Avatar` (name and e-mail) — no page title. --}}
@@ -50,13 +52,14 @@
                 <x-framed-grid-card.body-col variant="oneCol">
                     @if (! $ready)
                         {{-- ProjectsSkeleton.js --}}
-                        <div class="flex flex-col lg:flex-row" data-test="skeleton_projects">
+                        <div class="flex flex-col lg:flex-row" data-test="skeleton_projects" role="status">
+                            <span class="sr-only">Wird geladen …</span>
                             <div class="flex-1 lg:mr-2.5">
-                                <div aria-label="loading" class="animate-pulse rounded-lg bg-lilac-200 h-36"></div>
-                                <div aria-label="loading" class="animate-pulse rounded-lg mt-5 bg-lilac-200 h-44"></div>
+                                <div aria-hidden="true" class="animate-pulse rounded-lg bg-lilac-200 h-36"></div>
+                                <div aria-hidden="true" class="animate-pulse rounded-lg mt-5 bg-lilac-200 h-44"></div>
                             </div>
                             <div class="flex-1 hidden ml-2.5 lg:block">
-                                <div aria-label="loading" class="animate-pulse rounded-lg h-64 bg-lilac-200"></div>
+                                <div aria-hidden="true" class="animate-pulse rounded-lg h-64 bg-lilac-200"></div>
                             </div>
                         </div>
                     @elseif ($projects->isEmpty())
@@ -124,7 +127,7 @@
                                     <div class="absolute top-0 right-0">
                                         <x-menu
                                             data-test="menu_edit-project-card"
-                                            aria-label="Projekt Menü"
+                                            :aria-label="'Projekt Menü: '.$project->title"
                                             label-class="mx-5 my-1"
                                             inner-class="py-2 mr-4"
                                             color="lilac"

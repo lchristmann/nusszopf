@@ -51,6 +51,13 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 | BUG-036 | SEO / `og:url` and Twitter placeholders     | Trivial  | Fix                                 | Implemented — tenth slice (2026-09-23), `docs/rewrite/tenth-slice.md` |
 | BUG-037 | SEO / web manifest icon paths               | Trivial  | Fix                                 | Implemented — tenth slice (2026-09-23), `docs/rewrite/tenth-slice.md` |
 | BUG-038 | SEO / sitemap lists `noindex` project pages | Trivial  | Preserve                            | Decided — finish-line parity audit (2026-09-23); detail page `noindex` restored |
+| BUG-039 | Accessibility / names, labels, error association | Medium | Fix (decision A-7)                  | Implemented — P-3 (2026-09-23) |
+| BUG-040 | Accessibility / keyboard operability        | Medium   | Fix (decision A-7)                  | Implemented — P-3 (2026-09-23) |
+| BUG-041 | Accessibility / heading structure           | Low      | Fix (decision A-7)                  | Implemented — P-3 (2026-09-23) |
+| BUG-042 | Accessibility / contrast: error text in dialogs | Low  | Proposed Fix — maintainer approves or waives (A-7) | Awaiting maintainer decision; no palette change made |
+| BUG-043 | Accessibility / contrast: Home newsletter button | Trivial | Proposed Fix — maintainer approves or waives (A-7) | Awaiting maintainer decision; no palette change made |
+| BUG-044 | Accessibility / contrast: "Ausloggen" in the menu | Low | Proposed Fix — maintainer approves or waives (A-7) | Awaiting maintainer decision; no palette change made |
+| BUG-045 | Accessibility / contrast: dimmed older toasts | Trivial  | Proposed Fix — maintainer approves or waives (A-7) | Awaiting maintainer decision; no palette change made |
 
 ---
 
@@ -712,4 +719,105 @@ directly from `web-nusszopf/projects/webapp/src/containers/user/ProjectForm/*` a
   detail page's `noindex`, which is restored.
 - Regression test: `tests/Feature/Seo/SeoTagsTest.php` ("marks a project page noindex, as historically"),
   `SitemapTest` (projects still listed).
+
+### BUG-039 — Controls without a fitting accessible name, and messages not tied to their fields
+
+- Affected area: Accessibility (decision A-7: "correct German accessible names and error-to-field association").
+- Historical behavior (Confirmed, `web-nusszopf`):
+  - the Cropper's rotate and zoom buttons have no name, and the file input's only text is hidden;
+  - `PeriodField.js`/`LocationField.js` label their radio groups `cms.visibility.title` ("Sichtbarkeit"),
+    a copy slip;
+  - many links and checkboxes carry an `ariaLabel` that does not contain their visible text (WCAG 2.5.3
+    "Label in Name", Level A). Examples: "Zum Datenschutz" on "Datenschutzbedingungen", "Datenschutzerklärung"
+    on "Ich stimme den Datenschutzbedingungen zu", "E-Mail an Nusszopf schreiben" on the mail address;
+  - Formik's `ErrorMessage` is a loose paragraph that no field references;
+  - every card menu is "Projekt Menü"/"Gesuch Menü", whatever the card;
+  - the skeletons are labelled "loading" (English) on plain `div`s, which assistive technology ignores.
+- Nusszopf 2 additions with the same kind of defect:
+  - the place-search combobox lacked `aria-controls`;
+  - its suggestion list had no name;
+  - the visitor counter read as four loose digits.
+- Classification: **Fix** (A-7).
+- Corrected behavior:
+  - every control has a German name that contains its visible text; the historical wording stays as the
+    `title` tooltip or is extended to include the visible text;
+  - the radio groups are named for what they are;
+  - every validation message has an id, and its control carries `aria-invalid` and `aria-describedby`
+    while the message shows (`App\Support\FieldError`; the rich-text editor too);
+  - the menus are named after their card;
+  - the skeletons are a "Wird geladen …" status;
+  - the counter is one image named "N Aufrufe";
+  - the combobox references its named list and follows the active option with `aria-activedescendant`.
+- Visible change: none (the visual baselines are unchanged).
+- Regression tests: `tests/E2E/specs/a11y/axe.spec.ts` (axe on 45 states plus a label-in-name check),
+  `tests/E2E/specs/a11y/keyboard.spec.ts`, `tests/Feature/Views/FieldErrorTest.php`.
+
+### BUG-040 — Parts of the product cannot be used, or seen being used, from the keyboard
+
+- Affected area: Accessibility (decision A-7: "full keyboard operability", "a visible `:focus-visible`
+  indicator").
+- Historical behavior (Confirmed):
+  - every component sets `outline-none focus:outline-none`, so keyboard focus is invisible on links and
+    icon buttons;
+  - `EditRequestDialog` ignores Escape (`onDismiss={undefined}`);
+  - the password field's eye toggle is not focusable;
+  - (Nusszopf 2 before this pass) the nav menu and the filter popover neither took focus nor closed on
+    Escape, the card menus did not return focus to their button, and in WebKit a dialog could open without
+    receiving focus.
+- Classification: **Fix** (A-7; the focus indicator is recorded as an intentional change).
+- Corrected behavior:
+  - keyboard focus draws a 2px outline in the element's text colour (`:focus-visible` only, so no mouse
+    click shows it);
+  - every dialog and popover takes focus, keeps it while open, closes on Escape and gives focus back to its
+    opener;
+  - Escape in the request editor does what "Abbrechen" does, including the historical `confirm()` when the
+    form is dirty;
+  - the menus follow the ARIA menu pattern (arrows move, Escape returns to the button, Tab closes);
+  - the eye toggle is reachable.
+- Regression test: `tests/E2E/specs/a11y/keyboard.spec.ts` (Chromium, Firefox, WebKit).
+
+### BUG-041 — Pages without a level-one heading, section titles that are not headings
+
+- Affected area: Accessibility (decision A-7: "sensible headings").
+- Historical behavior (Confirmed):
+  - login/register and My Projects have no heading at all;
+  - the section titles of the project page, Profile, the wizard and the edit screen are `Text` paragraphs.
+- Classification: **Fix** (A-7). Corrected behavior:
+  - a visually hidden `h1` on login/register ("Einloggen"/"Registrieren") and My Projects ("Meine Projekte");
+  - the section titles are `h2` with unchanged classes.
+
+  There is no visible change (the baselines are pixel-identical).
+- Regression test: `tests/E2E/specs/a11y/axe.spec.ts` (`page-has-heading-one` no longer reported).
+
+### BUG-042 — Validation messages in the dialogs miss the contrast minimum
+
+- Affected area: Accessibility / colour contrast. Measured by the P-3 axe scan (state `contact-dialog-errors`).
+- Historical behavior: messages are `text-warning-700` (#b84405). On white that is 4.85:1 (passes); on the contact
+  dialog's `bg-lilac-200` (#e5e1e9) it is **4.20:1**, below the 4.5:1 WCAG AA minimum for 16px text. The request
+  editor's `bg-stone-200` (#f2f2f2) measures 4.85:1 and passes.
+- Proposed fix: use a darker warning tone for messages on tinted dialog backgrounds only (e.g. `warning-800`),
+  leaving every other use of `warning-700` unchanged.
+- Classification: **Proposed Fix — the maintainer approves or waives** (A-7: no palette change without approval).
+- Status: awaiting the maintainer's decision. Nothing changed.
+
+### BUG-043 — The Home newsletter button's text is just below the contrast minimum
+
+- Measured: `text-steel-700` (#37474f) on `bg-blue-400` (#87b2ed), **4.42:1** (AA minimum 4.5:1, 18px text) —
+  state `home`.
+- Proposed fix: a darker text (`steel-800`) on this one button, or waive as 0.08 below the line.
+- Classification: **Proposed Fix — the maintainer approves or waives** (A-7). Status: awaiting decision; nothing changed.
+
+### BUG-044 — "Ausloggen" in the nav menu has low contrast
+
+- Measured: `text-warning-700` (#b84405) on the menu's `bg-steel-400` (#90a4ae), **2.10:1** (AA minimum 4.5:1) —
+  state `nav-menu-user`. Historical (`NavHeader.organism.js`, warning-coloured logout item).
+- Proposed fix: a much darker warning tone for this item (e.g. `warning-900`), keeping it recognisably warning-coloured.
+- Classification: **Proposed Fix — the maintainer approves or waives** (A-7). Status: awaiting decision; nothing changed.
+
+### BUG-045 — Older toasts are dimmed below the contrast minimum
+
+- Historical behavior (Confirmed, `Toasts.service.js`): every toast but the newest is `opacity-50`; a dimmed
+  toast's text measures about **2.1:1** (state `newsletter-unsubscribe-lead-errors`). Toasts vanish after 3s.
+- Proposed fix: waive (transient, superseded by the newest toast, which passes), or dim to `opacity-75`.
+- Classification: **Proposed Fix — the maintainer approves or waives** (A-7). Status: awaiting decision; nothing changed.
 

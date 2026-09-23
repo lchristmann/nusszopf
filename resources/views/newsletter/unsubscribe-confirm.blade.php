@@ -12,7 +12,7 @@
             as="a"
             href="mailto:{{ config('nusszopf.contact_email') }}?subject={{ rawurlencode('Sponsorship | Partnerschaft | Feedback') }}"
             title="E-Mail an Nusszopf schreiben"
-            aria-label="E-Mail an Nusszopf schreiben"
+            aria-label="Feedback senden: E-Mail an Nusszopf schreiben"
             class="inline-block mt-6 bg-steel-100"
         >Feedback senden</x-button>
     </x-framed-card>

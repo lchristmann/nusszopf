@@ -8,6 +8,8 @@
     'type' => 'text',
     // Input.atom.js `displayRing`: the search field draws its own border and no hover/focus ring.
     'displayRing' => true,
+    // The validation key when it is neither the `name` nor the `wire:model` target.
+    'errorFor' => null,
 ])
 
 @php
@@ -32,6 +34,8 @@
 @endphp
 
 @php
+    // Decision A-7: an error message is tied to its field (App\Support\FieldError).
+    $attributes = $attributes->merge(\App\Support\FieldError::attributes(\App\Support\FieldError::field($attributes, $errorFor), $errors ?? null));
     $ringClass = $displayRing ? 'ring-2 ring-transparent' : '';
     $colorClass = $displayRing ? $colorClass : '';
 @endphp

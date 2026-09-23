@@ -109,7 +109,7 @@ test('an unknown URL shows the error page with a way home', async ({ page }) => 
     expect(response?.status()).toBe(404);
 
     await expect(page.getByRole('heading', { name: '404 – Nusszopf verknetet...' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'E-Mail an Nusszopf schreiben' })).toHaveAttribute('href', /^mailto:.+\?subject=Nusszopf verknetet$/);
+    await expect(page.getByTitle('E-Mail an Nusszopf schreiben')).toHaveAttribute('href', /^mailto:.+\?subject=Nusszopf verknetet$/);
     await expect(page.getByTestId('btn_burger_nav-header')).toHaveCount(0);
 
     await page.getByTestId('btn_home_error-page').click();

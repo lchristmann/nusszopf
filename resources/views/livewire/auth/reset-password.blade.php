@@ -18,7 +18,7 @@
                 placeholder="Passwort"
                 autocomplete="off"
             />
-            <x-input-error :message="$errors->first('password')" />
+            <x-input-error for="password" :message="$errors->first('password')" />
             <div class="mt-6 text-center">
                 <x-button type="submit" class="bg-steel-100" data-test="btn_save-new-password" wire:loading.attr="disabled" wire:target="save">Speichern</x-button>
             </div>

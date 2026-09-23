@@ -22,7 +22,6 @@
         x-on:click="visible = ! visible"
         x-bind:aria-label="visible ? 'Passwort verbergen' : 'Passwort anzeigen'"
         class="absolute inset-y-0 right-0 flex items-center px-3 text-current"
-        tabindex="-1"
     >
         <span x-show="! visible"><x-icon name="eye-off" :size="24" /></span>
         <span x-show="visible" x-cloak><x-icon name="eye" :size="24" /></span>

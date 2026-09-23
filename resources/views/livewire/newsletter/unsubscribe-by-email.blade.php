@@ -6,7 +6,7 @@
     <div class="w-full">
         <form wire:submit="unsubscribe" data-test="form_newsletter-unsubscribe">
             <x-input wire:model="email" name="email" type="email" autocomplete="off" data-test="input_newsletter-unsubscribe-email" aria-label="E-Mail-Adresse" placeholder="E-Mail-Adresse" />
-            <x-input-error :message="$errors->first('email')" />
+            <x-input-error for="email" :message="$errors->first('email')" />
             <div class="mt-6 text-center">
                 <x-button
                     type="submit"

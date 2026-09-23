@@ -38,6 +38,8 @@ export class MyProjectsPage {
     async openProject(title: string): Promise<void> {
         await this.openCardMenu(title);
         await this.card(title).getByTestId('menuitem-0').click();
+        // Callers read the project id from the URL: wait for the detail page, not the grid still showing.
+        await this.page.waitForURL(/\/projects\/[^/]+$/);
     }
 
     /** Item 2 ("Verbergen"/"Veröffentlichen") — the throttled toggle. */

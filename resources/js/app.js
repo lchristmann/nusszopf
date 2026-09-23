@@ -154,3 +154,47 @@ window.nzMasonry = function nzMasonry(el, breakpoints, gap) {
     watch();
     layout();
 };
+
+/**
+ * `x-dialog` (decision A-7): when a pre-rendered dialog is shown (`x-show` clears its `display`), focus moves to
+ * its first focusable element if `x-trap` has not already put it inside, and returns to the element that opened
+ * it when the dialog is hidden again. WebKit sometimes activates the trap before the dialog is laid out, which
+ * leaves focus on the opener and, on closing, nowhere.
+ */
+const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]):not([type=hidden]), select, textarea, [tabindex]:not([tabindex="-1"])';
+
+window.nzDialogFocus = function nzDialogFocus(el) {
+    let opener = null;
+    let shown = el.style.display !== 'none';
+    new MutationObserver(() => {
+        const visible = el.style.display !== 'none';
+        if (visible === shown) return;
+        shown = visible;
+        if (visible) {
+            if (!el.contains(document.activeElement)) opener = document.activeElement;
+            window.nzFocusInto(el, FOCUSABLE);
+        } else {
+            const target = opener;
+            opener = null;
+            requestAnimationFrame(() => {
+                const lost = document.activeElement === document.body || el.contains(document.activeElement);
+                if (lost && target?.isConnected) target.focus();
+            });
+        }
+    }).observe(el, { attributes: true, attributeFilter: ['style'] });
+};
+
+/**
+ * Moves focus into a just-opened popover (decision A-7) once it can take it: `x-show` with a transition applies
+ * `display` a tick later, and WebKit ignores focus() on an element that is not displayed yet. Retries for about a
+ * third of a second.
+ */
+window.nzFocusInto = function nzFocusInto(container, selector) {
+    let tries = 0;
+    const attempt = () => {
+        if (container.contains(document.activeElement)) return;
+        container.querySelector(selector)?.focus();
+        if (!container.contains(document.activeElement) && ++tries < 20) setTimeout(attempt, 16);
+    };
+    requestAnimationFrame(attempt);
+};

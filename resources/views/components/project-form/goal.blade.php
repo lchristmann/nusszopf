@@ -12,4 +12,4 @@
     wire:blur="blurred('goal')"
     placeholder="Wie lässt sich das Ziel des Projektes in einem Satz beschreiben?"
 ></x-input>
-<x-input-error :message="$error" />
+<x-input-error for="goal" :message="$error" />

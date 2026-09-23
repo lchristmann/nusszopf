@@ -41,7 +41,7 @@ test('creates requests in the wizard and shows, edits and deletes them through t
     await expect(page.getByText('Gib einen Titel ein')).toBeVisible();
     await expect(page.getByText('Wähle eine Kategorie aus')).toBeVisible();
     await expect(page.getByText('Gib eine Beschreibung ein')).toBeVisible();
-    await page.keyboard.press('Escape');
+    await page.mouse.click(5, 5);
     await expect(requests.dialog).toBeVisible();
 
     // The title input caps at 30 characters, the category select takes its color.

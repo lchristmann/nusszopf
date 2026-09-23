@@ -2,7 +2,7 @@
 
 {{-- PeriodField.js: Flexibel / Festgelegt + two `dd.mm.yyyy` inputs, disabled (and their labels dimmed) while flexible. --}}
 <x-field-title {{ $attributes }} info="Gibt es einen definierten Zeitraum, in welchem das Projekt stattfindet?">Projektzeitraum*</x-field-title>
-<div role="radiogroup" aria-label="Sichtbarkeit">
+<div role="radiogroup" aria-label="Projektzeitraum">
     <x-radiobox data-test="radio_flexible_project-period" name="period.flexible" value="1" :checked="$flexible" wire:click="$set('period.flexible', true)">
         <x-text variant="textSmMedium">Flexibel</x-text>
     </x-radiobox>
@@ -27,7 +27,7 @@
                     type="text"
                     :disabled="$flexible"
                 />
-                <x-input-error :message="$error" />
+                <x-input-error :for="'period.'.$field" :message="$error" />
             </div>
         </div>
     @endforeach

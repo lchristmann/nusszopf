@@ -12,4 +12,4 @@
     wire:blur="blurred('motto')"
     placeholder="Was ist euer Projektmotto?"
 ></x-input>
-<x-input-error :message="$error" />
+<x-input-error for="motto" :message="$error" />

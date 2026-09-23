@@ -125,7 +125,7 @@
                 <x-text variant="textMd" class="mb-4 sm:mb-5">Auch ein Nusszopf muss seine Brötchen verdienen: Wir haben das Projekt bei dem Augsburger Zukunftspreis 2021 eingereicht. Die Preisverleihung findet statt am Montag, den 16.05.22, wir sind fest am Daumen drücken!</x-text>
                 <x-text variant="textMd">
                     Mehr Informationen:
-                    <a href="https://www.nachhaltigkeit.augsburg.de/zukunftspreis" target="_blank" rel="noopener noreferrer" title="Augsburger Zukunftspreis 2021" aria-label="Augsburger Zukunftspreis 2021" class="border-b-2 cursor-pointer nz-text-md nz-link-red">augsburg.de/zukunftspreis</a>
+                    <a href="https://www.nachhaltigkeit.augsburg.de/zukunftspreis" target="_blank" rel="noopener noreferrer" title="Augsburger Zukunftspreis 2021" class="border-b-2 cursor-pointer nz-text-md nz-link-red">augsburg.de/zukunftspreis</a>
                 </x-text>
             </div>
             <div class="mt-12 sm:mt-16 lg:ml-4 xl:ml-0 lg:mt-4 lg:self-center lg:w-1/3 xl:w-5/12">
@@ -164,7 +164,6 @@
                             :rel="$type === 'url' ? 'noopener noreferrer' : null"
                             class="inline-block bg-pink-300"
                             :title="$meta"
-                            :aria-label="$meta"
                         >{{ $action }}</x-button>
                     </div>
                 </div>

@@ -55,7 +55,7 @@
             wire:model="contactEmail"
             placeholder="beispiel@mail.de"
         />
-        <x-input-error :message="$errors->first('contactEmail')" />
+        <x-input-error for="contactEmail" :message="$errors->first('contactEmail')" />
 
         <x-text class="mt-6 mb-3">Deine Nachricht*</x-text>
         <x-input
@@ -68,7 +68,7 @@
             wire:model="contactMsg"
             placeholder="..."
         />
-        <x-input-error :message="$errors->first('contactMsg')" />
+        <x-input-error for="contactMsg" :message="$errors->first('contactMsg')" />
 
         <div class="flex justify-center mt-12 space-x-4">
             <x-button

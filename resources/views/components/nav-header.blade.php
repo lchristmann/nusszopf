@@ -40,12 +40,20 @@
                 </a>
             @endauth
 
-            <details class="relative">
-                <summary data-test="btn_burger_nav-header" class="list-none cursor-pointer focus:outline-none" aria-label="Menü">
+            {{-- Decision A-7: Escape closes the menu; while it is open, focus stays in it and returns to the button. --}}
+            <details
+                aria-label="Menü"
+                class="relative"
+                x-data="{ open: false }"
+                x-on:toggle="open = $el.open; if (open) nzFocusInto($refs.panel, 'a, button')"
+                x-on:keydown.escape="if ($el.open) { $el.open = false; $refs.summary.focus(); }"
+                x-on:click.outside="$el.open = false"
+            >
+                <summary x-ref="summary" data-test="btn_burger_nav-header" class="list-none cursor-pointer focus:outline-none" aria-label="Menü">
                     <x-icon name="menu" />
                 </summary>
 
-                <div class="absolute right-0 z-20 py-4 mt-2 text-sm font-medium rounded-md shadow-md text-steel-800 bg-steel-400 w-56">
+                <div x-ref="panel" x-trap="open" class="absolute right-0 z-20 py-4 mt-2 text-sm font-medium rounded-md shadow-md text-steel-800 bg-steel-400 w-56">
                     <a href="{{ route('search') }}" class="block px-4 py-2 hover:bg-steel-300">
                         <span class="flex items-center">
                             <span class="w-6 mr-1"><x-icon name="search" class="-ml-2" /></span>

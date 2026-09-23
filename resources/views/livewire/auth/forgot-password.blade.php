@@ -20,7 +20,7 @@
                 placeholder="E-Mail-Adresse"
                 autocomplete="off"
             />
-            <x-input-error :message="$errors->first('email')" />
+            <x-input-error for="email" :message="$errors->first('email')" />
             <div class="mt-6 space-x-4 text-center">
                 <x-button type="submit" class="bg-steel-100" data-test="btn_send-reset-link" wire:loading.attr="disabled" wire:target="send">Senden</x-button>
                 <x-button :as="'a'" href="{{ route('login') }}" data-test="btn_cancel-reset">Abbrechen</x-button>

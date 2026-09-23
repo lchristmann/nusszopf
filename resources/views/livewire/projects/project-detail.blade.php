@@ -26,7 +26,7 @@
                         <a
                             href="{{ route('projects.edit', $project) }}"
                             title="Projekt bearbeiten"
-                            aria-label="Projekt bearbeiten"
+                            aria-label="Klicke hier, um das Projekt zu bearbeiten"
                             class="underline"
                         >Klicke hier</a>, wenn Du Projekt und Gesuche bearbeiten willst.
                     </x-text>
@@ -56,7 +56,6 @@
                                     <a
                                         href="{{ $location['link'] }}"
                                         title="Zu OpenStreetMap"
-                                        aria-label="Zu OpenStreetMap"
                                         rel="noopener noreferrer"
                                         target="_blank"
                                         class="nz-text-sm cursor-pointer border-b-2 nz-link-lilac"
@@ -102,18 +101,18 @@
             <x-framed-grid-card.body gap="medium" class="grid-flow-row bg-white">
                 <x-framed-grid-card.body-col variant="twoCols" class="lg:col-start-2 lg:pr-4">
                     <div class="mt-10 lg:mt-0" data-test="description_project-detail">
-                        <x-text class="mb-3" variant="textLg">Projektbeschreibung</x-text>
+                        <x-text as="h2" class="mb-3" variant="textLg">Projektbeschreibung</x-text>
                         <div class="text-lg">{!! $descriptionHtml !!}</div>
                     </div>
                     @if ($project->team)
                         <div class="mt-10" data-test="team_project-detail">
-                            <x-text class="mb-3" variant="textLg">Projektteam</x-text>
+                            <x-text as="h2" class="mb-3" variant="textLg">Projektteam</x-text>
                             <div class="text-lg">{!! $teamHtml !!}</div>
                         </div>
                     @endif
                     @if ($project->motto)
                         <div class="mt-10" data-test="motto_project-detail">
-                            <x-text class="mb-3" variant="textLg">Projektmotto</x-text>
+                            <x-text as="h2" class="mb-3" variant="textLg">Projektmotto</x-text>
                             <x-text variant="textSm">{{ $project->motto }}</x-text>
                         </div>
                     @endif
@@ -127,7 +126,8 @@
                             ? ['0', '0', '0', '0']
                             : ($views > 9999 ? ['+', '9', '9', '9', '9'] : str_split(str_pad((string) $views, 4, '0', STR_PAD_LEFT)));
                     @endphp
-                    <div class="inline-flex items-center py-2 px-2.5 bg-lilac-150 rounded-md mt-12 mb-3 md:mb-0" data-test="visitor-counter_project-detail">
+                    {{-- Decision A-7: one name for the counter; its digit boxes are decoration. --}}
+                    <div class="inline-flex items-center py-2 px-2.5 bg-lilac-150 rounded-md mt-12 mb-3 md:mb-0" data-test="visitor-counter_project-detail" role="img" aria-label="{{ ltrim(implode('', $digits), '0') ?: '0' }} Aufrufe">
                         <x-icon name="eye" :size="22" class="mr-2" />
                         @foreach ($digits as $digit)
                             <div class="flex items-center justify-center w-6 h-6 mx-0.5 rounded-md bg-lilac-300">
@@ -138,7 +138,7 @@
                 </x-framed-grid-card.body-col>
 
                 <x-framed-grid-card.body-col variant="twoCols" class="row-start-1 lg:row-start-auto lg:pl-4 text-stone-800">
-                    <x-text class="mb-4" variant="textLg">Projektgesuche</x-text>
+                    <x-text as="h2" class="mb-4" variant="textLg">Projektgesuche</x-text>
                     {{-- Each request is a card opening its dialog; `openRequest` is the id of the one shown
                          (state lives on the root element, shared with the contact dialog below). --}}
                     <div>
@@ -179,7 +179,6 @@
         <a
             href="{{ $reportMailto }}"
             title="Projekt {{ config('nusszopf.contact_email') }} melden"
-            aria-label="Projekt {{ config('nusszopf.contact_email') }} melden"
             data-test="link_report_project-detail"
             {{-- `Link variant="button"` renders a clean base-size Button: `py-2 px-4` around a centred row. --}}
             class="inline-block font-medium text-lg py-2 px-4 underline cursor-pointer outline-none focus:outline-none lg:pr-2.5"

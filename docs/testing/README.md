@@ -42,6 +42,19 @@ A small number of important user journeys through the real UI, per role/actor, t
 - `tests/Feature/Search/ProjectSearchSyncTest.php` mixes fast document-shape tests with a few
   `@group meilisearch` tests against the real engine (edit re-indexing, publish/hide, delete).
 
+### Finish-line conventions (P-1…P-3)
+
+- Accessibility specs live in `tests/E2E/specs/a11y/` (`docs/testing/accessibility.md`). The axe scan runs in
+  Chromium only and spends one more newsletter request (the unsubscribe confirmation): a full run now uses all 10 of
+  the shared budget, so clear the counter before every full run (see below).
+- Page objects wait for a Livewire action's own response before the next assertion: `SearchPage.search()`,
+  `ProjectEditPage.saveSettings()` and `ProjectWizardPage.pick()` for the `$set` radios. `LoginPage` waits for the
+  page load before filling, and `MyProjectsPage.openProject()` waits for the detail URL. Without this, an earlier
+  toast or earlier results could satisfy the next check, and a late answer could reset a field.
+- `waitForMail()` searches Mailpit by recipient and waits up to 60s: under the full parallel suite the single queue
+  worker has a backlog.
+- The three whole-story journeys set a 120s timeout.
+
 ### Tenth-slice conventions
 
 - `tests/E2E/specs/visitor/public-shell.spec.ts` spends one more of the shared newsletter budget per engine (the Home

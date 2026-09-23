@@ -108,7 +108,7 @@ test('creates, publishes, edits and re-verifies a project through the historical
     const projectId = new URL(page.url()).pathname.split('/').at(-1)!;
     await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();
     await expect(page.getByText('Eine grüne Fläche für alle schaffen.')).toBeVisible();
-    const locationLink = page.getByTestId('location_project-detail').getByRole('link', { name: 'Zu OpenStreetMap' });
+    const locationLink = page.getByTestId('location_project-detail').getByRole('link', { name: 'Leipzig' });
     await expect(locationLink).toHaveAttribute('href', 'https://www.openstreetmap.org/relation/62649');
     await expect(locationLink).toHaveText('Leipzig');
     await expect(page.getByTestId('period_project-detail')).toHaveText('1.3.2027 - 31.5.2027');
@@ -126,7 +126,7 @@ test('creates, publishes, edits and re-verifies a project through the historical
     await expect(page.getByText('So sieht das Projekt für andere Nusszopfer:innen aus.')).toBeVisible();
 
     // --- Edit: entered from the owner banner, loaded with the stored values -------------------
-    await page.getByRole('link', { name: 'Projekt bearbeiten' }).click();
+    await page.getByRole('link', { name: 'Klicke hier' }).click();
     await expect(page).toHaveURL(new RegExp(`/user/project/${projectId}/edit$`));
     await expect(edit.viewSelect).toHaveValue('Beschreibung');
     await expect(page.getByTestId('input_project-title')).toHaveValue(title);
@@ -152,6 +152,9 @@ test('creates, publishes, edits and re-verifies a project through the historical
 
     // Leaving with unsaved changes asks the historical native confirm(); dismissing stays.
     await wizard.fillMotto('Ungespeichert.');
+    // The view switch asks only when the form is dirty (its Alpine `dirty()`, over Livewire's client state):
+    // wait until the typed value has reached that state.
+    await expect.poll(() => page.evaluate(() => (window as any).Alpine.$data(document.querySelector('[x-on\\:form-saved\\.window]')).dirty())).toBe(true);
     const dialogs: string[] = [];
     page.once('dialog', (dialog) => {
         dialogs.push(dialog.message());

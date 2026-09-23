@@ -1,4 +1,8 @@
-@props(['disabled' => false])
+@props(['errorFor' => null, 'disabled' => false])
+@php
+    // Decision A-7: an error message is tied to its field (App\Support\FieldError).
+    $attributes = $attributes->merge(\App\Support\FieldError::attributes(\App\Support\FieldError::field($attributes, $errorFor), $errors ?? null));
+@endphp
 
 {{--
     Checkbox.atom.js: a visually-hidden native checkbox (keeps keyboard and

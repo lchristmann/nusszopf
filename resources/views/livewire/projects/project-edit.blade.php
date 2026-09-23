@@ -46,24 +46,25 @@
         <x-frame class="bg-white lg:bg-steel-100">
             @if (! $ready)
                 {{-- EditProjectViews/SkeletonView.js, for every view; the header and view selector render meanwhile. --}}
-                <x-framed-grid-card.body gap="medium" class="grid-flow-row bg-white" wire:key="view-skeleton" data-test="skeleton_edit-project">
+                <x-framed-grid-card.body gap="medium" class="grid-flow-row bg-white" wire:key="view-skeleton" data-test="skeleton_edit-project" role="status">
+                    <span class="sr-only">Wird geladen …</span>
                     <x-framed-grid-card.body-col variant="twoCols" class="lg:pr-4 lg:col-start-2">
-                        <div aria-label="loading" class="animate-pulse box-content rounded-lg h-4 max-w-xs bg-lilac-200 w-36"></div>
-                        <div aria-label="loading" class="animate-pulse box-content rounded-lg w-full h-10 mt-3 bg-lilac-200"></div>
-                        <div aria-label="loading" class="animate-pulse box-content rounded-lg h-4 max-w-xs mt-10 bg-lilac-200 w-36"></div>
-                        <div aria-label="loading" class="animate-pulse box-content rounded-lg w-full mt-3 bg-lilac-200 h-18"></div>
-                        <div aria-label="loading" class="animate-pulse box-content rounded-lg h-4 max-w-xs mt-10 bg-lilac-200 w-36"></div>
-                        <div aria-label="loading" class="animate-pulse box-content rounded-lg w-full h-32 mt-3 bg-lilac-200"></div>
-                        <div aria-label="loading" class="animate-pulse box-content rounded-lg h-4 max-w-xs mt-10 bg-lilac-200 w-36"></div>
-                        <div aria-label="loading" class="animate-pulse box-content rounded-lg w-full mt-3 bg-lilac-200 h-18"></div>
+                        <div aria-hidden="true" class="animate-pulse box-content rounded-lg h-4 max-w-xs bg-lilac-200 w-36"></div>
+                        <div aria-hidden="true" class="animate-pulse box-content rounded-lg w-full h-10 mt-3 bg-lilac-200"></div>
+                        <div aria-hidden="true" class="animate-pulse box-content rounded-lg h-4 max-w-xs mt-10 bg-lilac-200 w-36"></div>
+                        <div aria-hidden="true" class="animate-pulse box-content rounded-lg w-full mt-3 bg-lilac-200 h-18"></div>
+                        <div aria-hidden="true" class="animate-pulse box-content rounded-lg h-4 max-w-xs mt-10 bg-lilac-200 w-36"></div>
+                        <div aria-hidden="true" class="animate-pulse box-content rounded-lg w-full h-32 mt-3 bg-lilac-200"></div>
+                        <div aria-hidden="true" class="animate-pulse box-content rounded-lg h-4 max-w-xs mt-10 bg-lilac-200 w-36"></div>
+                        <div aria-hidden="true" class="animate-pulse box-content rounded-lg w-full mt-3 bg-lilac-200 h-18"></div>
                     </x-framed-grid-card.body-col>
                     <x-framed-grid-card.body-col variant="twoCols" class="lg:pl-4">
-                        <div aria-label="loading" class="animate-pulse box-content rounded-lg h-4 max-w-xs bg-lilac-200 w-36"></div>
-                        <div aria-label="loading" class="animate-pulse box-content rounded-lg w-full h-32 mt-3 bg-lilac-200"></div>
-                        <div aria-label="loading" class="animate-pulse box-content rounded-lg h-4 max-w-xs mt-10 bg-lilac-200 w-36"></div>
-                        <div aria-label="loading" class="animate-pulse box-content rounded-lg w-full h-32 mt-3 bg-lilac-200"></div>
-                        <div aria-label="loading" class="animate-pulse box-content rounded-lg h-4 max-w-xs mt-10 bg-lilac-200 w-36"></div>
-                        <div aria-label="loading" class="animate-pulse box-content rounded-lg w-full h-32 mt-3 bg-lilac-200"></div>
+                        <div aria-hidden="true" class="animate-pulse box-content rounded-lg h-4 max-w-xs bg-lilac-200 w-36"></div>
+                        <div aria-hidden="true" class="animate-pulse box-content rounded-lg w-full h-32 mt-3 bg-lilac-200"></div>
+                        <div aria-hidden="true" class="animate-pulse box-content rounded-lg h-4 max-w-xs mt-10 bg-lilac-200 w-36"></div>
+                        <div aria-hidden="true" class="animate-pulse box-content rounded-lg w-full h-32 mt-3 bg-lilac-200"></div>
+                        <div aria-hidden="true" class="animate-pulse box-content rounded-lg h-4 max-w-xs mt-10 bg-lilac-200 w-36"></div>
+                        <div aria-hidden="true" class="animate-pulse box-content rounded-lg w-full h-32 mt-3 bg-lilac-200"></div>
                     </x-framed-grid-card.body-col>
                 </x-framed-grid-card.body>
             @elseif ($view === 'Beschreibung')
@@ -110,7 +111,7 @@
                 {{-- RequestsView.js --}}
                 <x-framed-grid-card.body gap="medium" class="grid-flow-row bg-white" wire:key="view-requests">
                     <x-framed-grid-card.body-col variant="twoCols" class="text-center lg:text-left lg:pr-4 lg:col-start-2">
-                        <x-text class="mb-2 text-left">Projektgesuche</x-text>
+                        <x-text as="h2" class="mb-2 text-left">Projektgesuche</x-text>
                         <x-text variant="textSm" class="text-left">Gesuche in dem Projekt zeigen anderen Nusszopfer:innen, was für die Projektumsetzung noch alles benötigt wird.</x-text>
                         <x-button data-test="btn_create_requests-view" color="stone" size="large" class="mt-8 bg-stone-300" wire:click="openRequestDialog">
                             <x-slot:iconLeft><x-icon name="plus-circle" class="mr-2 -ml-2" /></x-slot:iconLeft>
@@ -118,7 +119,7 @@
                         </x-button>
                     </x-framed-grid-card.body-col>
                     <x-framed-grid-card.body-col variant="twoCols" class="lg:pl-4">
-                        <x-text class="mt-8 mb-4 lg:mt-0">Aktuelle Gesuche</x-text>
+                        <x-text as="h2" class="mt-8 mb-4 lg:mt-0">Aktuelle Gesuche</x-text>
                         @forelse ($requests as $request)
                             <x-request-card
                                 variant="edit"
@@ -158,7 +159,7 @@
                             </div>
                         </x-framed-grid-card.body-col>
                         <x-framed-grid-card.body-col variant="twoCols" class="lg:pr-4 lg:col-start-2 text-warning-700">
-                            <x-text class="mt-10 mb-2 text-left lg:mt-8">Projekt löschen</x-text>
+                            <x-text as="h2" class="mt-10 mb-2 text-left lg:mt-8">Projekt löschen</x-text>
                             <x-text variant="textSm" class="text-left">Nach dem Löschen können die Daten nicht wieder hergestellt werden.</x-text>
                             <div class="mt-4 text-center sm:text-left">
                                 <x-button
