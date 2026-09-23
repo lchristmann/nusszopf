@@ -1,0 +1,59 @@
+{
+  "_comment": "One dataset for the visual-regression suite (docs/testing/visual-regression.md): seeded into Nusszopf 2 by VisualReferenceSeeder and into the historical app by tests/Visual/historical-harness/seed.mjs, so both render the same content.",
+  "timestamp": "2026-09-01T10:00:00.000Z",
+  "users": [
+    { "id": "0199a000-0000-7000-8000-00000000aa01", "historicalId": "auth0|demo", "name": "demo", "email": "demo@nusszopf.test", "password": "Str0ng!Passw0rd" }
+  ],
+  "projects": [
+    {
+      "id": "0199a000-0000-7000-8000-000000000001",
+      "user": "demo",
+      "title": "Gemeinschaftsgarten Lindenau",
+      "goal": "Eine grüne Oase für die ganze Nachbarschaft schaffen.",
+      "description": ["Auf einer brachliegenden Fläche im Leipziger Westen legen wir gemeinsam einen Garten an.", "Jede:r kann mitmachen, ernten und eigene Ideen einbringen."],
+      "team": ["Anna, Ben und Carla aus der Nachbarschaft."],
+      "motto": "Gemeinsam wächst mehr.",
+      "location": { "remote": false, "searchTerm": "Leipzig, Sachsen, Deutschland", "data": { "key": "62649", "postcode": "04109", "city": "Leipzig", "countryCode": "de", "geo": { "lat": "51.3406321", "lon": "12.3747329" }, "osm": { "id": "62649", "type": "relation" } } },
+      "period": { "flexible": false, "from": "2027-04-01T00:00:00.000Z", "to": "2027-09-30T00:00:00.000Z" },
+      "visibility": "public",
+      "contact": "mail@nusszopf.org",
+      "views": 42,
+      "requests": [
+        { "id": "0199a000-0000-7000-8000-000000000101", "title": "Hochbeete aus Holz", "category": "materials", "description": ["Wir suchen unbehandelte Bretter für drei Hochbeete."] },
+        { "id": "0199a000-0000-7000-8000-000000000102", "title": "Mitgärtner:innen gesucht", "category": "companions", "description": ["Wer hat Lust, jeden Samstag mit anzupacken?"] }
+      ]
+    },
+    {
+      "id": "0199a000-0000-7000-8000-000000000002",
+      "user": "demo",
+      "title": "Repair-Café im Hinterhof",
+      "goal": "Kaputte Dinge gemeinsam reparieren statt wegwerfen.",
+      "description": ["Einmal im Monat öffnen wir den Hinterhof für alle, die etwas reparieren möchten."],
+      "team": [],
+      "motto": "",
+      "location": { "remote": true, "searchTerm": "", "data": {} },
+      "period": { "flexible": true, "from": "", "to": "" },
+      "visibility": "public",
+      "contact": "demo@nusszopf.test",
+      "views": 7,
+      "requests": [
+        { "id": "0199a000-0000-7000-8000-000000000103", "title": "Trockener Raum für Werkzeug", "category": "rooms", "description": ["Ein kleiner Raum, in dem wir Werkzeug lagern können."] }
+      ]
+    },
+    {
+      "id": "0199a000-0000-7000-8000-000000000003",
+      "user": "demo",
+      "title": "Lastenrad für alle",
+      "goal": "Ein Lastenrad, das sich das ganze Viertel teilt.",
+      "description": ["Noch in Planung."],
+      "team": [],
+      "motto": "",
+      "location": { "remote": true, "searchTerm": "", "data": {} },
+      "period": { "flexible": true, "from": "", "to": "" },
+      "visibility": "private",
+      "contact": "mail@nusszopf.org",
+      "views": 0,
+      "requests": []
+    }
+  ]
+}

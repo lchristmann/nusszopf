@@ -39,3 +39,6 @@ Thumbs.db
 # Operator legal texts (config nusszopf.legal_path, docs/deployment/README.md)
 /legal/
 playwright-report-visual/
+
+# Visual-regression reference harness work folder (tests/Visual/historical-harness/run.sh)
+/.historical-harness

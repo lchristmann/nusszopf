@@ -204,3 +204,43 @@ jobs:
           name: playwright-report-${{ matrix.project }}
           path: playwright-report/
           retention-days: 7
+
+  visual:
+    name: Visual regression (Playwright screenshots)
+    runs-on: ubuntu-latest
+    needs: [test, build-assets]
+    steps:
+      - uses: actions/checkout@v4
+      # The same stack preparation as the e2e job (see the comments there).
+      - run: cp .env.example .env
+      - run: sed -i "s|^MEILISEARCH_KEY=.*|MEILISEARCH_KEY=nusszopf-dev-master-key-change-me|" .env
+      - run: |
+          echo "UID=$(id -u)" >> .env
+          echo "GID=$(id -g)" >> .env
+      - run: sed -i "s|^APP_KEY=.*|APP_KEY=base64:$(openssl rand -base64 32)|" .env
+      - run: mkdir -p node_modules vendor
+      - name: Start the real dev stack
+        run: docker compose -f compose.dev.yaml up -d --build workspace web php-fpm queue-worker postgres redis meilisearch playwright
+      - name: Wait for the app to be healthy
+        run: timeout 120 sh -c 'until docker compose -f compose.dev.yaml ps php-fpm | grep -q healthy; do sleep 2; done'
+      - name: Install dependencies and build the assets
+        run: |
+          docker compose -f compose.dev.yaml exec -T -u root workspace composer install --no-interaction --prefer-dist
+          docker compose -f compose.dev.yaml exec -T -u root workspace npm ci
+          docker compose -f compose.dev.yaml exec -T -u root workspace npm run build
+          docker compose -f compose.dev.yaml exec -T -u root playwright npm ci
+      # docs/testing/visual-regression.md: the fixed dataset, then every screen at phone, tablet and desktop width
+      # against tests/Visual/baselines — screenshots are taken inside the pinned Playwright image, where the
+      # baselines were made, so the comparison is exact.
+      - name: Seed the visual reference dataset
+        run: sh tests/Visual/reseed.sh
+      - name: Compare every screen with its baseline
+        run: docker compose -f compose.dev.yaml exec -T playwright npx playwright test -c playwright.visual.config.ts
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-visual
+          path: |
+            playwright-report-visual/
+            test-results/
+          retention-days: 7

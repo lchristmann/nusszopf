@@ -1,0 +1,72 @@
+name: nusszopf-hist
+networks:
+  dev:
+    name: nusszopf-dev_default
+    external: true
+services:
+  hist-postgres:
+    image: postgres:12
+    environment:
+      POSTGRES_PASSWORD: postgrespassword
+    networks: [dev]
+  hist-hasura:
+    image: hasura/graphql-engine:v1.3.3.cli-migrations-v2
+    depends_on: [hist-postgres]
+    restart: always
+    volumes:
+      - ${HARNESS_WORK}/be/hasura/migrations:/hasura-migrations:ro
+      - ${HARNESS_WORK}/be/hasura/metadata:/hasura-metadata:ro
+    environment:
+      HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:postgrespassword@hist-postgres:5432/postgres
+      HASURA_GRAPHQL_ADMIN_SECRET: histadmin
+      HASURA_GRAPHQL_JWT_SECRET: '{"type":"HS256","key":"nusszopf-historical-reference-harness-secret-key"}'
+      HASURA_GRAPHQL_UNAUTHORIZED_ROLE: anonymous
+      HASURA_GRAPHQL_CORS_DOMAIN: "*"
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "false"
+      EVENT_SECRET: x
+      USERS_TRIGGER_URL: http://hist-web:3000/api/events/users
+      LEADS_TRIGGER_URL: http://hist-web:3000/api/events/leads
+      PROJECTS_TRIGGER_URL: http://hist-web:3000/api/events/search
+      SEARCH_TRIGGER_URL: http://hist-web:3000/api/events/search
+      ACCOUNT_ACTION_URL: http://hist-web:3000/api/x
+    networks: [dev]
+  hist-meili:
+    image: getmeili/meilisearch:v0.19.0
+    environment:
+      MEILI_MASTER_KEY: meilipassword
+      MEILI_NO_ANALYTICS: "true"
+      MEILI_ENV: development
+    networks: [dev]
+  hist-web:
+    image: node:12-bullseye
+    user: "${HARNESS_UID:-1000}:${HARNESS_GID:-1000}"
+    working_dir: /app/projects/webapp
+    command: ["/app/node_modules/.bin/next", "start", "-p", "3000"]
+    env_file: [hist.env]
+    environment:
+      HOME: /tmp
+    volumes:
+      - ${HARNESS_WORK}/web:/app
+    networks: [dev]
+  hist-auth-login:
+    image: node:12-bullseye
+    user: "${HARNESS_UID:-1000}:${HARNESS_GID:-1000}"
+    working_dir: /app/projects/auth-login
+    command: ["/app/node_modules/.bin/next", "start", "-p", "3001"]
+    env_file: [hist.env]
+    environment:
+      HOME: /tmp
+    volumes:
+      - ${HARNESS_WORK}/web:/app
+    networks: [dev]
+  hist-auth-password:
+    image: node:12-bullseye
+    user: "${HARNESS_UID:-1000}:${HARNESS_GID:-1000}"
+    working_dir: /app/projects/auth-password
+    command: ["/app/node_modules/.bin/next", "start", "-p", "3002"]
+    env_file: [hist.env]
+    environment:
+      HOME: /tmp
+    volumes:
+      - ${HARNESS_WORK}/web:/app
+    networks: [dev]
