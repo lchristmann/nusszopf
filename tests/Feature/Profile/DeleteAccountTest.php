@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Profile\Profile;
+use App\Models\Lead;
 use App\Models\Project;
 use App\Models\ProjectAnalytics;
 use App\Models\ProjectRequest;
@@ -75,4 +76,16 @@ it('logs the account out and never leaves it deletable by anyone else', function
     Livewire::actingAs($owner)->test(Profile::class)->call('deleteAccount');
 
     $this->assertGuest();
+});
+
+it('deletes the newsletter subscription for the account address, and only that one (decision A-1)', function () {
+    $user = User::factory()->create();
+    Lead::factory()->confirmed()->create(['email' => $user->email]);
+    $other = Lead::factory()->confirmed()->create();
+
+    Livewire::actingAs($user)->test(Profile::class)->call('deleteAccount');
+
+    expect(User::find($user->id))->toBeNull()
+        ->and(Lead::where('email', $user->email)->exists())->toBeFalse()
+        ->and($other->fresh())->not->toBeNull();
 });

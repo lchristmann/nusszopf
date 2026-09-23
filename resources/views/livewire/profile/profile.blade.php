@@ -18,22 +18,40 @@
                 <x-framed-grid-card.body>
                     <x-framed-grid-card.body-col variant="twoCols" class="lg:col-start-2">
                         {{--
-                            Newsletter subsection: intentional scaffolding
-                            (docs/rewrite/master-roadmap.md, "Slice 8"). The
-                            `Lead` model, double opt-in and consent record
-                            don't exist until slice 9 (decision A-1) — the
-                            historical copy/layout is reproduced, but the
-                            control is inert rather than pretending to
-                            subscribe anyone.
+                            Newsletter (`profile.js`): the subscribe form until
+                            the lead is confirmed (`!lead.hasConfirmed`), then
+                            the unsubscribe button. Subscribing requests a
+                            pending lead and mails the confirmation link
+                            (decision A-1, BUG-011).
                         --}}
                         <div id="newsletter">
                             <x-text variant="textMd" class="mb-2">Newsletter</x-text>
-                            <x-text variant="textSm" class="mb-2">Wir versorgen Dich mit backfrischen Nusszopf­neuigkeiten, inspirierenden Projekten und allem, was uns sonst noch so einfällt.</x-text>
-                            <x-checkbox disabled aria-label="Datenschutzerklärung" class="whitespace-normal">
-                                Ich stimme den <a href="{{ route('privacy') }}?back=1" title="Zum Datenschutz" aria-label="Zum Datenschutz" class="italic underline">Datenschutzbedingungen</a> zu
-                            </x-checkbox>
-                            <x-button disabled class="block mx-auto mt-6 sm:mt-4 bg-steel-100 sm:ml-0">Anmelden</x-button>
-                            <x-text variant="textSm" class="mt-2 italic">Folgt in Kürze.</x-text>
+                            @if ($newsletterConfirmed)
+                                <x-text variant="textSm" class="mb-2">Du möchtest dich vom nussigsten Newsletter aller Zeiten abmelden?</x-text>
+                                <x-button
+                                    data-test="btn_newsletter-unsubscribe_settings-page"
+                                    class="block mx-auto mt-6 sm:mt-4 bg-steel-100 sm:ml-0"
+                                    wire:loading.attr="disabled"
+                                    wire:target="unsubscribeNewsletter"
+                                    x-on:click="if (confirm('Willst Du dich wirklich vom Newsletter abmelden?')) { nzToast('loading', 'Du wirst abgemeldet.'); $wire.unsubscribeNewsletter(); }"
+                                >Abmelden</x-button>
+                            @else
+                                <form wire:submit="subscribeNewsletter">
+                                    <x-text variant="textSm" class="mb-2">Wir versorgen Dich mit backfrischen Nusszopf­neuigkeiten, inspirierenden Projekten und allem, was uns sonst noch so einfällt.</x-text>
+                                    <x-checkbox wire:model="newsletterPrivacy" name="newsletterPrivacy" data-test="checkbox_newsletter_settings-page" aria-label="Datenschutzerklärung" class="whitespace-normal">
+                                        Ich stimme den <a href="{{ route('privacy') }}?back=1" title="Zum Datenschutz" aria-label="Zum Datenschutz" class="italic underline">Datenschutzbedingungen</a> zu
+                                    </x-checkbox>
+                                    <x-input-error :message="$errors->first('newsletterPrivacy')" class="!mt-1 mb-3 !ml-6" />
+                                    <x-button
+                                        type="submit"
+                                        data-test="btn_newsletter-subscribe_settings-page"
+                                        class="block mx-auto mt-6 sm:mt-4 bg-steel-100 sm:ml-0"
+                                        wire:loading.attr="disabled"
+                                        wire:target="subscribeNewsletter"
+                                        x-on:click="nzToast('loading', 'Du wirst angemeldet.')"
+                                    >Anmelden</x-button>
+                                </form>
+                            @endif
                         </div>
 
                         {{--

@@ -5,8 +5,10 @@ namespace App\Livewire\Auth;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Mail\BlockedAccountMail;
 use App\Mail\WelcomeMail;
+use App\Models\Lead;
 use App\Models\User;
 use App\Rules\PasswordPolicy;
+use App\Support\Newsletter;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -15,6 +17,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Throwable;
 
 /**
  * The historical combined Login/Register screen (docs/authentication/README.md
@@ -46,9 +49,10 @@ class LoginRegister extends Component
     public bool $privacy = false;
 
     /**
-     * Rendered per inventory item 27 (docs/rewrite/master-roadmap.md) but
-     * wired to nothing yet — the `Lead` model doesn't exist until slice 9.
-     * Intentional scaffolding, recorded in docs/rewrite/seventh-slice.md.
+     * "Nussigen Newsletter abonnieren" (inventory item 27). Checked, it
+     * requests a *pending* subscription with the same confirmation mail as
+     * every other path — decision A-1, BUG-011 (historically the lead was
+     * created already confirmed, with no mail).
      */
     public bool $newsletter = false;
 
@@ -162,6 +166,16 @@ class LoginRegister extends Component
         // login/registration are never gated by it.
         Mail::send(new WelcomeMail($user));
         $user->sendEmailVerificationNotification();
+
+        // Fail-open, as historically: the Auth0 rule swallowed any newsletter
+        // error so registration itself could never fail because of it.
+        if ($this->newsletter) {
+            try {
+                Newsletter::subscribe($user->email, $user->name, Lead::SOURCE_REGISTRATION);
+            } catch (Throwable $e) {
+                report($e);
+            }
+        }
 
         Auth::login($user);
         session()->regenerate();

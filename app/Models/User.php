@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Mail;
@@ -32,6 +33,18 @@ class User extends Authenticatable implements MustVerifyEmailContract
     public function projects(): HasMany
     {
         return $this->hasMany(Project::class);
+    }
+
+    /**
+     * `User.lead` (docs/domain/relationships.md): the newsletter subscription
+     * for the same address — matched by e-mail, not a foreign key, as
+     * historically.
+     *
+     * @return HasOne<Lead, $this>
+     */
+    public function lead(): HasOne
+    {
+        return $this->hasOne(Lead::class, 'email', 'email');
     }
 
     /**

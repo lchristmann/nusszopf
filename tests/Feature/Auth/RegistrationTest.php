@@ -1,8 +1,11 @@
 <?php
 
 use App\Livewire\Auth\LoginRegister;
+use App\Mail\NewsletterSubscribeMail;
+use App\Models\Lead;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
 
 /**
@@ -75,4 +78,54 @@ it('rejects a username containing whitespace', function () {
         ->set('privacy', true)
         ->call('register')
         ->assertHasErrors(['username']);
+});
+
+/**
+ * Inventory item 27, decision A-1 / BUG-011: the "newsletter" checkbox
+ * requests a pending subscription with the confirmation mail — historically
+ * the lead was created already confirmed, with no mail at all.
+ */
+function registerWithNewsletter(bool $newsletter): void
+{
+    Livewire::test(LoginRegister::class)
+        ->set('tab', 'register')
+        ->set('username', 'nussknacker')
+        ->set('email', 'nussknacker@example.com')
+        ->set('registerPassword', 'Str0ng!Pass')
+        ->set('privacy', true)
+        ->set('newsletter', $newsletter)
+        ->call('register')
+        ->assertRedirect(route('projects.mine'));
+}
+
+it('requests a pending newsletter subscription when the checkbox is ticked', function () {
+    Mail::fake();
+
+    registerWithNewsletter(true);
+
+    $lead = Lead::sole();
+    expect($lead->email)->toBe('nussknacker@example.com')
+        ->and($lead->name)->toBe('nussknacker')
+        ->and($lead->source)->toBe(Lead::SOURCE_REGISTRATION)
+        ->and($lead->confirmed_at)->toBeNull();
+    Mail::assertQueued(NewsletterSubscribeMail::class, fn ($mail) => $mail->hasTo('nussknacker@example.com'));
+});
+
+it('creates no lead when the checkbox is not ticked', function () {
+    Mail::fake();
+
+    registerWithNewsletter(false);
+
+    expect(Lead::count())->toBe(0);
+    Mail::assertNotQueued(NewsletterSubscribeMail::class);
+});
+
+it('still registers when the newsletter side effect fails (fail-open, as historically)', function () {
+    Mail::fake();
+    Lead::saving(fn () => throw new RuntimeException('database hiccup'));
+
+    registerWithNewsletter(true);
+
+    $this->assertAuthenticated();
+    expect(User::where('email', 'nussknacker@example.com')->exists())->toBeTrue();
 });

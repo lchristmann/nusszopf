@@ -130,10 +130,9 @@
                 </div>
                 <div>
                     {{--
-                        Rendered but unwired (inventory item 27,
-                        docs/rewrite/master-roadmap.md) — the `Lead` model and
-                        signup-side double opt-in belong to slice 9. Intentional
-                        scaffolding, docs/rewrite/seventh-slice.md.
+                        Inventory item 27: checked, registration requests a
+                        pending newsletter subscription and sends the
+                        double-opt-in mail (decision A-1, BUG-011).
                     --}}
                     <x-checkbox wire:model="newsletter" name="newsletter" data-test="checkbox_newsletter" aria-label="Nussigen Newsletter abonnieren" class="whitespace-normal">
                         Nussigen Newsletter abonnieren

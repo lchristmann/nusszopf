@@ -3,9 +3,8 @@
 use App\Models\User;
 
 /**
- * docs/design/screen-specs.md, "Profile / account settings". The newsletter
- * subsection is intentional scaffolding (no `Lead` model until slice 9,
- * matching the registration checkbox scaffold from the seventh slice); the
+ * docs/design/screen-specs.md, "Profile / account settings" (the newsletter
+ * subsection: tests/Feature/Profile/ProfileNewsletterTest.php); the
  * "Kontakt speichern" vCard `InfoCard` is deliberately not reproduced
  * (docs/rewrite/intentional-changes.md, extends the sixth-slice mail-footer
  * decision).
@@ -22,14 +21,6 @@ it('shows the profile page to the owner only, always "me"', function () {
         ->assertSee('Einstellungen')
         ->assertSee($user->name)
         ->assertSee($user->email);
-});
-
-it('renders the newsletter subsection as an inert scaffold', function () {
-    $user = User::factory()->create();
-
-    $this->actingAs($user)->get(route('profile'))
-        ->assertSee('Newsletter')
-        ->assertSee('Folgt in Kürze.');
 });
 
 it('shows the sponsoring link and the support info card, but not the vCard link', function () {

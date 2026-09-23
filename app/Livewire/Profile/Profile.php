@@ -2,9 +2,12 @@
 
 namespace App\Livewire\Profile;
 
+use App\Livewire\Newsletter\Concerns\ThrottlesNewsletter;
+use App\Models\Lead;
 use App\Models\User;
 use App\Support\AccountDeleter;
 use App\Support\AvatarUploader;
+use App\Support\Newsletter;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
@@ -18,10 +21,8 @@ use Throwable;
  * The historical `/user/profile` (`pages/user/profile.js`, docs/design/
  * screen-specs.md "Profile / account settings"): avatar upload/crop, the
  * sponsoring link, the two info cards, and account deletion
- * (docs/rewrite/master-roadmap.md, "Slice 8"). The newsletter subsection is
- * intentional scaffolding — no `Lead` model exists until slice 9, matching
- * the registration checkbox scaffold the seventh slice already shipped
- * (`docs/rewrite/seventh-slice.md`).
+ * (docs/rewrite/master-roadmap.md, "Slice 8"), and the newsletter subsection
+ * (slice 9).
  *
  * Always "me": there is no route parameter and no way to view another
  * account's settings (docs/security/authorization-matrix.md).
@@ -32,9 +33,64 @@ use Throwable;
 ])]
 class Profile extends Component
 {
-    use WithFileUploads;
+    use ThrottlesNewsletter, WithFileUploads;
 
     public ?UploadedFile $avatarUpload = null;
+
+    public bool $newsletterPrivacy = false;
+
+    /**
+     * `handleSubscribe` in `profile.js`. Historically it inserted the lead
+     * already confirmed, straight from the browser; now it requests a pending
+     * subscription and sends the confirmation mail like every other path
+     * (decision A-1, BUG-011) — hence the public form's toast instead of the
+     * historical "Du bist jetzt angemeldet!".
+     */
+    public function subscribeNewsletter(): void
+    {
+        $this->validate(
+            ['newsletterPrivacy' => ['accepted']],
+            ['newsletterPrivacy.accepted' => 'Stimme den Datenschutzbestimmungen zu'],
+        );
+
+        $user = Auth::user();
+
+        if (! $this->attemptNewsletterAction()) {
+            $this->dispatch('toast', type: 'error', message: 'Sorry, da lief etwas schief.');
+
+            return;
+        }
+
+        try {
+            Newsletter::subscribe($user->email, $user->name, Lead::SOURCE_PROFILE);
+        } catch (Throwable $e) {
+            report($e);
+            $this->dispatch('toast', type: 'error', message: 'Sorry, da lief etwas schief.');
+
+            return;
+        }
+
+        $this->newsletterPrivacy = false;
+        $this->dispatch('toast', type: 'success', message: 'E-Mail verschickt! Bitte bestätige deine Anmeldung.');
+    }
+
+    /**
+     * `handleUnsubscribe` in `profile.js`: native `confirm()`, then the lead
+     * is deleted at once — the session already proves who owns the address.
+     */
+    public function unsubscribeNewsletter(): void
+    {
+        try {
+            Newsletter::forget(Auth::user()->email);
+        } catch (Throwable $e) {
+            report($e);
+            $this->dispatch('toast', type: 'error', message: 'Sorry, da lief etwas schief.');
+
+            return;
+        }
+
+        $this->dispatch('toast', type: 'success', message: 'Du bist jetzt abgemeldet!');
+    }
 
     /**
      * `AvatarDialog.js`'s `handleSubmit`: the browser crops/compresses the
@@ -111,6 +167,8 @@ class Profile extends Component
 
     public function render(): View
     {
-        return view('livewire.profile.profile');
+        return view('livewire.profile.profile', [
+            'newsletterConfirmed' => (bool) Auth::user()->lead?->isConfirmed(),
+        ]);
     }
 }

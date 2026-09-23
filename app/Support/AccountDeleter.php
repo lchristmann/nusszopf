@@ -25,7 +25,8 @@ use Illuminate\Support\Facades\DB;
  * delete fires the model events `Project::booted()` already uses to
  * de-index the project and its requests (`app/Models/Project.php`) — a raw
  * cascade delete raises no events at all and would silently orphan those
- * search documents. The avatar file and the `users` row are removed last,
+ * search documents. The avatar file, the newsletter lead for the same address
+ * (decision A-1) and the `users` row are removed last,
  * inside the same transaction, so a failure before that point leaves the
  * account fully intact (safe to retry) instead of partially deleted.
  */
@@ -37,6 +38,9 @@ final class AccountDeleter
             $user->projects()->get()->each(fn (Project $project) => $project->delete());
 
             AvatarUploader::deleteStoredAvatar($user);
+
+            // Decision A-1: the newsletter subscription for the same address goes with the account.
+            Newsletter::forget($user->email);
 
             $user->delete();
         });
