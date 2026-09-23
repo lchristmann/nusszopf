@@ -1,6 +1,7 @@
 @props([
     'as' => 'p',
-    'variant' => 'textSm',
+    // Text.atom.js: `variant = 'textMd'` when none is given.
+    'variant' => 'textMd',
 ])
 
 @php
@@ -16,8 +17,9 @@
         'textSmMedium' => 'nz-text-sm-medium',
         'textSm' => 'nz-text-sm',
         'textXs' => 'nz-text-xs',
-        default => 'nz-text-sm',
+        default => 'nz-text-md',
     };
 @endphp
 
-<{{ $as }} {{ $attributes->class([$variantClass]) }}>{{ $slot }}</{{ $as }}>
+{{-- Text.atom.js: every non-heading text hyphenates (`hyphens-auto`, the ui-library utility). --}}
+<{{ $as }} {{ $attributes->class([$variantClass, 'hyphens-auto' => ! in_array($as, ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'], true)]) }}>{{ $slot }}</{{ $as }}>

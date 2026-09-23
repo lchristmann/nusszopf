@@ -181,10 +181,13 @@
             title="Projekt {{ config('nusszopf.contact_email') }} melden"
             aria-label="Projekt {{ config('nusszopf.contact_email') }} melden"
             data-test="link_report_project-detail"
-            class="inline-flex items-center underline lg:pr-2.5"
+            {{-- `Link variant="button"` renders a clean base-size Button: `py-2 px-4` around a centred row. --}}
+            class="inline-block font-medium text-lg py-2 px-4 underline cursor-pointer outline-none focus:outline-none lg:pr-2.5"
         >
-            <x-icon name="alert-triangle" :size="21" class="mr-2" />
-            <x-text as="span" variant="textSmMedium">Projekt melden</x-text>
+            <div class="flex items-center justify-center">
+                <x-icon name="alert-triangle" :size="21" class="mr-2" />
+                <span><x-text as="span" variant="textSmMedium">Projekt melden</x-text></span>
+            </div>
         </a>
     </x-frame>
 </div>

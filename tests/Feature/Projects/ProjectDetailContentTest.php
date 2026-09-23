@@ -206,7 +206,7 @@ it('shows no owner banner to another authenticated user', function () {
  */
 function visitorCounterDigits(string $html): array
 {
-    preg_match_all('/<p class="nz-text-xs font-medium">([^<]*)<\/p>/', $html, $matches);
+    preg_match_all('/<p class="nz-text-xs[^"]*font-medium[^"]*">([^<]*)<\/p>/', $html, $matches);
 
     return $matches[1];
 }

@@ -375,3 +375,43 @@
 .nz-legal strong {
     @apply font-semibold;
 }
+
+/*
+ * ui-library/styles/utilities.css: the historical `hyphens-auto` also lets long words break, which
+ * Tailwind's own utility of that name does not.
+ */
+@utility hyphens-auto {
+    hyphens: auto;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+/*
+ * Tailwind 2.1 preflight defaults the historical UI relied on and Tailwind 4 changed
+ * (`tailwindcss/lib/plugins/css/preflight.css`): plain buttons show the pointer, and a
+ * placeholder without its own colour is #a1a1aa. (Borders already default to currentColor in
+ * both: the historical palette has no `gray` for Tailwind 2 to fall back to.)
+ */
+@layer base {
+    input::placeholder,
+    textarea::placeholder {
+        color: #a1a1aa;
+    }
+
+    button,
+    [role='button'] {
+        cursor: pointer;
+    }
+}
+
+/*
+ * ui-library/styles/reset.css, loaded last historically: every placeholder at 70 % opacity, and
+ * `em` (the search highlight) semibold.
+ */
+*::placeholder {
+    opacity: 0.7 !important;
+}
+
+em {
+    font-weight: 600 !important;
+}

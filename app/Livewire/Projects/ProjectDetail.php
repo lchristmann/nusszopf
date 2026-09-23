@@ -26,7 +26,8 @@ use Throwable;
  * historical SSR behavior (docs/rewrite/open-questions.md, "Does
  * /projects/{id}'s SSR enforce visibility, or only existence?").
  */
-#[Layout('components.layout', ['mainClass' => 'bg-white text-lilac-800 lg:bg-steel-100', 'footerBg' => 'bg-steel-100'])]
+// `noindex={true}` like the historical page, although the sitemap lists public projects (BUG-038, Preserve).
+#[Layout('components.layout', ['mainClass' => 'bg-white text-lilac-800 lg:bg-steel-100', 'footerBg' => 'bg-steel-100', 'noindex' => true])]
 class ProjectDetail extends Component
 {
     /**

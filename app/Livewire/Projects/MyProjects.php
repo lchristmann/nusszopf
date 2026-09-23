@@ -20,7 +20,8 @@ use Throwable;
  * state (`pages/user/projects.js`) — deferred by the second slice to this
  * one (docs/rewrite/master-roadmap.md, slice 5).
  */
-#[Layout('components.layout', ['noindex' => true])]
+// `pages/user/projects.js`: `className="bg-white text-steel-700 lg:bg-steel-100"`, `footer.className="bg-steel-100"`.
+#[Layout('components.layout', ['mainClass' => 'bg-white text-steel-700 lg:bg-steel-100', 'footerBg' => 'bg-steel-100', 'noindex' => true])]
 class MyProjects extends Component
 {
     /**

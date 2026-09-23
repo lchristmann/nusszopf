@@ -98,3 +98,11 @@ it('links the historical favicons, and the manifest names icons that exist (BUG-
     expect(public_path(ltrim($tile[1], '/')))->toBeFile()
         ->and(public_path('images/og-image.png'))->toBeFile();
 });
+
+it('marks a project page noindex, as historically, even though the sitemap lists it (BUG-038)', function () {
+    $project = Project::factory()->public()->create();
+    $this->app['env'] = 'production';
+
+    $this->get(route('projects.show', $project))->assertSee('<meta name="robots" content="noindex,nofollow" />', false);
+    $this->get('/search')->assertSee('<meta name="robots" content="index,follow" />', false);
+});

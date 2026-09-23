@@ -50,6 +50,7 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 | BUG-035 | SEO / sitemap and robots host               | Low      | Fix                                 | Implemented — tenth slice (2026-09-23), `docs/rewrite/tenth-slice.md` |
 | BUG-036 | SEO / `og:url` and Twitter placeholders     | Trivial  | Fix                                 | Implemented — tenth slice (2026-09-23), `docs/rewrite/tenth-slice.md` |
 | BUG-037 | SEO / web manifest icon paths               | Trivial  | Fix                                 | Implemented — tenth slice (2026-09-23), `docs/rewrite/tenth-slice.md` |
+| BUG-038 | SEO / sitemap lists `noindex` project pages | Trivial  | Preserve                            | Decided — finish-line parity audit (2026-09-23); detail page `noindex` restored |
 
 ---
 
@@ -694,3 +695,21 @@ directly from `web-nusszopf/projects/webapp/src/containers/user/ProjectForm/*` a
 - Classification: **Fix**
 - Intended Nusszopf 2 behavior: the same files with `/favicons/…` paths.
 - Regression test: `tests/Feature/Seo/SeoTagsTest.php`.
+
+### BUG-038 — The sitemap lists project pages that ask not to be indexed
+
+- Affected area: SEO
+- Historical behavior: `pages/projects/[id].js` renders `<Page noindex={true}>`, so every project page carries
+  `noindex`, yet `/api/sitemap` lists every public project for search engines.
+- Evidence: `webapp/src/pages/projects/[id].js:137-143`, `webapp/src/pages/api/sitemap.js`
+  (`docs/rewrite/tenth-slice.md`).
+- Severity/impact: Trivial — search engines honour `noindex`, so projects were effectively never indexed; the
+  sitemap entries only cost crawl requests.
+- Classification: **Preserve** — the two signals contradict each other, but which one was intended (projects
+  findable on the web, or kept out of it) is a product and privacy question the code does not answer. Keeping
+  both reproduces the observable result (projects not indexed) and indexes nothing new.
+- Found: the finish-line visual parity audit (P-2) re-read every `<Page>` call; slice 10 had missed the
+  detail page's `noindex`, which is restored.
+- Regression test: `tests/Feature/Seo/SeoTagsTest.php` ("marks a project page noindex, as historically"),
+  `SitemapTest` (projects still listed).
+

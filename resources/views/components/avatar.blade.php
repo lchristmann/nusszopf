@@ -20,7 +20,8 @@
     $editable = $variant === 'settings' && ! $user->isSocialAccount();
 @endphp
 <div {{ $attributes->class(['flex items-center']) }}>
-    <div class="relative flex-shrink-0 overflow-hidden border-2 rounded-full border-steel-700 bg-steel-700 w-14 h-14">
+    {{-- The 56px image sits inside the 2px border, so the circle is 60px across. --}}
+    <div class="relative flex-shrink-0 overflow-hidden border-2 rounded-full border-steel-700 bg-steel-700">
         @if ($avatarUrl)
             <img
                 src="{{ $avatarUrl }}"
@@ -30,8 +31,9 @@
             />
         @else
             <div
-                class="flex items-center justify-center w-14 h-14 text-2xl font-medium uppercase"
-                style="background-color: #cfd8dc; color: #37474f"
+                class="flex items-center justify-center w-14 h-14 uppercase"
+                {{-- ui-avatars.com `size=128&font-size=0.6`: the initial is 0.6 of the circle, regular weight. --}}
+                style="background-color: #cfd8dc; color: #37474f; font-size: 33.6px; line-height: 1"
                 aria-hidden="true"
             >{{ mb_substr($user->name, 0, 1) }}</div>
         @endif

@@ -30,7 +30,8 @@ use Livewire\Component;
  *
  * @property-read SearchResults $results
  */
-#[Layout('components.layout')]
+// `pages/search.js`: `<Page className="bg-white text-steel-700" footer={{ className: 'bg-white' }}>`.
+#[Layout('components.layout', ['mainClass' => 'bg-white text-steel-700', 'footerBg' => 'bg-white'])]
 class Search extends Component
 {
     /** `SearchInput.js`: `maxLength="30"` */

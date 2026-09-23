@@ -38,3 +38,4 @@ Thumbs.db
 
 # Operator legal texts (config nusszopf.legal_path, docs/deployment/README.md)
 /legal/
+playwright-report-visual/

@@ -228,7 +228,7 @@ final class RichText
         $inner = self::inline($paragraph, $linkClass);
 
         // Slate rendered an empty text leaf as a `block my-2` span.
-        return '<p class="nz-text-sm">'.($inner === '' ? '<span class="block my-2"></span>' : $inner).'</p>';
+        return '<p class="nz-text-sm hyphens-auto">'.($inner === '' ? '<span class="block my-2"></span>' : $inner).'</p>';
     }
 
     /**
