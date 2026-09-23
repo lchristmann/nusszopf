@@ -29,6 +29,13 @@ person is listed as pending), **In progress**, **Not started**.
 | P-16 Release preparation and RC | [`P-16-release.md`](P-16-release.md) | Not started |
 | P-17 Final sign-off | this page, below | Maintainer only |
 
+## Carried forward to later phases
+
+- **P-12 (queue):** a welcome or verification mail queued for an account that is deleted before the worker sends it
+  fails with `ModelNotFoundException` and stays in `failed_jobs`. Observed during P-3 after quick
+  register-then-delete runs and a database reset. It is noise for an operator who reads `failed_jobs`; decide
+  there whether such jobs should be dropped instead.
+
 ## Section 7 checklist
 
 Filled in as the phases produce evidence. Numbering follows `master-roadmap.md` §7.
