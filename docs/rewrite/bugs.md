@@ -18,12 +18,12 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 | BUG-003 | Auth / route protection                     | Medium   | Fix                                 | Implemented — first vertical slice (2026-09-18)                                         |
 | BUG-004 | Auth / avatar sync                          | Low      | Fix                                 | Implemented — seventh slice (2026-09-22)                                                |
 | BUG-005 | Email / contact form                        | Medium   | Fix                                 | Implemented — sixth slice (2026-09-22)                                                  |
-| BUG-006 | Email / copy                                | Trivial  | Fix                                 | Spec'd — `intentional-changes.md`; the affected templates (newsletter subscribe/unsubscribe) are slice 9's, not slice 6's |
+| BUG-006 | Email / copy                                | Trivial  | Fix                                 | Approved — implemented with the newsletter mails in slice 9 |
 | BUG-007 | Domain / `visibility` constraint            | Low      | Fix                                 | Implemented — first vertical slice (2026-09-18)                                         |
 | BUG-008 | Search / operations                         | Medium   | Fix                                 | Implemented — first vertical slice (2026-09-18); extended to requests and completed with `search:reindex` — fourth slice (2026-09-21) |
 | BUG-009 | Background jobs / operations                | Medium   | Fix                                 | Implemented (search-sync path) — first vertical slice (2026-09-18); failed-job regression test incl. requests — fourth slice (2026-09-21) |
 | BUG-010 | Email / contact form validation             | Medium   | Fix                                 | Implemented — sixth slice (2026-09-22)                                                  |
-| BUG-011 | Newsletter / consent asymmetry              | Medium   | Fix                                 | Decided 2026-09-21 (GDPR): double opt-in on every path — needs an `intentional-changes.md` entry before slice 9 |
+| BUG-011 | Newsletter / consent asymmetry              | Medium   | Fix                                 | Spec'd and Approved — `intentional-changes.md` "Double opt-in on every newsletter path (BUG-011)"; slice 9 |
 | BUG-012 | Auth / Apple social login                   | Low      | Replace (drop)                      | Decided — do not implement                                                              |
 | BUG-013 | Design / destructive-action confirmation    | Low      | Preserve                            | Decided — register B10 (native `confirm()`), reconciled 2026-09-21                      |
 | BUG-014 | Design / Button "filled" variant            | Trivial  | Preserve (dead vocabulary)          | Decided 2026-09-21 — the never-used `filled` variant is not implemented; the two ad hoc filled looks stay as they are |
@@ -44,6 +44,9 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 | BUG-029 | Security / search hit rendering             | Medium   | Fix                                 | Implemented — fourth slice (2026-09-21); ratified by the maintainer as an intentional Fix (2026-09-22) |
 | BUG-030 | Auth / no e-mail verification               | Low      | Fix (product change, decision A-3)  | Implemented — seventh slice (2026-09-22)                                                                |
 | BUG-031 | Security / avatar upload server-side trust  | Medium   | Fix                                  | Implemented — eighth slice (2026-09-23)                                                                 |
+| BUG-032 | Newsletter / duplicate subscribe            | Low      | Fix                                  | Approved — slice 9 (`intentional-changes.md` "Neutral, idempotent newsletter answers (BUG-032, BUG-033, BUG-034)") |
+| BUG-033 | Newsletter / unsubscribe-by-email enumeration | Low    | Fix                                  | Approved — slice 9 (same entry) |
+| BUG-034 | Newsletter / confirm link for a vanished lead | Trivial | Fix                                 | Approved — slice 9 (same entry) |
 
 ---
 
@@ -230,6 +233,7 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 - Recommended default if no decision is made before implementation: preserve both paths exactly as
   historically observed (product-fidelity default), and record whichever answer is eventually given
   in `docs/rewrite/intentional-changes.md`.
+- Full spec (2026-09-23): `docs/rewrite/intentional-changes.md` → "Double opt-in on every newsletter path (BUG-011)".
 
 ### BUG-012 — Apple social login button present but never wired up
 
@@ -605,3 +609,49 @@ directly from `web-nusszopf/projects/webapp/src/containers/user/ProjectForm/*` a
   content-type is rejected; an oversized/non-square source image is still stored as a bounded square.
 - Full spec: `docs/rewrite/intentional-changes.md` → "Avatar uploads are re-validated and re-encoded
   server-side (BUG-031)".
+
+### BUG-032 — Subscribing an address that already has a lead fails with HTTP 500
+
+- Affected area: Newsletter, `handleSubscribe` (`webapp/src/utils/functions/newsletter.function.js`)
+- Historical behavior: `if (existingLead) res.status(500).end('lead with email X could not be created')`
+  — whether the existing lead is still pending or already confirmed. The form shows the generic error
+  toast ("Sorry, es ist ein Fehler aufgetreten…"), and a visitor whose first confirmation mail was lost
+  can never get a new one: the only way out is to unsubscribe first.
+- Evidence: `newsletter.function.js` `handleSubscribe`, `newsletter.service.js` `handleRequest` (any
+  non-2xx → error toast). Read in full for slice 9.
+- Severity/impact: Low — a server error for a normal user action, a dead end for a lost mail, and a
+  response that tells anyone whether an address is on the list (enumeration).
+- Classification: **Fix** (register B-9; decision A-1 "a duplicate subscribe resends/answers neutrally").
+- Intended Nusszopf 2 behavior: the answer is identical whether or not the address is known. A pending
+  lead gets its consent record refreshed and a fresh confirmation mail; a confirmed lead is left
+  untouched and no mail is sent.
+- Regression test: `tests/Feature/Newsletter/SubscribeTest.php`.
+
+### BUG-033 — Unsubscribe by e-mail reveals whether an address is subscribed
+
+- Affected area: Newsletter, `handleUnsubscribe`, `/newsletter/unsubscribe/lead`
+- Historical behavior: an unknown address answers HTTP 404 (error toast), a known one 200 (success
+  toast "E-Mail verschickt! Bitte bestätige deine Abmeldung."). Anyone can test whether an address is
+  on the list.
+- Evidence: `newsletter.function.js` `handleUnsubscribe`; `pages/newsletter/unsubscribe/lead.js`.
+- Severity/impact: Low — a list-membership oracle on a public, unauthenticated form.
+- Classification: **Fix** (decision A-1: "unsubscribe-by-email answers identically whether or not a lead exists").
+- Intended Nusszopf 2 behavior: the success toast for every valid address; the unsubscribe mail is sent
+  only when a lead exists.
+- Regression test: `tests/Feature/Newsletter/UnsubscribeTest.php`.
+
+### BUG-034 — A valid subscribe link for a lead that no longer exists renders an empty confirmation
+
+- Affected area: Newsletter, `handleSubscribeConfirm`, `/newsletter/subscribe/[token]`
+- Historical behavior: the JWT is verified, then `updateLead(leadId)` updates nothing (the lead was
+  unsubscribed in between) and returns `null`; the handler still answers 200 with `{ email: undefined }`
+  and the page renders "… wurde zum Newsletter angemeldet." with no address and no lead confirmed.
+- Evidence: `newsletter.function.js` `handleSubscribeConfirm`, `api.function.js` `updateLead`,
+  `pages/newsletter/subscribe/[token].js`.
+- Severity/impact: Trivial — a success message that is false.
+- Classification: **Fix** — it is the same case as an unknown token: nothing was confirmed.
+- Intended Nusszopf 2 behavior: 404, exactly like an invalid or expired token. (The unsubscribe link
+  for a lead that is already gone keeps answering with the success page, as historically — the result
+  the visitor asked for is true.)
+- Regression test: `tests/Feature/Newsletter/ConfirmationPagesTest.php`.
+

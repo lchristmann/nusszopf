@@ -158,7 +158,7 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 
 ### Newsletter email copy typo fix ("Bestätigte" → "Bestätige")
 
-- Status: Proposed — not yet implemented; the templates this applies to (newsletter subscribe/unsubscribe) belong to slice 9, not slice 6
+- Status: Approved — implemented in slice 9 (2026-09-23), `resources/views/mail/newsletter-subscribe.blade.php` / `newsletter-unsubscribe.blade.php`
 - Date: 2026-09-18
 - Historical behavior: `newsletter/subscribe.mjml` and `newsletter/unsubscribe.mjml` both open with "Bestätigte deine..." (past tense/participle) where German grammar calls for the imperative "Bestätige deine...". Confirmed in `docs/email/README.md` ("Suspected historical issues" #1).
 - Why it is defective/incomplete or why change is required: this is a plain grammatical error (not a stylistic choice — the identical mistake in two independent templates suggests a copy-paste of the same typo), not a deliberate brand-voice decision (the brand voice elsewhere, e.g. "Nusszopfer:in", is playful but grammatically correct).
@@ -558,6 +558,104 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 - Migration implications: none.
 - Tests: `tests/Feature/Profile/ProfilePageTest.php` — asserts the support `mailto:` renders and the vCard link does not.
 - Approval: Approved (extends the sixth slice's already-approved decision, `docs/rewrite/sixth-slice.md`).
+
+---
+
+### Double opt-in on every newsletter path (BUG-011)
+
+- Status: Approved — decision A-1 (maintainer, 2026-09-21); implemented in slice 9
+- Date: 2026-09-23
+- Historical behavior: three paths create a `Lead`. The public form (`/api/newsletter` action
+  `subscribe`) creates it unconfirmed and mails a 7-day confirmation link. The registration checkbox
+  (Auth0 `syncWithHasura` → action `auth0SyncHasura`) and the Profile page (`profile.js`
+  `handleSubscribe`: `addLead` then `updateLead` straight from the browser) create it **already
+  confirmed**, with no mail. The Profile toast then says "Du bist jetzt angemeldet!". Nothing records
+  when or through which text consent was given beyond a `privacy` boolean (hard-coded `true` on the
+  registration path), and an unconfirmed lead stays in the table forever.
+- Why it changes: the maintainer's GDPR requirement (A-1). Consent must be provable and tied to the
+  owner of the address; two of three paths never proved either.
+- New behavior:
+  - Every path — public form (`App\Livewire\Newsletter\SubscribeForm`, mounted by Home in slice 10),
+    registration checkbox, Profile — goes through `App\Support\Newsletter::subscribe()`: a **pending**
+    lead plus the same confirmation mail (`App\Mail\NewsletterSubscribeMail`). Only the link confirms.
+  - Consent record on the lead: `requested_at`, `confirmed_at`, `source` (`form`, `registration`,
+    `profile`), `consent_version` (`NEWSLETTER_CONSENT_VERSION`, operator-set because the operator owns
+    the privacy text, decision A-4). No IP address. The historical `privacy` boolean is not kept: every
+    path requires the consent checkbox, so it would always be `true`; the record replaces it.
+  - Re-requesting a pending subscription refreshes `requested_at`/`source`/`consent_version` (the
+    consent the visitor is about to confirm is the latest one) and resends the mail.
+  - Unconfirmed leads are deleted 14 days after their latest request by the scheduled
+    `newsletter:purge-unconfirmed` command (daily) — the first real scheduler task. 14 days is twice
+    the link lifetime, so a lead with a still-valid link is never purged.
+  - The Profile subsection's subscribe toast becomes the public form's historical
+    "E-Mail verschickt! Bitte bestätige deine Anmeldung." (the old "Du bist jetzt angemeldet!" would be
+    false); the subsection still shows the subscribe form until the lead is confirmed, exactly as
+    historically (`!lead.hasConfirmed`). Its unsubscribe stays immediate after the native `confirm()`
+    (the session already proves who owns the address).
+  - Deleting an account deletes the lead with the same address (`App\Support\AccountDeleter`).
+  - Registration stays fail-open for the newsletter side effect, as historically (the Auth0 rule
+    swallowed every error): a failure is reported, the account is still created.
+  - Relation to A-3 (an unverified address may not be subscribed): the confirmation click *is* the
+    proof of ownership, so a lead is never confirmed for an address nobody verified. No separate
+    `hasVerifiedEmail()` gate is added — it would contradict A-1's registration path, where the
+    address is always unverified at the moment of the request.
+- Affected screens: registration, Profile (newsletter subsection), the three `/newsletter/*` pages,
+  Home's newsletter section (form built now, placed in slice 10).
+- Affected domain: `Lead` (`docs/domain/entities.md`).
+- Affected workflows: "newsletter lead creation, confirmation and cleanup", "account deletion"
+  (`docs/domain/workflows.md`).
+- Migration implications: new `leads` table (no data import, A-2).
+- Tests: `tests/Feature/Newsletter/SubscribeTest.php` (every path pending + mail, consent record),
+  `ConfirmationPagesTest.php`, `PurgeUnconfirmedLeadsTest.php`, `tests/Feature/Auth/RegistrationTest.php`
+  (checkbox), `tests/Feature/Profile/ProfileNewsletterTest.php`, `DeleteAccountTest.php` (lead deleted);
+  `tests/E2E/specs/visitor/newsletter.spec.ts`.
+- Approval: Approved (decision A-1, `docs/rewrite/decisions-register.md`).
+
+---
+
+### Neutral, idempotent newsletter answers (BUG-032, BUG-033, BUG-034)
+
+- Status: Approved — decision A-1 / register B-9; implemented in slice 9
+- Date: 2026-09-23
+- Historical behavior: see `docs/rewrite/bugs.md` BUG-032 (duplicate subscribe → HTTP 500),
+  BUG-033 (unsubscribe-by-email → 404 for an unknown address) and BUG-034 (a valid subscribe link for a
+  vanished lead → an empty success page).
+- Why it changes: a server error for a normal action, a lost-mail dead end, a public list-membership
+  oracle, and a false success message.
+- New behavior: subscribe answers the same success toast whether the address is new, pending or
+  confirmed (pending → fresh mail; confirmed → nothing changes, no mail). Unsubscribe-by-email answers
+  the same success toast for every valid address and mails only a lead that exists. Confirming a
+  subscription is idempotent (a second click shows the page again without moving `confirmed_at`); a
+  link whose lead no longer exists is a 404 like any invalid link. The unsubscribe link stays
+  idempotent and keeps showing its page after the lead is gone, as historically.
+- Affected screens: the three `/newsletter/*` pages, Profile, the (slice 10) Home form.
+- Affected domain/workflows: `Lead`; newsletter workflow.
+- Migration implications: none.
+- Tests: `tests/Feature/Newsletter/SubscribeTest.php`, `UnsubscribeTest.php`, `ConfirmationPagesTest.php`.
+- Approval: Approved (decision A-1 names both neutral answers; register B-9 names the duplicate case).
+
+---
+
+### Newsletter mechanics: SendGrid list sync, JWT links and 307 redirects are replaced
+
+- Status: Approved — decision A-6 and the architecture mapping; implemented in slice 9
+- Date: 2026-09-23
+- Historical behavior: confirming or deleting a lead fired the `sync_leads_sendgrid` Hasura trigger,
+  which added/removed the address on a SendGrid marketing list that issues were sent from by hand.
+  Links carried a JWT signed with `EMAIL_SECRET` (7 days). An invalid link answered with a 307 to `/404`
+  (`/500` on an exception) from `getServerSideProps`.
+- Why it changes: SendGrid is not a dependency of Nusszopf 2 (register B5, SMTP only); JWT/`EMAIL_SECRET`
+  and SSR redirects are obsolete mechanisms (category **Replace**, product behavior unchanged).
+- New behavior: the `leads` table is the only subscriber list. `php artisan newsletter:export` writes
+  the confirmed subscribers as CSV for an operator's own sender; any external sender must link to this
+  instance's `/newsletter/unsubscribe/lead` page so unsubscribing always happens here
+  (`docs/deployment/operations.md`). Links carry a compact HMAC-signed token keyed from `APP_KEY`
+  (`App\Support\NewsletterToken`), still expiring after 7 days and bound to the lead's id (a link
+  cannot confirm or delete a later lead for the same address). An invalid, expired, tampered or
+  unknown link renders the 404 page in place (status 404) instead of redirecting to `/404`.
+- Tests: `tests/Feature/Newsletter/NewsletterTokenTest.php`, `ConfirmationPagesTest.php`,
+  `ExportSubscribersTest.php`.
+- Approval: Approved (decision A-6; register B5).
 
 ---
 
