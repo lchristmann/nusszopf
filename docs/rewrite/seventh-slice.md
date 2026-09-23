@@ -79,7 +79,7 @@ below); breached-password detection (register C2, deferred indefinitely); Apple 
 
 | Item | Why | Ends with |
 |---|---|---|
-| Registration's "Nussigen Newsletter abonnieren" checkbox renders, records nothing | The `Lead` model, double opt-in and consent record don't exist until slice 9 (register A-1) | Slice 9 |
+| Registration's "Nussigen Newsletter abonnieren" checkbox renders, records nothing | The `Lead` model, double opt-in and consent record don't exist until slice 9 (register A-1) | Slice 9 — **resolved** (`docs/rewrite/ninth-slice.md`) |
 | The only in-app place to resend a verification e-mail is next to the wizard/edit "Persönlich" error | `/user/profile` (where a "resend" affordance would naturally also live) is slice 8 | Slice 8 |
 
 ## Test map

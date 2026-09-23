@@ -198,7 +198,7 @@ Decisions about how Nusszopf 2 itself should work — as distinct from `docs/rew
 - Decision: document Laravel's standard mail-driver configuration (SMTP as the universal fallback, with common transactional-provider drivers as documented options) rather than hard-coupling setup instructions to SendGrid specifically.
 - Alternatives: keep SendGrid as the documented default (rejected as the *only* documented path — self-hosters should not be forced into one paid vendor); support only SMTP (simplest, but loses provider-specific features like unsubscribe-list management that the historical product relied on for the newsletter — see the Newsletter-sync intentional change).
 - Consequences: the newsletter list-sync mechanic (`docs/domain/workflows.md`'s `sync_leads_sendgrid`) needs its own explicit decision about what (if anything) replaces "sync to an external marketing list" when SendGrid isn't assumed — not yet made, follow-up needed.
-- Revisit conditions: revisit once the newsletter-sync replacement mechanism is decided.
+- Revisit conditions: revisit once the newsletter-sync replacement mechanism is decided. **Resolved by decision A-6 (implemented in slice 9):** no list sync at all — the `leads` table is the list, `php artisan newsletter:export` hands it to an operator's own sender, which must link back to `/newsletter/unsubscribe/lead` (`docs/deployment/operations.md`, "Newsletter subscribers").
 
 ---
 

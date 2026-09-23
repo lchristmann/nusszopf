@@ -82,7 +82,7 @@ being served by `web` after `php artisan storage:link` (already documented as de
 
 ## Remaining gaps
 
-- Newsletter subscribe/unsubscribe is inert scaffolding until slice 9 — tracked there, not here.
+- Newsletter subscribe/unsubscribe is inert scaffolding until slice 9 — tracked there, not here. **Resolved in slice 9** (`docs/rewrite/ninth-slice.md`).
 - `Avatar.skeleton.js`'s loading placeholder has no equivalent (decision 10) — not a gap so much as a
   category that doesn't apply to a server-rendered page; noted for completeness.
 - Playwright coverage runs only against `compose.dev.yaml`; the production-image smoke test

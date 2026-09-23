@@ -19,6 +19,13 @@ Evidence base: `../historical/be-nusszopf/hasura/metadata/tables.yaml` (`event_t
 
 ## Workflow: newsletter lead creation, confirmation (double opt-in), and cleanup
 
+> **Nusszopf 2 (slice 9, `App\Support\Newsletter`):** all three paths — public form, registration checkbox, Profile —
+> create a *pending* lead with a consent record and send the same confirmation mail; only the link confirms (BUG-011,
+> decision A-1). A known address gets the same answer as a new one (pending → fresh mail, confirmed → nothing; BUG-032);
+> unsubscribe-by-email answers identically for unknown addresses (BUG-033). Unconfirmed leads are purged 14 days after
+> their latest request (`newsletter:purge-unconfirmed`, daily); deleting an account deletes the lead for its address.
+> There is no external list sync: the `leads` table is the list, exported by the operator (`newsletter:export`, A-6).
+
 - Actors: a lead (identified by email), the `web-nusszopf` `/api/newsletter` route, external SendGrid list.
 - **Confirmed, fully resolved** (`webapp/src/pages/api/newsletter.js`, `src/utils/functions/newsletter.function.js`): a single Next.js API route, `POST /api/newsletter`, action-dispatches to five handlers, all backed by privileged (admin-secret) `addLead`/`updateLead`/`getLead`/`deleteLead` calls. Two independent creation paths exist with **different confirmation guarantees** — see `docs/domain/entities.md`'s `Lead` entry for full detail:
   1. **Public newsletter-signup form** (Home `NewsletterSection` only): submitting creates an **unconfirmed** `Lead` (`hasConfirmed = false`) and sends the `subscribe.mjml` confirmation email; clicking its link (`/newsletter/subscribe/[token]`) verifies a 7-day JWT and flips `hasConfirmed = true`. True double opt-in. Re-submitting an email that already has a `Lead` row **fails with HTTP 500** rather than resending/no-op'ing.

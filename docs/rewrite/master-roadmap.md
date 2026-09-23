@@ -100,7 +100,7 @@ Items with **no** historical basis are listed separately in 2.2 so they are not 
 **Profile** (`/user/profile`)
 
 22. Avatar dialog: crop, upload (≤1 MB JPEG, versioned filename `…nz_vN.jpeg`), replace, old-file cleanup.
-23. Newsletter subsection (subscribe with privacy checkbox / unsubscribe with native confirm).
+23. Newsletter subsection (subscribe with privacy checkbox / unsubscribe with native confirm) — implemented in slice 9.
 24. Sponsoring subsection and two `InfoCard`s (contact document link, support `mailto:`) — copy
     transcribed verbatim in slice 8 (`profile.data.js`); the contact-document `InfoCard` itself is not
     reproduced (`docs/rewrite/intentional-changes.md`).
@@ -112,7 +112,8 @@ Items with **no** historical basis are listed separately in 2.2 so they are not 
     `/newsletter/subscribe/{token}`, `/newsletter/unsubscribe/{token}`, `/newsletter/unsubscribe/lead`;
     subscribe/unsubscribe confirmation emails; historical quirks (re-submit → HTTP 500 — needs a
     Preserve/Fix classification, see B-9). BUG-011 (consent asymmetry) blocks the signup-checkbox path.
-27. Signup "newsletter" checkbox on the register form (currently absent).
+    — Implemented in slice 9 (BUG-011/032/033/034 fixed); Home places the public form in slice 10.
+27. Signup "newsletter" checkbox on the register form — implemented in slice 9 (double opt-in, BUG-011).
 
 **Public/static shell**
 
@@ -282,7 +283,7 @@ Slice sizes: S = a few days of focused work, M = about a week, L = more than a w
 - **Parity**: profile layout, avatar variants (`settings`, `project`), dialog.
 - **Human approval**: no.
 
-### Slice 9 — Newsletter — **M**
+### Slice 9 — Newsletter — **M** — ✅ implemented 2026-09-23 (`docs/rewrite/ninth-slice.md`)
 
 - **Covers**: 23, 26, 27 (and Home's form component for slice 10).
 - **Scope**: `Lead` model; subscribe/unsubscribe flows with signed expiring tokens (7 days historically);
@@ -394,7 +395,7 @@ nothing historical requires them and self-hosting principles say to avoid unnece
 | B-6 | Google login when credentials are unset | Button hidden and route disabled (dependency-dropped category; same pattern as `LOCATIONIQ_KEY`); record in `intentional-changes.md` |
 | B-7 | Throttle thresholds, whether lockout sends the "IP blocked" email | Documented default (register B12); send the notice only to the account owner when lockout is per-account; document |
 | B-8 | Avatar storage layout and serving path | **Decided (slice 8): local disk, versioned names, `web` mounts `laravel-storage` read-only and serves `/storage/...` directly via nginx** (see §6, `docs/deployment/README.md` "Avatar storage and serving") |
-| B-9 | Newsletter duplicate-subscribe behavior (historical HTTP 500 is clearly a defect, not a feature) | Classify as new BUG entry (Fix): idempotent, resend confirmation; needs `bugs.md`/`intentional-changes.md` entries first |
+| B-9 | Newsletter duplicate-subscribe behavior (historical HTTP 500 is clearly a defect, not a feature) | **Decided (slice 9): BUG-032 (Fix)** — same answer for every address; a pending lead gets a fresh mail, a confirmed one nothing |
 | B-10 | Search page size and debounce values | Read from `search.service.js`, do not guess |
 | B-11 | Health endpoint content, backup script layout (Tier 1, register B2), reindex command name, version exposure | As already adopted |
 | B-12 | Sitemap route (`/sitemap.xml` with a redirect from the historical `/api/sitemap`) | Provide both if search engines historically indexed the API path (verify) |
@@ -418,7 +419,7 @@ the small items each slice must handle:
 | Livewire 4 / Blade | Yes | Dialogs, popover, crop UI already have precedent in slice 2; keep Alpine minimal (rule already decided) |
 | Tailwind 4 | Yes | Design tokens for the remaining colors (`bg-warning-200`, home section colors) come from the historical theme |
 | Redis / queues | Yes | queue-worker exists; mail and index sync ride on it; failure/retry must be *tested* (BUG-009) |
-| Scheduler | Yes, currently unused | Nothing periodic is historically required |
+| Scheduler | Yes | Nothing periodic is historically required; the first task is slice 9's `newsletter:purge-unconfirmed` (decision A-1), daily |
 | Scout / Meilisearch | Yes | A second searchable model (`ProjectRequest`) and grouped queries; extend `scout:sync-index-settings`; reindex command to document |
 | Storage | **Resolved (slice 8, B-8)** | `web` now mounts `laravel-storage` read-only and serves `/storage/...` directly (`docker-compose.yaml`, `docker/nginx/default.conf`); `docker/php/Dockerfile` bakes the `public/storage` symlink into both images at build time. Not an architecture change, a wiring fix |
 | Mail | Yes | SMTP is the universal path (B5); needs a dev/CI mail catcher service in `compose.dev.yaml` |

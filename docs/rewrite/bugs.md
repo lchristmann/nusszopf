@@ -18,12 +18,12 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 | BUG-003 | Auth / route protection                     | Medium   | Fix                                 | Implemented — first vertical slice (2026-09-18)                                         |
 | BUG-004 | Auth / avatar sync                          | Low      | Fix                                 | Implemented — seventh slice (2026-09-22)                                                |
 | BUG-005 | Email / contact form                        | Medium   | Fix                                 | Implemented — sixth slice (2026-09-22)                                                  |
-| BUG-006 | Email / copy                                | Trivial  | Fix                                 | Approved — implemented with the newsletter mails in slice 9 |
+| BUG-006 | Email / copy                                | Trivial  | Fix                                 | Implemented — ninth slice (2026-09-23), `docs/rewrite/ninth-slice.md` |
 | BUG-007 | Domain / `visibility` constraint            | Low      | Fix                                 | Implemented — first vertical slice (2026-09-18)                                         |
 | BUG-008 | Search / operations                         | Medium   | Fix                                 | Implemented — first vertical slice (2026-09-18); extended to requests and completed with `search:reindex` — fourth slice (2026-09-21) |
 | BUG-009 | Background jobs / operations                | Medium   | Fix                                 | Implemented (search-sync path) — first vertical slice (2026-09-18); failed-job regression test incl. requests — fourth slice (2026-09-21) |
 | BUG-010 | Email / contact form validation             | Medium   | Fix                                 | Implemented — sixth slice (2026-09-22)                                                  |
-| BUG-011 | Newsletter / consent asymmetry              | Medium   | Fix                                 | Spec'd and Approved — `intentional-changes.md` "Double opt-in on every newsletter path (BUG-011)"; slice 9 |
+| BUG-011 | Newsletter / consent asymmetry              | Medium   | Fix                                 | Implemented — ninth slice (2026-09-23), `docs/rewrite/ninth-slice.md` |
 | BUG-012 | Auth / Apple social login                   | Low      | Replace (drop)                      | Decided — do not implement                                                              |
 | BUG-013 | Design / destructive-action confirmation    | Low      | Preserve                            | Decided — register B10 (native `confirm()`), reconciled 2026-09-21                      |
 | BUG-014 | Design / Button "filled" variant            | Trivial  | Preserve (dead vocabulary)          | Decided 2026-09-21 — the never-used `filled` variant is not implemented; the two ad hoc filled looks stay as they are |
@@ -44,9 +44,9 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 | BUG-029 | Security / search hit rendering             | Medium   | Fix                                 | Implemented — fourth slice (2026-09-21); ratified by the maintainer as an intentional Fix (2026-09-22) |
 | BUG-030 | Auth / no e-mail verification               | Low      | Fix (product change, decision A-3)  | Implemented — seventh slice (2026-09-22)                                                                |
 | BUG-031 | Security / avatar upload server-side trust  | Medium   | Fix                                  | Implemented — eighth slice (2026-09-23)                                                                 |
-| BUG-032 | Newsletter / duplicate subscribe            | Low      | Fix                                  | Approved — slice 9 (`intentional-changes.md` "Neutral, idempotent newsletter answers (BUG-032, BUG-033, BUG-034)") |
-| BUG-033 | Newsletter / unsubscribe-by-email enumeration | Low    | Fix                                  | Approved — slice 9 (same entry) |
-| BUG-034 | Newsletter / confirm link for a vanished lead | Trivial | Fix                                 | Approved — slice 9 (same entry) |
+| BUG-032 | Newsletter / duplicate subscribe            | Low      | Fix                                  | Implemented — ninth slice (2026-09-23), `docs/rewrite/ninth-slice.md` |
+| BUG-033 | Newsletter / unsubscribe-by-email enumeration | Low    | Fix                                  | Implemented — ninth slice (2026-09-23), `docs/rewrite/ninth-slice.md` |
+| BUG-034 | Newsletter / confirm link for a vanished lead | Trivial | Fix                                 | Implemented — ninth slice (2026-09-23), `docs/rewrite/ninth-slice.md` |
 
 ---
 

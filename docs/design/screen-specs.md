@@ -15,7 +15,7 @@ A consistent, checklist-format specification for every screen, intended as an im
 | Data displayed         | CMS-driven copy (`assets/data/*.data.js` — literal German copy pending a content pass, do not invent)                                                                                    |
 | Actions                | "Search" CTA → `/search`; "Create project" CTA → `/api/login`-equivalent if unauthenticated, else project creation; newsletter subscribe form                                            |
 | Navigation             | Entry point for all unauthenticated visitors                                                                                                                                             |
-| Validation             | Newsletter form: valid email format                                                                                                                                                      |
+| Validation             | Newsletter form (`NewsletterForm.js`, Confirmed slice 9): name required, ≤ 50 ("Gib einen Namen ein"/"Maximal 50 Zeichen"); e-mail required and valid ("Gib eine E-Mail-Adresse ein"/"Keine valide E-Mail-Adresse"); privacy checkbox required ("Stimme den Datenschutzbestimmungen zu"). The form component exists since slice 9 (`App\Livewire\Newsletter\SubscribeForm`), Home places it in slice 10                                                                                                                                                      |
 | Loading state          | None distinct from global route-change indicator                                                                                                                                         |
 | Empty state            | N/A                                                                                                                                                                                      |
 | Error state            | Global `ErrorPage`/`ErrorBoundary` on render failure                                                                                                                                     |
@@ -137,7 +137,7 @@ A consistent, checklist-format specification for every screen, intended as an im
 | Purpose                | Manage avatar, newsletter subscription, view sponsoring/support links, delete account                                                                                                                                                                                                               |
 | Access                 | Auth required                                                                                                                                                                                                                                                                                       |
 | Layout                 | `FramedGridCard`, two-column body (stacks below `lg`)                                                                                                                                                                                                                                               |
-| Components             | Header: title + `Avatar variant="settings"` (opens `AvatarDialog`); Newsletter subsection (subscribe form or unsubscribe button depending on `lead.hasConfirmed`); Sponsoring subsection (static + external link); Delete-account subsection; two `InfoCard`s (contact doc link, support `mailto:`). Nusszopf 2 (slice 8): the newsletter subsection is inert scaffolding until slice 9 (no `Lead` model yet); the "Kontakt speichern" vCard `InfoCard` is not reproduced (`docs/rewrite/intentional-changes.md`, extends the sixth-slice mail-footer decision) — only the support `mailto:` `InfoCard` renders |
+| Components             | Header: title + `Avatar variant="settings"` (opens `AvatarDialog`); Newsletter subsection (subscribe form or unsubscribe button depending on `lead.hasConfirmed`); Sponsoring subsection (static + external link); Delete-account subsection; two `InfoCard`s (contact doc link, support `mailto:`). Nusszopf 2 (slice 9): the newsletter subsection is live — subscribing requests a pending lead and mails the confirmation link (BUG-011), so the form stays until the link is clicked; the "Kontakt speichern" vCard `InfoCard` is not reproduced (`docs/rewrite/intentional-changes.md`, extends the sixth-slice mail-footer decision) — only the support `mailto:` `InfoCard` renders |
 | Data displayed         | Current user's name/avatar, newsletter confirmation status                                                                                                                                                                                                                                          |
 | Actions                | Change avatar; subscribe/unsubscribe to newsletter; delete account                                                                                                                                                                                                                                  |
 | Navigation             | Reached from `NavHeader`'s "Account" menu item                                                                                                                                                                                                                                                      |
@@ -145,7 +145,7 @@ A consistent, checklist-format specification for every screen, intended as an im
 | Loading state          | Three stacked `Skeleton` bars in the newsletter subsection while `loading`. Nusszopf 2: no equivalent — the page is server-rendered (Livewire/Blade), so there is no async client-side fetch for this data to show a loading state for |
 | Empty state            | N/A                                                                                                                                                                                                                                                                                                 |
 | Error state            | Toast on any failed mutation                                                                                                                                                                                                                                                                        |
-| Success state          | Newsletter subscribe/unsubscribe → loading→success/error toast; delete account → loading→success toast, then `logout()`, then redirect home. Nusszopf 2: redirects to `/search`, not `/` — `/` is itself a temporary redirect to `/search` (routes/web.php, pending Home in slice 10) and would lose the flashed toast |
+| Success state          | Newsletter subscribe/unsubscribe → loading→success/error toast (Nusszopf 2: the subscribe success toast is the public form's "E-Mail verschickt! Bitte bestätige deine Anmeldung." — the historical "Du bist jetzt angemeldet!" would be false under double opt-in, BUG-011); delete account → loading→success toast, then `logout()`, then redirect home. Nusszopf 2: redirects to `/search`, not `/` — `/` is itself a temporary redirect to `/search` (routes/web.php, pending Home in slice 10) and would lose the flashed toast |
 | Responsive behavior    | Two-column layout stacks below `lg`; text alignment flips `text-center sm:text-left` in one subsection                                                                                                                                                                                              |
 | Authorization behavior | Own account only — no route param, always "me"                                                                                                                                                                                                                                                      |
 | URL/query params       | None                                                                                                                                                                                                                                                                                                |
@@ -183,15 +183,15 @@ A consistent, checklist-format specification for every screen, intended as an im
 | Data displayed | Confirmed email address (on success only — failure never renders this screen) |
 | Actions | None beyond implicit "go home" via logo |
 | Navigation | Reached only via the subscribe-confirmation email link |
-| Validation | Token verified server-side (signed JWT, per historical evidence) before render |
+| Validation | Token verified server-side (signed JWT, per historical evidence) before render. Nusszopf 2: HMAC token keyed from `APP_KEY`, bound to the lead id, 7 days |
 | Loading state | N/A (SSR-resolved before render) |
 | Empty state | N/A |
-| Error state | Invalid/expired token → server-side 307 redirect to `/404`; thrown error → redirect to `/500`. No "link expired" specific messaging (see `docs/rewrite/open-questions.md`) |
+| Error state | Invalid/expired token → server-side 307 redirect to `/404`; thrown error → redirect to `/500`. No "link expired" specific messaging (see `docs/rewrite/open-questions.md`). Nusszopf 2: the 404 page is rendered in place (status 404, no redirect), also for a valid link whose lead is gone (BUG-034) |
 | Success state | Confirmation message |
 | Responsive behavior | Standard `FramedCard` |
 | Authorization behavior | Token possession is the only "authorization" — no login required |
 | URL/query params | `token` route param |
-| Side effects | `Lead.hasConfirmed` flips to true; triggers list-sync side effect |
+| Side effects | `Lead.hasConfirmed` flips to true; triggers list-sync side effect. Nusszopf 2: `confirmed_at` set once (a second click changes nothing); no list sync (decision A-6) |
 
 ## Newsletter unsubscribe confirmation (`/newsletter/unsubscribe/{token}`)
 
@@ -207,12 +207,12 @@ A consistent, checklist-format specification for every screen, intended as an im
 | Validation             | Token verified server-side before render                                                                             |
 | Loading state          | N/A                                                                                                                  |
 | Empty state            | N/A                                                                                                                  |
-| Error state            | Same 307-redirect pattern as subscribe-confirm                                                                       |
+| Error state            | Same 307-redirect pattern as subscribe-confirm (Nusszopf 2: in-place 404). A valid link whose lead is already gone still shows the page, as historically |
 | Success state          | Confirmation message                                                                                                 |
 | Responsive behavior    | Standard `FramedCard`                                                                                                |
 | Authorization behavior | Token possession only                                                                                                |
 | URL/query params       | `token` route param                                                                                                  |
-| Side effects           | `Lead` row deleted; triggers list-sync side effect                                                                   |
+| Side effects           | `Lead` row deleted; triggers list-sync side effect (Nusszopf 2: no list sync, decision A-6; only the lead the link was issued for is deleted) |
 
 ## Newsletter unsubscribe by email (`/newsletter/unsubscribe/lead`)
 
@@ -220,7 +220,7 @@ A consistent, checklist-format specification for every screen, intended as an im
 |------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
 | Purpose                | Unsubscribe without a token, by typing an email                                                                                        |
 | Access                 | Public                                                                                                                                 |
-| Layout                 | Plain form                                                                                                                             |
+| Layout                 | Centered `FramedCard` with the big logo, as the two token pages (Confirmed slice 9 from `lead.js`)                                    |
 | Components             | Email input, submit button (hard-coded label "Abmelden" — a confirmed minor CMS inconsistency vs. every other page's data-driven copy) |
 | Data displayed         | None                                                                                                                                   |
 | Actions                | Submit email to unsubscribe                                                                                                            |
@@ -233,7 +233,7 @@ A consistent, checklist-format specification for every screen, intended as an im
 | Responsive behavior    | Standard `Frame` container                                                                                                             |
 | Authorization behavior | None — email is the only "credential", matching the same weak-identification pattern as the historical product                         |
 | URL/query params       | None                                                                                                                                   |
-| Side effects           | Deletes the matching `Lead` row; triggers list-sync side effect                                                                        |
+| Side effects           | Mails the unsubscribe link if a matching `Lead` exists (the link deletes it) — corrected slice 9 against `newsletter.function.js`; historically 404 for an unknown address, Nusszopf 2 answers every valid address with the same success toast (BUG-033). Shares the 10/15-min per-IP throttle with the sign-up form |
 
 ## Error screens (`/404`, `/500`, any other status, render errors)
 
@@ -270,7 +270,7 @@ behavior they must reproduce. Full field/validation/copy detail: `docs/authentic
 | Error state   | Field validation (5-rule password policy on register); distinguished duplicate-username error                                                                                                                     | Generic failure toast               | Generic failure toast                             |
 | Success state | Redirect to `/user/projects` (both login and registration land here)                                                                                                                                              | "Email sent" toast, stays on screen | Toast + delayed redirect to login                 |
 | Validation    | See `docs/authentication/README.md` §2 for the exact per-field rules                                                                                                                                              | Valid email format                  | Same password-strength policy as registration     |
-| Side effects  | Registration creates the `User` row directly (no more JIT-provisioning gap, closing the historical Auth0-rule dependency) and, if "newsletter" was checked, creates a `Lead` per BUG-011's still-pending decision | Sends a password-reset email        | Updates the password, invalidates the reset token |
+| Side effects  | Registration creates the `User` row directly (no more JIT-provisioning gap, closing the historical Auth0-rule dependency) and, if "newsletter" was checked, requests a *pending* `Lead` and sends the double-opt-in mail (BUG-011, decision A-1; fail-open) | Sends a password-reset email        | Updates the password, invalidates the reset token |
 | Social login  | Google only — Apple was present but never wired up historically; do not build it (BUG-012)                                                                                                                        | N/A                                 | N/A                                               |
 
 ## Not covered by this pass

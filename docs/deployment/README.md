@@ -72,7 +72,7 @@ Avatars (`docs/design/screen-specs.md`, "Profile / account settings") live on th
 `.env.production.example` is the source of truth — every variable with its default or a `REQUIRED` marker (release, `APP_KEY`, `APP_URL`, `DB_PASSWORD`, `MEILISEARCH_KEY`).
 `install.sh` generates the secrets. Notable choices: `APP_ENV=production`, `APP_DEBUG=false`; sessions, cache and queue on Redis; `SCOUT_QUEUE=true` so search sync is a retried
 job, never fire-and-forget (BUG-009); `LOG_CHANNEL=stderr` so `docker compose logs` shows the application's log; `SESSION_LIFETIME=480`, the historical 8-hour rolling session;
-`TRUSTED_PROXIES`, `APP_BIND`, `APP_PORT` for the proxy setup below; `HEALTH_TOKEN` for `/health` details; `MAIL_*`, an operator-supplied SMTP relay for the project contact form (`docs/email/README.md`; the dev/CI stack uses a bundled Mailpit catcher instead, never production).
+`TRUSTED_PROXIES`, `APP_BIND`, `APP_PORT` for the proxy setup below; `HEALTH_TOKEN` for `/health` details; `MAIL_*`, an operator-supplied SMTP relay for every mail — contact form, account mails, newsletter confirmations (`docs/email/README.md`; the dev/CI stack uses a bundled Mailpit catcher instead, never production).
 
 ### Location search (`LOCATIONIQ_KEY`)
 
@@ -94,7 +94,14 @@ screen is hidden and its routes 404 — password/username login is completely un
 `GOOGLE_REDIRECT_URI` only needs setting if the app is reachable at a different URL than `APP_URL`
 (e.g. behind a path-rewriting proxy).
 
-The list will grow (not shrink) as newsletter/object-storage land in later slices; every variable keeps a default or an explicit `REQUIRED` note.
+### Newsletter (`NEWSLETTER_CONSENT_VERSION`)
+
+Stored with every newsletter subscription's consent record (decision A-1): name the version of your
+Datenschutz text and change it whenever that text changes. Default `1`. Exporting subscribers for an
+external sender, retention and the unsubscribe link every issue must carry: `docs/deployment/operations.md`,
+"Newsletter subscribers". Newsletter mails need the same `MAIL_*` relay as every other mail.
+
+The list will grow (not shrink) as object storage lands in a later version; every variable keeps a default or an explicit `REQUIRED` note.
 
 ## Installation (operator path)
 

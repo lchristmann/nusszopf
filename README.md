@@ -55,7 +55,7 @@ See `docs/README.md`.
 
 Important specifications include design, domain, user journeys, search, authentication, email, and release process.
 
-Start with `docs/rewrite/decisions-register.md` (what's decided vs. what needs a human call), `docs/rewrite/bugs.md` (classified historical defects), and `docs/rewrite/first-slice.md`, `docs/rewrite/second-slice.md` and `docs/rewrite/third-slice.md` (the implemented vertical slices: registration/login, search and project detail; the historical project creation wizard and edit screen; the project requests, Gesuche). Later slices (newsletter, password reset, social login, avatars, account deletion, analytics) are not implemented yet; `CHANGELOG.md` lists what has shipped.
+Start with `docs/rewrite/decisions-register.md` (what's decided vs. what needs a human call), `docs/rewrite/bugs.md` (classified historical defects), and `docs/rewrite/first-slice.md`, `docs/rewrite/second-slice.md` and `docs/rewrite/third-slice.md` (the implemented vertical slices: registration/login, search and project detail; the historical project creation wizard and edit screen; the project requests, Gesuche). `docs/rewrite/README.md` lists every implemented slice (through slice 9, the newsletter); the public shell — Home, legal pages, error pages, SEO — is the last one still to come.
 
 ## Self-hosting
 

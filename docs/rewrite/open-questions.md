@@ -36,7 +36,7 @@ Unresolved historical behavior, consolidated from the archaeology pass across `d
 
 ### Newsletter signup-checkbox path skips double opt-in
 
-- Status: Unknown (product-intent question, not a research gap)
+- Status: **Resolved** — decision A-1 (2026-09-21): double opt-in on every path; implemented in slice 9 (2026-09-23), see `docs/rewrite/intentional-changes.md` → "Double opt-in on every newsletter path (BUG-011)".
 - Area: Domain / Newsletter / Authentication
 - Sources inspected: `web-nusszopf/projects/webapp/src/pages/api/newsletter.js`, `src/utils/functions/newsletter.function.js` (see the resolved "Lead (newsletter) creation route" entry above for full context).
 - Historical evidence: a `Lead` created via the public newsletter-signup form goes through true double opt-in (unconfirmed → confirmation email → click-through confirms). A `Lead` created via the "newsletter" checkbox at account signup is created **already confirmed**, with no confirmation email sent at all.

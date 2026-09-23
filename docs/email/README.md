@@ -184,6 +184,10 @@ These four are triggered directly by `web-nusszopf`'s Next.js API routes calling
 
 ### 6. Newsletter subscribe confirmation (`sendgrid/newsletter/subscribe.mjml`)
 
+> **Nusszopf 2 (slice 9):** `App\Mail\NewsletterSubscribeMail` / `resources/views/mail/newsletter-subscribe.blade.php`,
+> verbatim except BUG-006. Sent on every subscription path (public form, registration checkbox, Profile — BUG-011),
+> from `MAIL_FROM_ADDRESS` like every other mail; the link is `App\Support\NewsletterToken` (7 days), not a JWT.
+
 - **Trigger (Confirmed):** `newsletter.function.js` → `handleSubscribe()`, called from the
   `/api/newsletter` route with `action: 'subscribe'`. A double-opt-in flow: submitting the
   newsletter signup form creates a "lead" record (`addLead`) and immediately sends this
@@ -209,6 +213,9 @@ These four are triggered directly by `web-nusszopf`'s Next.js API routes calling
 
 ### 7. Newsletter unsubscribe confirmation (`sendgrid/newsletter/unsubscribe.mjml`)
 
+> **Nusszopf 2 (slice 9):** `App\Mail\NewsletterUnsubscribeMail` / `resources/views/mail/newsletter-unsubscribe.blade.php`,
+> verbatim except BUG-006; sent only when the address has a lead (BUG-033).
+
 - **Trigger (Confirmed):** `handleUnsubscribe()`, action `unsubscribe`; also double-
   confirmation — clicking the link calls `handleUnsubscribeConfirm` (action
   `unsubscribeConfirm`) which verifies a JWT and deletes the lead (`deleteLead`).
@@ -217,7 +224,7 @@ These four are triggered directly by `web-nusszopf`'s Next.js API routes calling
 - **Template:** `process.env.SENDGRID_TEMPLATE_UNSUBSCRIBE_ID`.
 - **Subject / mj-title:** "Nussiger Newsletter – Abmeldebestätigung"
 - **Heading (Verbatim, brand pun):** "Der Nusszopf liebt dich sowieso!"
-- **Body (Verbatim):** "Bestätige deine Abmeldung von dem Newsletter, indem Du auf den
+- **Body (Verbatim):** "Bestätigte deine Abmeldung von dem Newsletter, indem Du auf den
   Button klickst. Wenn Du möchtest, kannst Du dich natürlich jederzeit wieder anmelden."
   (same "Bestätigte" vs. "Bestätige" typo pattern appears here as "Bestätigte" too — see
   Suspected Issues.)
@@ -301,6 +308,8 @@ These four are triggered directly by `web-nusszopf`'s Next.js API routes calling
    the past tense/participle, which reads as a grammatical error in context. Evidence:
    both occurrences are identical in structure, suggesting a copy-paste of the same mistake
    rather than two independent typos. Likely intended behavior: imperative "Bestätige".
+   **BUG-006, Fixed in slice 9.** (Item 7's "Body (Verbatim)" line above used to show the corrected
+   verb; reconciled in slice 9 against the source, which reads "Bestätigte" in both templates.)
 2. **No `Reply-To` header on the contact-form email.** `contact.js` puts the visitor's email
    only in the body copy (`{{contact_email}}`) rather than setting a `replyTo` on the SendGrid
    payload. This means hitting "Reply" in a mail client replies to `noreply@nusszopf.org`

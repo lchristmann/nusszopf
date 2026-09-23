@@ -8,6 +8,12 @@ The historical domain is deliberately small: five tables plus one view. There is
 
 ### `Lead`
 
+> **Nusszopf 2 (slice 9):** `App\Models\Lead`, table `leads`: `id` (uuid), `email` (unique), `name` (≤ 50),
+> `requested_at`, `confirmed_at` (replaces `hasConfirmed`), `source` (`form`/`registration`/`profile`, CHECK constraint),
+> `consent_version`, timestamps. The historical `privacy` boolean is replaced by that consent record (every path requires
+> consent, so it was always `true`); no IP address is stored. `User::lead()` keeps the email-matched relationship.
+> See `docs/rewrite/intentional-changes.md` → "Double opt-in on every newsletter path (BUG-011)".
+
 - Status: Confirmed (table), Inferred (product meaning)
 - Historical table: `public.leads`
 - Purpose: Inferred — a newsletter/contact "lead", i.e. an email address that has expressed interest (via the public newsletter subscribe form or a similar public flow) and gone through email double opt-in. Confirmed by column shape (`email` unique, `hasConfirmed` boolean) and by the existence of `../historical/emails-nusszopf/src/sendgrid/newsletter/{subscribe,welcome,unsubscribe}.mjml`. Not confirmed to be the newsletter mechanism itself — that requires cross-referencing the frontend `/api/newsletter` route (see Open cross-reference below).

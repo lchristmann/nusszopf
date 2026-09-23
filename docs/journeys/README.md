@@ -90,7 +90,14 @@ it('User can contact a project', () => { expect(true).to.equal(true) })
 
 Actual search behavior in the historical product is exercised **only incidentally**, as a side effect of the create/update/delete assertions inside `_projects.spec.js` (does a specific project's title appear/disappear from an otherwise-empty query). There is **no historical E2E coverage at all** for: searching by a real query term, filtering (`FilterPopover`), or contacting a project's owner from a search result. This is a genuine, confirmed gap in historical test coverage — record it in `docs/rewrite/open-questions.md` and treat these three flows as needing behavior confirmed from implementation (`docs/design/screens.md`'s Search section) rather than from E2E evidence, and ensure the new Playwright suite actually covers them (closing the historical gap, not reproducing it).
 
-## Journey 6 — Newsletter subscribe / confirm (Inferred — no E2E evidence)
+## Journey 6 — Newsletter subscribe / confirm — **implemented, slice 9** (`docs/rewrite/ninth-slice.md`)
+
+> **Nusszopf 2:** both paths below are now double opt-in (BUG-011, decision A-1) and there is no list-sync job
+> (decision A-6). Covered by `tests/E2E/specs/visitor/newsletter.spec.ts`: registration checkbox → mailbox → confirm →
+> unsubscribe by address → mailbox → confirm; Profile subscribe → mailbox → confirm → Profile unsubscribe; unknown or
+> tampered links → 404. The public Home form itself is driven by Feature tests until Home exists (slice 10).
+> The historical description follows unchanged.
+
 
 **Actors:** anonymous visitor (public form) or a newly-registering user (signup checkbox). **Source:** implementation only (`docs/domain/entities.md` `Lead`, `docs/domain/workflows.md`, `docs/email/README.md`) — no historical E2E coverage exists for either path.
 

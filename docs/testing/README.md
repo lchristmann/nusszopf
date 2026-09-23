@@ -42,6 +42,14 @@ A small number of important user journeys through the real UI, per role/actor, t
 - `tests/Feature/Search/ProjectSearchSyncTest.php` mixes fast document-shape tests with a few
   `@group meilisearch` tests against the real engine (edit re-indexing, publish/hide, delete).
 
+### Ninth-slice conventions
+
+- `tests/E2E/specs/visitor/newsletter.spec.ts` needs `E2E_MAILPIT_URL`, like the password-reset spec. The public
+  newsletter forms share the historical budget of 10 requests per 15 minutes per IP, and every engine runs from the same
+  address: the specs spend two of it per engine, so a full three-engine run fits once per 15 minutes. Running it again
+  sooner, clear the counter first: `docker compose -f compose.dev.yaml exec php-fpm php artisan cache:clear`.
+- Mailed links are followed by their path only (`mailedPath()`), because `APP_URL` need not be the origin Playwright reaches.
+
 ## Production stack
 
 `scripts/smoke-test.sh` (run from the host, needs Docker, curl and openssl; CI job "Production stack") builds the two production images from the working copy, installs into a fresh temporary directory exactly

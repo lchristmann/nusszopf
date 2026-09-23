@@ -51,7 +51,7 @@ All three sponsor/partner logos (Vercel, Auth0, sponsor badges in the main READM
 
 - Unauthenticated users hitting an auth-required page are redirected by `withAuth` (see `docs/authentication/README.md` for the exact mechanics) rather than the page rendering a "please log in" state.
 - `/user/project/[id]/edit` redirects to `/404` client-side if the project id doesn't resolve after loading (`useEffect` in the page, not a route-level guard) — **Confirmed**, this is a soft/late redirect (the shell of the page can flash before redirecting), not a hard 404 at the routing layer, unlike `/projects/[id]`'s SSR `notFound: true`.
-- `/newsletter/subscribe/[token]` and `/newsletter/unsubscribe/[token]` perform **server-side 307 redirects** to `/404` or `/500` on failure (`getServerSideProps`), so these never flash the confirmation UI on an invalid/expired token. **Confirmed.**
+- `/newsletter/subscribe/[token]` and `/newsletter/unsubscribe/[token]` perform **server-side 307 redirects** to `/404` or `/500` on failure (`getServerSideProps`), so these never flash the confirmation UI on an invalid/expired token. **Confirmed.** Nusszopf 2: the 404 renders in place (no redirect), with the same effect.
 - Login (`/api/login`) always sets `returnTo: '/user/projects'` (`webapp/src/pages/api/login.js`) — i.e. **every** login, regardless of where it was triggered from, lands the user on their projects dashboard rather than returning them to the page they were on. **Confirmed** — a real product behavior to preserve or explicitly call out as a fixable UX gap in `docs/rewrite/open-questions.md` (not decided here).
 
 ## Not covered by this pass

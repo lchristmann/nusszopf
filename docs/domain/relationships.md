@@ -6,7 +6,7 @@ Evidence base: `../historical/be-nusszopf/hasura/metadata/tables.yaml` (`object_
 
 - Cardinality: 0/1 : 0/1, by matching `email` — **not a real foreign key**, a Hasura "manual relationship" (`manual_configuration`, `column_mapping: { email: email }`).
 - Direction: `leads.user` (object) and (implicitly, not separately declared) usable in reverse for `users.lead` (object), same mapping.
-- Ownership/deletion: no FK, so no cascade behavior at the DB level. Deleting a `User` does **not** delete the matching `Lead`, and vice versa — they are only linked at query time.
+- Ownership/deletion: no FK, so no cascade behavior at the DB level. Deleting a `User` does **not** delete the matching `Lead`, and vice versa — they are only linked at query time. **Nusszopf 2 (decision A-1, slice 9):** still no FK, but `App\Support\AccountDeleter` deletes the lead with the account's address explicitly.
 - Authorization implication: the `leads` insert permission's `check` (`user: { id: { _eq: X-Hasura-User-Id } }`) reaches through this manual relationship, which means a `Lead` insert is only permitted while the caller's `X-Hasura-User-Id` matches a `users` row whose `email` equals the `leads.email` being inserted — i.e. a lead can only be self-inserted by an already-registered user with that exact email, through Hasura directly. This corroborates the `entities.md` finding that public/anonymous newsletter signups do **not** go through this permission and must go through a separate backend route with elevated privileges.
 - Evidence: `hasura/metadata/tables.yaml` (leads → object_relationships: user).
 

@@ -26,8 +26,8 @@ These are established and should not be silently re-litigated by a future contri
   account also deletes the lead for the same address. Adopted without further ask: a consent record
   (requested-at, confirmed-at, path, consent-text version; no IP address), unconfirmed leads purged 14 days
   after creation by a scheduled job, a duplicate subscribe resends/answers neutrally instead of HTTP 500,
-  and unsubscribe-by-email answers identically whether or not a lead exists. Needs `bugs.md` /
-  `intentional-changes.md` entries (Proposed → Approved) before slice 9.
+  and unsubscribe-by-email answers identically whether or not a lead exists. Recorded (BUG-011, BUG-032–034,
+  `intentional-changes.md`) and implemented in slice 9 (2026-09-23).
 - Newsletter scope (decided by the maintainer 2026-09-21; A-6): subscription and consent only. Historically
   the application only collected and confirmed subscribers and mirrored them to a SendGrid list; issues
   ("Nussig No. 1-3") and `support.mjml` were sent by hand from SendGrid (Inferred; no code or UI sends them).
