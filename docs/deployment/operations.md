@@ -131,7 +131,7 @@ Scheduled with a root crontab entry (`crontab -e`), e.g. weekly. This is the min
 
 **Neither tier backs up Meilisearch.** Meilisearch's index is fully derivable from PostgreSQL by reindexing (assuming Nusszopf's search indexing is idempotent and triggered from domain data, per standard Laravel Scout/Meilisearch integration patterns) — so the recommended default is **don't back up the index, document a reindex command as the recovery path**, but this is Unknown/unverified until `docs/search/README.md` establishes how indexing actually works.
 
-What must always be backed up regardless of tier (Confirmed necessity from LCxHolz's reasoning, directly applicable): the database, the storage volume (user uploads), and `.env` (contains `APP_KEY` — losing it makes any `APP_KEY`-encrypted data permanently unrecoverable).
+What must always be backed up regardless of tier (Confirmed necessity from LCxHolz's reasoning, directly applicable): the database, the storage volume (user uploads), `.env` (contains `APP_KEY` — losing it makes any `APP_KEY`-encrypted data permanently unrecoverable), and the `legal/` folder with your Impressum/Rechtliches/Datenschutz texts (`docs/deployment/README.md`, "Legal pages").
 
 ## Restore
 

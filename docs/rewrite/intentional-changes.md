@@ -536,7 +536,10 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 
 ### Profile page's "Kontakt speichern" vCard link is not reproduced
 
-- Status: Approved (extends the sixth-slice mail-footer decision, `resources/views/components/mail/layout.blade.php`);
+- Status: **Superseded in slice 10** (2026-09-23): the vCard is generated from this instance's own addresses
+  (`/contact/nusszopf-vcard.vcf`, `App\Support\Operator`) and linked again from Profile, Home and the mail footer
+  (`docs/rewrite/tenth-slice.md`, decision 4; `tests/Feature/Support/OperatorIdentityTest.php`). Originally:
+  Approved (extends the sixth-slice mail-footer decision, `resources/views/components/mail/layout.blade.php`);
   recorded 2026-09-23
 - Date: 2026-09-23
 - Historical behavior: one of Profile's two `InfoCard`s links to a static `nusszopf-vcard.vcf` download — a vCard

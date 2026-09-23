@@ -34,14 +34,14 @@ Every page renders through the shared `<Page>` component (`src/components/Page/P
 Confirmed from `pages/index.js` + `src/assets/data/*.data.js`. No `NavHeader` (`navHeader={{ visible: false }}`) — the landing page has its own header. Sections, top to bottom:
 
 1. **Header** — two-column hero (`bg-steel-50`): Nusszopf logo (`assets/logos/nusszopf-logo-*.svg`) on one side, title/subtitle (`headerData.title/subtitle`) on the other. Below it, a highlighted info card (`bg-livid-300`) with an ordered list explaining how the product works (`headerData.info[2]`, rendered as `<ol>` — Confirmed this is a numbered "how it works" explainer, content itself is CMS data not yet transcribed).
-2. **HowToSection** (`containers/home/HowToSection`) — step cards, likely explaining the create/search flow (component present, not fully inspected — **Inferred** purpose from naming and position, content Unknown pending fixture data reading).
+2. **HowToSection** (`containers/home/HowToSection`, `bg-yellow-250`) — "How To Nusszopf (Alte Version)": four static `StepCard`s (Idee! / Projekt / Gesuche / Umsetzung; step 3 shows the `Request` icon instead of a number) and one CTA "Alte Version entdecken" → `/search`. **Confirmed** (slice 10).
 3. **CarouselSection** — present in code but **commented out** in `pages/index.js` (`{/* <CarouselSection /> */}`). **Confirmed dead/disabled section** — historical page does not render it even though the component and its container still exist. Candidate for `docs/rewrite/open-questions.md` (not populated by this pass — flag for the synthesis step).
 4. **About** section (`bg-turquoise-300`) — 3-column feature list (`homeData.about.list`).
 5. **Contest** section (`bg-red-300`) — heading/description/link plus a sponsor/partner logo (`contestData.host`).
 6. **Fellows** section (`bg-pink-200`) — sponsor/fellow logos row plus a 3-column options list, each with its own CTA button.
 7. **NewsletterSection** (`containers/home/NewsletterSection`) — newsletter subscribe form, styled section.
 
-Footer variant: `classy` (legal links + Instagram + Vercel badge — see `docs/design/navigation.md`).
+Footer variant: `classy` (legal links + Instagram + Vercel badge — see `docs/design/navigation.md`). Implemented in slice 10 (`docs/rewrite/tenth-slice.md`), copy verbatim; the Vercel badge is not reproduced (decision 5).
 
 ## Search (`/search`)
 
@@ -121,7 +121,7 @@ Loading state: `<Skeleton>` bars in place of the newsletter subsection while `lo
 
 ## Legal Notice / Legal Policy / Privacy (`/legalNotice`, `/legalPolicy`, `/privacy`)
 
-Confirmed from the three page files. All three are static content pages (`bg-steel-200`) rendered from CMS data arrays (`legalNoticeData`, `legalPolicyData`, `privacyData`), with a `goBackUri` in the header (`/legalNotice`, `/legalPolicy` always go back to `/`; `/privacy` goes to `router.query?.back ? 'back' : '/'` — i.e. Privacy can be deep-linked with a `?back=1` query param to make the back button return to the referring page instead of home — **Confirmed**, a small but real piece of navigation behavior). Content itself (the legal copy) was not transcribed in this pass — CMS-driven, treat as **Unknown** pending a dedicated content-archaeology pass; do not invent legal copy.
+Confirmed from the three page files. All three are static content pages (`bg-steel-200`) rendered from CMS data arrays (`legalNoticeData`, `legalPolicyData`, `privacyData`), with a `goBackUri` in the header (`/legalNotice`, `/legalPolicy` always go back to `/`; `/privacy` goes to `router.query?.back ? 'back' : '/'` — i.e. Privacy can be deep-linked with a `?back=1` query param to make the back button return to the referring page instead of home — **Confirmed**, a small but real piece of navigation behavior). Content itself (the legal copy) was not transcribed in this pass — CMS-driven, treat as **Unknown** pending a dedicated content-archaeology pass; do not invent legal copy. **Nusszopf 2 (slice 10, decision A-4):** the pages render the operator's own Markdown (`docs/deployment/README.md`, "Legal pages"); the historical texts are transcribed only as labelled examples in `docs/deployment/legal-examples/`.
 
 ## Newsletter confirmation pages
 

@@ -42,6 +42,19 @@ A small number of important user journeys through the real UI, per role/actor, t
 - `tests/Feature/Search/ProjectSearchSyncTest.php` mixes fast document-shape tests with a few
   `@group meilisearch` tests against the real engine (edit re-indexing, publish/hide, delete).
 
+### Tenth-slice conventions
+
+- `tests/E2E/specs/visitor/public-shell.spec.ts` spends one more of the shared newsletter budget per engine (the Home
+  sign-up, needs `E2E_MAILPIT_URL`): with the ninth slice's two, a three-engine run now uses 9 of the 10 requests per
+  15 minutes. Clear the counter as below before running the full suite twice in a row.
+- Responsive checks are layout assertions at 375/768/1440 px (no horizontal scroll, hero stacked below `lg`, footer
+  links stacked below `sm`), not pixel baselines; pixel-level parity was checked by hand from screenshots
+  (`docs/rewrite/tenth-slice.md`).
+- A Feature test comparing two responses from one test must reset Livewire's once-per-process asset flags
+  (`FrontendAssets::$hasRenderedStyles`/`$hasRenderedScripts`) between the requests (`tests/Feature/Errors/ErrorPagesTest.php`).
+- Legal-page tests point `nusszopf.legal_path` at a temporary folder, so a developer's own `legal/` folder never
+  leaks in; `phpunit.xml` pins `NUSSZOPF_CONTACT_EMAIL` (and blanks `NUSSZOPF_LEGAL_PATH`) against a local `.env`.
+
 ### Ninth-slice conventions
 
 - `tests/E2E/specs/visitor/newsletter.spec.ts` needs `E2E_MAILPIT_URL`, like the password-reset spec. The public

@@ -1,6 +1,8 @@
 # Tenth Vertical Slice — Public shell: Home, legal, errors, SEO
 
-Status: **in progress** (started 2026-09-23). Scope and sequencing come from
+Status: **implemented and verified** (2026-09-23). This slice shipped Home, the legal pages with operator text,
+the error page for every status, the SEO head, favicons, sitemap and `robots.txt`, and made the operator mailbox
+and contact card instance configuration. Scope and sequencing come from
 `docs/rewrite/master-roadmap.md`, "Slice 10" (inventory items 28–31); the governing decisions are A-4
 (legal text is operator-provided) and A-5 (Home verbatim; operator mailbox/identity become configuration).
 
@@ -35,15 +37,56 @@ Status: **in progress** (started 2026-09-23). Scope and sequencing come from
 | 10 | Search-engine verification tags and Visitor Analytics not reproduced | **Replace** (A-5, adopted) | They belong to the original operator's accounts; analytics was decided out |
 | 11 | Sitemap throttle 10 / 15 min per IP | **Preserve** | |
 | 12 | `noindex` on Profile, My projects, project create and edit | **Preserve** | Previously only the newsletter pages set it |
+| 13 | Web manifest / `browserconfig.xml` icon paths point at `/favicons/…` | **Fix** (BUG-037) | Historically they named root paths that 404 |
+| 14 | Account deletion lands on Home | **Preserve** (closes slice 8's workaround) | `logout()` → `/api/logout` → Home; slice 8 used `/search` only because `/` was a redirect |
+| 15 | Privacy link styles: the newsletter form's consent link and Profile's `InfoCard` links use the historical `Route`/`livid` `Link` underline instead of a plain `underline` | **Preserve** (fidelity correction) | Touched while placing the form on Home; Profile's consent link carries `?back=history` as historically |
+| 16 | Default `<title>` is `seoData.title` everywhere a page passes none | **Preserve** | The newsletter pages' interim `title="Nusszopf"` removed |
 
 ## Implementation
 
-Filled in as the slice lands.
+- **Operator identity**: `config('nusszopf.contact_email')` (`NUSSZOPF_CONTACT_EMAIL` → `MAIL_FROM_ADDRESS`), `App\Support\Operator`
+  (`contactEmail()`, `vcard()`), route `contact.vcard`; `SubscribeForm::error()` replaces the `ERROR` constant.
+- **Home**: `resources/views/home.blade.php` (`Route::view('/')`), `x-logo` + `resources/logos/*.svg` (AZ, Vercel, Auth0,
+  Sanity, LocationIQ), the embedded `livewire:newsletter.subscribe-form`.
+- **Footer**: `x-footer` `variant` (`default` band / `classy`), layout prop `footerVariant`; `nz-link-{red,livid,warning}`.
+- **Legal**: `App\Support\LegalText`, `LegalPageController` (`legal.notice`, `legal.policy`, `privacy`), `resources/views/legal/page.blade.php`,
+  `.nz-legal` typography; `goBackUri === 'back'` in `x-nav-header`; `NUSSZOPF_LEGAL_PATH` (default `<app>/legal`), `./legal` mounted
+  read-only by `docker-compose.yaml`, created by `install.sh`, excluded from the image; examples in `docs/deployment/legal-examples/`.
+- **Errors**: `x-error-page`, `resources/views/errors/{401,402,403,404,419,429,500,503,4xx,5xx}.blade.php`.
+- **SEO**: `x-layout` head (title/description truncation, canonical, Open Graph, `twitter:card`, favicons, theme colour); `layoutData`
+  from `ProjectDetail`; `noindex` on the four account pages; `Seo\SitemapController` (`throttle:10,15,sitemap`),
+  `Seo\RobotsController` (nginx now passes `/robots.txt` to the app); `public/favicons/*`, `public/images/og-image.png`,
+  the historical `favicon.ico`.
 
 ## Test map
 
-Filled in as the slice lands.
+| Layer | File | Covers |
+|---|---|---|
+| Feature | `tests/Feature/Home/HomePageTest.php` | no nav header, classy footer without Vercel, section order/colours, verbatim copy, the single search CTA, no create CTA/carousel, operator `mailto:`s, link targets, embedded form and vCard link |
+| Feature | `tests/Feature/Legal/LegalPagesTest.php` | not-configured notice (missing/empty file), Markdown rendering, HTML escaping and unsafe links, colours, back chevron incl. `?back`, Profile's `?back=history`, the labelled examples, no unused processors in the Datenschutz example |
+| Feature | `tests/Feature/Errors/ErrorPagesTest.php` | 404, 500, 401-style framework codes and any other status, footer band, private project = missing project, newsletter link 404 |
+| Feature | `tests/Feature/Seo/SeoTagsTest.php`, `SitemapTest.php` | head tags, lodash-equivalent truncation, canonical incl. query, BUG-036, `noindex` pages, production-only indexing, favicons/manifest (BUG-037); sitemap content, guest view only, `lastmod`, throttle and its own key, `robots.txt` |
+| Feature | `tests/Feature/Support/OperatorIdentityTest.php` | configured mailbox on project/Profile/toast/mail, vCard content and headers |
+| E2E | `tests/E2E/specs/visitor/public-shell.spec.ts` | Journey 1, Home chrome, layout at 375/768/1440, Home newsletter sign-up → mailbox → confirm, legal navigation and back, `?back`, 404 page → home |
+| E2E | `newsletter.spec.ts`, `profile.spec.ts` (updated) | the invalid-link 404 now shows the error page; account deletion lands on Home |
+| Smoke | `scripts/smoke-test.sh` | Home, `robots.txt`/sitemap on `APP_URL` through nginx, `./legal` mount (unconfigured → configured), the error page in production |
+
+Verified 2026-09-23 against the dev stack: Pest 543 passed; Larastan clean; Pint clean; Playwright 132 passed / 6 skipped
+(the search specs that need extra environment, as before) on Chromium, Firefox and WebKit; `scripts/smoke-test.sh` passed.
+Home was checked by screenshot at 375, 768 and 1440 px against `pages/index.js`'s classes and copy, and the legal and
+error pages at 375 and 1440 px.
 
 ## Remaining gaps
 
-Filled in at close-out.
+- **Pixel comparison against the running historical Home was not possible**: no historical deployment or build exists
+  here, so parity was checked against the source's classes/copy and by screenshots of the rewrite, not side by side.
+- **Home content is dated by design** (A-5): "Wir sind am Kneten…" (a 2021 rework announcement), the 2022 Contest date,
+  and sponsors the rewrite does not use. The roadmap asks for a re-read before the release candidate.
+- **Legal pages are only as good as the operator's files**: the app cannot check them. The historical footer links the
+  legal pages only from Home (Preserve), so other pages have no Impressum link — a legal question for operators, not
+  changed without a product decision.
+- **Instagram and Steady links stay the historical brand URLs** (A-5); only the mailbox and contact card are configuration.
+- The `?back` chevron uses `history.back()`: opened in a fresh tab it does nothing, exactly as historically.
+- `CarouselSection` stays absent (historically commented out).
+- Livewire update requests that fail show Livewire's own error modal around the 500 page; there is no client-side
+  error boundary beyond that (the React `ErrorBoundary` has no counterpart).

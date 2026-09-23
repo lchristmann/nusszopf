@@ -304,7 +304,7 @@ Slice sizes: S = a few days of focused work, M = about a week, L = more than a w
 - **Playwright**: subscribe → confirm via mailbox → unsubscribe; unknown token → 404 page.
 - **Human approval**: no (A-1, A-6 decided).
 
-### Slice 10 — Public shell: Home, legal, errors, SEO — **L**
+### Slice 10 — Public shell: Home, legal, errors, SEO — **L** — ✅ implemented 2026-09-23 (`docs/rewrite/tenth-slice.md`)
 
 - **Covers**: 28–31.
 - **Scope**: Home in full (transcribe the CMS `*.data.js` copy verbatim; the "how it works" list; sections

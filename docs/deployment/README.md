@@ -101,6 +101,37 @@ Datenschutz text and change it whenever that text changes. Default `1`. Exportin
 external sender, retention and the unsubscribe link every issue must carry: `docs/deployment/operations.md`,
 "Newsletter subscribers". Newsletter mails need the same `MAIL_*` relay as every other mail.
 
+### Your identity (`NUSSZOPF_CONTACT_EMAIL`)
+
+The address shown wherever Nusszopf says "write to us": the error page, Home's "Partner:in werden"/"Feedback
+senden" buttons, the newsletter and Profile pages, every e-mail's footer, the "Projekt melden" link and the
+downloadable contact card (`/contact/nusszopf-vcard.vcf`, built from this address, `MAIL_FROM_ADDRESS` and
+`APP_URL`). Empty means `MAIL_FROM_ADDRESS`. Historically this was `mail@nusszopf.org`; it is your mailbox now
+(decision A-5). Home's copy, logos and the Instagram/Steady links are the historical Nusszopf's, reproduced
+verbatim (decision A-5).
+
+### Legal pages (`./legal`, `NUSSZOPF_LEGAL_PATH`)
+
+Impressum (`/legalNotice`), Rechtliches (`/legalPolicy`) and Datenschutz (`/privacy`) show **your** text
+(decision A-4 — Nusszopf ships none). Put three Markdown files into the `legal/` folder next to
+`docker-compose.yaml` (`install.sh` creates it; the stack mounts it read-only):
+
+| File | Page |
+|---|---|
+| `legal/legal-notice.md` | Impressum |
+| `legal/legal-policy.md` | Rechtliches (terms of use) |
+| `legal/privacy.md` | Datenschutz |
+
+The page heading is fixed; the file is the body — `##` headings, paragraphs, lists, links, a line ending in
+two spaces for a line break. Raw HTML is shown as text. Changes appear on the next page load, no restart.
+A missing or empty file makes its page say "Dieser Text wurde von den Betreiber:innen dieser
+Nusszopf-Instanz noch nicht hinterlegt." `docs/deployment/legal-examples/` holds the original operators'
+2021 texts, labelled as examples — do not publish them as they are. Your Datenschutz text should describe
+what your instance actually does: the services you configure (SMTP relay, LocationIQ, Google login) and
+the newsletter's double opt-in; it must not name Auth0, SendGrid or Visitor Analytics, which Nusszopf 2 does
+not use. When it changes, raise `NEWSLETTER_CONSENT_VERSION`. `NUSSZOPF_LEGAL_PATH` points elsewhere only
+if you mount the files at another path. Back the folder up with `.env`.
+
 The list will grow (not shrink) as object storage lands in a later version; every variable keeps a default or an explicit `REQUIRED` note.
 
 ## Installation (operator path)
@@ -147,6 +178,7 @@ Named volumes, one per stateful concern (never one shared "data" volume, so that
 
 - `postgres-data` — database
 - `laravel-storage` — uploaded files: avatars (slice 8) are the only confirmed contents so far
+- `./legal` (a bind mount, not a volume) — your legal texts; back it up with `.env`
 - `meilisearch-data` — search index (Nusszopf-original; rebuildable from Postgres via reindexing, so arguably lower backup priority than the database — see `docs/deployment/operations.md`)
 
 No shared assets volume — see [above](#why-a-dedicated-nginx-image-not-a-shared-assets-volume).

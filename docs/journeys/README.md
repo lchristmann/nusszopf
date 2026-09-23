@@ -4,7 +4,9 @@ Source: `historical/web-nusszopf/projects/e2e/cypress/integration/*.spec.js` (Cy
 
 **Important structural finding, Confirmed:** `cypress.json` sets `"testFiles": ["main.spec.js"]`, and `main.spec.js` does nothing but set a cookie-preservation rule and `import` the five other spec files (`_landingpage`, `_search`, `_auth`, `_projects`, `_settings`). The leading underscore on those five filenames is a convention to exclude them from Cypress's own file-glob discovery (so they only run when explicitly imported by `main.spec.js`). All five files' tests **share one continuous session and one continuous dataset** — they are not independent, isolated specs; `_auth` creates the account, `_projects` creates/updates/deletes a project using that same logged-in session, `_settings` deletes that same account at the very end. **This is a single, ordered, stateful end-to-end script, not a suite of independent test cases.** Any Playwright rewrite should decide deliberately whether to preserve this "one long story" structure or split it into independent, seeded test cases — record this as an architecture decision, don't silently change it.
 
-## Journey 1 — Landing page CTAs (`_landingpage.spec.js`)
+## Journey 1 — Landing page CTAs (`_landingpage.spec.js`) — implemented, tenth slice
+
+**Nusszopf 2:** step 2 is `tests/E2E/specs/visitor/public-shell.spec.ts` ("Journey 1"); step 3 stays retired (below).
 
 **Actors:** anonymous visitor. **Precondition:** none (fresh visit to `/`).
 

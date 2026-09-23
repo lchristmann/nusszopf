@@ -290,10 +290,9 @@ These four are triggered directly by `web-nusszopf`'s Next.js API routes calling
 - **vCard link:** every footer links to `https://nusszopf.org/contact/nusszopf-vcard.vcf`,
   a static downloadable contact card — confirm in `docs/design` whether this file is served
   from `web-nusszopf/projects/webapp/public/contact/nusszopf-vcard.vcf` (Confirmed: that file
-  exists at that path) and needs to be reproduced as a static asset in the rewrite. **Not yet
-  reproduced** (sixth slice, decision 5): the file hardcodes the *original* project's own
-  contact addresses, which is operator-identity content, not a static brand asset — deferred to
-  slice 10 alongside `Project::NUSSZOPF_CONTACT` becoming configuration.
+  exists at that path) and needs to be reproduced as a static asset in the rewrite. **Done in
+  slice 10**: `/contact/nusszopf-vcard.vcf` is generated from this instance's own addresses
+  (`App\Support\Operator::vcard()`, `NUSSZOPF_CONTACT_EMAIL`), and every footer links it again.
 - **No attachments, no retry/failure-handling logic** are visible in any template or in the
   two API handlers beyond a generic `handleError` catch — SendGrid's own delivery retries
   are relied upon. The rewrite should use Laravel's queued-mail retry/backoff instead and

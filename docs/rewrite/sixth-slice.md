@@ -82,7 +82,8 @@ Manually verified against a real Mailpit send (not only Blade/Feature-test asser
 
 ## Remaining gaps
 
-- The vCard footer link (decision 5) and `Project::NUSSZOPF_CONTACT`/`MAIL_FROM_ADDRESS` staying
+- *(Closed in slice 10: the vCard is generated and linked; the displayed mailbox is `NUSSZOPF_CONTACT_EMAIL`.)*
+  The vCard footer link (decision 5) and `Project::NUSSZOPF_CONTACT`/`MAIL_FROM_ADDRESS` staying
   hardcoded literals — both fold into slice 10's "operator mailbox/identity are configuration" line,
   not new gaps this slice opened.
 - BUG-006 (newsletter copy typo) stays Proposed, not Implemented — its templates are slice 9's.

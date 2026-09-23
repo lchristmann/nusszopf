@@ -47,9 +47,9 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 | BUG-032 | Newsletter / duplicate subscribe            | Low      | Fix                                  | Implemented — ninth slice (2026-09-23), `docs/rewrite/ninth-slice.md` |
 | BUG-033 | Newsletter / unsubscribe-by-email enumeration | Low    | Fix                                  | Implemented — ninth slice (2026-09-23), `docs/rewrite/ninth-slice.md` |
 | BUG-034 | Newsletter / confirm link for a vanished lead | Trivial | Fix                                 | Implemented — ninth slice (2026-09-23), `docs/rewrite/ninth-slice.md` |
-| BUG-035 | SEO / sitemap and robots host               | Low      | Fix                                 | Proposed — tenth slice, `docs/rewrite/tenth-slice.md` |
-| BUG-036 | SEO / `og:url` and Twitter placeholders     | Trivial  | Fix                                 | Proposed — tenth slice, `docs/rewrite/tenth-slice.md` |
-| BUG-037 | SEO / web manifest icon paths               | Trivial  | Fix                                 | Proposed — tenth slice, `docs/rewrite/tenth-slice.md` |
+| BUG-035 | SEO / sitemap and robots host               | Low      | Fix                                 | Implemented — tenth slice (2026-09-23), `docs/rewrite/tenth-slice.md` |
+| BUG-036 | SEO / `og:url` and Twitter placeholders     | Trivial  | Fix                                 | Implemented — tenth slice (2026-09-23), `docs/rewrite/tenth-slice.md` |
+| BUG-037 | SEO / web manifest icon paths               | Trivial  | Fix                                 | Implemented — tenth slice (2026-09-23), `docs/rewrite/tenth-slice.md` |
 
 ---
 

@@ -45,6 +45,10 @@ Source: `ui-library/stories/organisms/Footer/Footer.organism.js`. Three variants
 - **`auth0`** — Vercel badge plus an Auth0 "JWT Auth for open source projects" badge, side by side. **Confirmed**, and confirmed dead specifically within `webapp` (no page there passes `variant="auth0"`) but **live and load-bearing in `auth-login`/`auth-password`** — both apps' shared `Page.js` renders `<Footer variant="auth0" .../>` on every screen. Since Auth0 itself is being replaced (`docs/authentication/README.md`), this specific footer variant (and its Auth0 sponsor badge) does not need to be reproduced in Nusszopf 2's login/register/password screens — it was Auth0-program branding, not a general-purpose Nusszopf footer layout — but the surrounding page-shell pattern (a dedicated, minimal chrome for the auth screens, distinct from the main app's `vercel`-footer chrome) is worth preserving as a design decision if Nusszopf 2's own login/register screens get a visually distinct, minimal shell.
 - **`classy`** — used on Home (`footer={{ variant: 'classy', className: 'bg-steel-200' }}`). Two-row (stacks on mobile, row on `md+`) layout: legal links (Legal Notice / Privacy / Legal Policy, in that order, routing to `/legalNotice`, `/privacy`, `/legalPolicy`) on the left, Instagram icon link (`instagram.com/nuss.zopf`) + Vercel badge on the right.
 
+**Nusszopf 2 (slice 10, `docs/rewrite/tenth-slice.md` decision 5):** `classy` on Home without the Vercel badge;
+every other page's footer is the `vercel` band at its original height with the badge omitted — it states the
+hosting platform, which a self-hosted instance is not (`resources/views/components/footer.blade.php`).
+
 All three sponsor/partner logos (Vercel, Auth0, sponsor badges in the main README) reflect the project's original OSS sponsorship program — **Confirmed** historical fact, not necessarily something Nusszopf 2 needs to reproduce (a product/branding decision, not covered by this doc).
 
 ## Route-level navigation rules (cross-referenced from `docs/design/screens.md`)
