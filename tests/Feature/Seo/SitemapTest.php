@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\RateLimiter;
  */
 beforeEach(function () {
     config(['app.url' => 'https://nuss.example']);
-    RateLimiter::clear(sha1('127.0.0.1'));
 });
 
 function sitemapLocs(string $xml): array
@@ -60,4 +59,13 @@ it('serves robots.txt naming this instance\'s sitemap', function () {
         ->assertOk()
         ->assertHeader('Content-Type', 'text/plain; charset=UTF-8')
         ->assertContent("User-agent: *\nSitemap: https://nuss.example/sitemap.xml\n");
+});
+
+it('keeps its own budget, apart from other throttled routes', function () {
+    foreach (range(1, 10) as $i) {
+        $this->get('/sitemap.xml')->assertOk();
+    }
+
+    expect(RateLimiter::attempts('sitemap'.sha1('|127.0.0.1')))->toBe(10)
+        ->and(RateLimiter::attempts(sha1('|127.0.0.1')))->toBe(0);
 });

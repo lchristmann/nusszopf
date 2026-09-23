@@ -53,7 +53,7 @@ Route::get('/health', function (Request $request, HealthChecker $health) {
 // `robots.txt` and the sitemap (`pages/api/sitemap.js`, rate-limited to 10
 // requests / 15 min per IP as historically) — both on APP_URL (BUG-035).
 Route::get('/robots.txt', RobotsController::class)->name('robots');
-Route::get('/sitemap.xml', SitemapController::class)->middleware('throttle:10,15')->name('sitemap');
+Route::get('/sitemap.xml', SitemapController::class)->middleware('throttle:10,15,sitemap')->name('sitemap');
 
 Route::get('/search', Search::class)->name('search');
 Route::get('/projects/{project}', ProjectDetail::class)->name('projects.show');

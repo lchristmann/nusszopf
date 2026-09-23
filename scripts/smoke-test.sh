@@ -60,6 +60,14 @@ asset="$(curl -s "$BASE/login" | grep -o '/build/assets/[^"]*\.css' | head -1)"
 [ -n "$asset" ] || fail "the login page links no built stylesheet"
 [ "$(curl -s -o /dev/null -w '%{http_code}' "$BASE$asset")" = "200" ] || fail "the built stylesheet $asset is not served"
 
+step "The public shell: Home, robots.txt/sitemap on APP_URL, legal pages from ./legal"
+[ "$(curl -s -o /dev/null -w '%{http_code}' "$BASE/")" = "200" ] || fail "Home is not 200"
+curl -s "$BASE/robots.txt" | grep -qF "Sitemap: $BASE/sitemap.xml" || fail "robots.txt does not name this instance's sitemap"
+curl -s "$BASE/sitemap.xml" | grep -qF "<loc>$BASE/legalNotice</loc>" || fail "the sitemap does not list the static pages on APP_URL"
+curl -s "$BASE/legalNotice" | grep -q 'data-test="legal-not-configured"' || fail "an unconfigured Impressum does not say so"
+printf '## Smoke\n\nSmoke-Test-Impressum\n' > legal/legal-notice.md
+curl -s "$BASE/legalNotice" | grep -q "Smoke-Test-Impressum" || fail "the Impressum does not come from ./legal/legal-notice.md"
+
 step "Uploaded files (avatars) are served by web through the read-only storage mount"
 compose exec -T php-fpm sh -c 'mkdir -p storage/app/public/avatars && echo smoke-test > storage/app/public/avatars/smoke.txt'
 [ "$(curl -s "$BASE/storage/avatars/smoke.txt")" = "smoke-test" ] || fail "web does not serve a file php-fpm wrote to the public disk"
@@ -69,8 +77,9 @@ compose exec -T php-fpm php artisan migrate:status | grep -q "Ran" || fail "no m
 compose exec -T php-fpm sh -c 'test -f bootstrap/cache/config.php && test -f bootstrap/cache/routes-v7.php' || fail "the framework caches were not built"
 
 step "Debug mode is off and details are not leaked"
-[ "$(curl -s -o /dev/null -w '%{http_code}' "$BASE/no-such-page")" = "404" ] || fail "an unknown page is not a plain 404"
+[ "$(curl -s -o /dev/null -w '%{http_code}' "$BASE/no-such-page")" = "404" ] || fail "an unknown page is not a 404"
 curl -s "$BASE/no-such-page" | grep -qi "stack trace\|vendor/laravel" && fail "an error page leaks debug output"
+curl -s "$BASE/no-such-page" | grep -q "404 – Nusszopf verknetet..." || fail "an unknown page does not show the Nusszopf error page"
 
 step "Dependencies, scheduler and queue worker report healthy (they heartbeat once a minute)"
 i=0

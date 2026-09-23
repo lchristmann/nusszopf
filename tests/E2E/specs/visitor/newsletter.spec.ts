@@ -88,5 +88,6 @@ test('answers an unknown or tampered link with the 404 page', async ({ page }) =
         expect(response?.status()).toBe(404);
         await expect(page.getByText('Juhuu! Nussige News!')).toHaveCount(0);
         await expect(page.getByText('Schade Marmelade')).toHaveCount(0);
+        await expect(page.getByRole('heading', { name: '404 – Nusszopf verknetet...' })).toBeVisible();
     }
 });
