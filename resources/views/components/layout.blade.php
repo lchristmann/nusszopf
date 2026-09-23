@@ -1,5 +1,8 @@
 @props([
-    'title' => 'Nusszopf',
+    // `Page.js` SEO props (`seo.data.js` defaults); project detail passes
+    // its title and goal.
+    'title' => 'Nusszopf – Netzwerk für gemeinsame Ideen und Projekte',
+    'description' => 'Setze mehr Ideen mit passenden Mitstreiter:innen, Ressourcen und Wissen um. Mach mit bei spannenden Projekten und werde Teil der Nusszopfgemeinschaft!',
     'hideNavHeader' => false,
     'goBackUri' => null,
     // Historical `Page` props: `className` on <main> and `footer.className`
@@ -18,8 +21,40 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    @php
+        // `Page.js`/next-seo: lodash `truncate` (60 / 150, "..." included),
+        // canonical = domain + path (BUG-036: `og:url` is the same absolute
+        // URL, not the bare path).
+        $truncate = fn (string $text, int $length) => mb_strlen($text) > $length ? mb_substr($text, 0, $length - 3).'...' : $text;
+        $domain = rtrim((string) config('app.url'), '/');
+        $path = request()->getRequestUri();
+        $canonical = $path === '/' ? $domain : $domain.$path;
+    @endphp
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="msapplication-TileColor" content="#000000" />
+    <meta name="msapplication-config" content="/favicons/browserconfig.xml" />
+    <link href="/favicons/apple-touch-icon.png" rel="apple-touch-icon" sizes="180x180" />
+    <link href="/favicons/favicon-32x32.png" rel="icon" sizes="32x32" type="image/png" />
+    <link href="/favicons/favicon-16x16.png" rel="icon" sizes="16x16" type="image/png" />
+    <link href="/favicons/site.webmanifest" rel="manifest" />
+    <link color="#000000" href="/favicons/safari-pinned-tab.svg" rel="mask-icon" />
+    <link href="/favicons/favicon.ico" rel="shortcut icon" />
+    <title>{{ $truncate($title, 60) }}</title>
     <meta name="robots" content="{{ app()->isProduction() && ! $noindex ? 'index,follow' : 'noindex,nofollow' }}" />
-    <title>{{ $title }}</title>
+    <meta name="googlebot" content="{{ app()->isProduction() && ! $noindex ? 'index,follow' : 'noindex,nofollow' }}" />
+    <meta name="description" content="{{ $truncate($description, 150) }}" />
+    <link rel="canonical" href="{{ $canonical }}" />
+    <meta property="og:title" content="{{ $title }}" />
+    <meta property="og:description" content="{{ $description }}" />
+    <meta property="og:url" content="{{ $canonical }}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="de_DE" />
+    <meta property="og:image" content="{{ $domain }}/images/og-image.png" />
+    <meta property="og:image:alt" content="{{ $description }}" />
+    <meta property="og:image:width" content="1648" />
+    <meta property="og:image:height" content="863" />
+    <meta name="twitter:card" content="summary_large_image" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>

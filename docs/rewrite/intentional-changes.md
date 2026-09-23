@@ -659,7 +659,7 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 
 ---
 
-### Sitemap, `robots.txt` and Open Graph URLs use this instance's own address (BUG-035, BUG-036)
+### Sitemap, `robots.txt` and Open Graph URLs use this instance's own address (BUG-035, BUG-036, BUG-037)
 
 - Status: Approved — roadmap-authorized (`docs/rewrite/master-roadmap.md`, "Slice 10"); implemented in slice 10
 - Date: 2026-09-23
@@ -668,7 +668,8 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 - Why it changes: see `docs/rewrite/bugs.md` BUG-035/BUG-036 — wrong host for every other deployment,
   an invalid relative `og:url`, and documentation placeholders shipped as data.
 - New behavior: sitemap, `robots.txt`, canonical and `og:url` are built from `APP_URL`; the two
-  placeholder Twitter tags are not rendered. Everything else (the three static URLs plus public projects,
+  placeholder Twitter tags are not rendered; the web manifest and `browserconfig.xml` name the icons at
+  `/favicons/…`, where they actually are (BUG-037). Everything else (the three static URLs plus public projects,
   `lastmod`, the 10 / 15 min throttle, title/description truncation, `de_DE`) is unchanged.
 - Affected screens: none visible; `/sitemap.xml`, `/robots.txt`, every page's `<head>`.
 - Affected domain/workflows: none. Migration implications: none.

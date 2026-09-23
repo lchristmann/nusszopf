@@ -49,6 +49,7 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 | BUG-034 | Newsletter / confirm link for a vanished lead | Trivial | Fix                                 | Implemented — ninth slice (2026-09-23), `docs/rewrite/ninth-slice.md` |
 | BUG-035 | SEO / sitemap and robots host               | Low      | Fix                                 | Proposed — tenth slice, `docs/rewrite/tenth-slice.md` |
 | BUG-036 | SEO / `og:url` and Twitter placeholders     | Trivial  | Fix                                 | Proposed — tenth slice, `docs/rewrite/tenth-slice.md` |
+| BUG-037 | SEO / web manifest icon paths               | Trivial  | Fix                                 | Proposed — tenth slice, `docs/rewrite/tenth-slice.md` |
 
 ---
 
@@ -681,4 +682,15 @@ directly from `web-nusszopf/projects/webapp/src/containers/user/ProjectForm/*` a
 - Classification: **Fix**
 - Intended Nusszopf 2 behavior: `og:url` equals the canonical URL; the two placeholder tags are omitted
   (the `twitter:card` type stays).
+- Regression test: `tests/Feature/Seo/SeoTagsTest.php`.
+
+### BUG-037 — The web manifest and `browserconfig.xml` point at icons that do not exist
+
+- Affected area: SEO/PWA metadata, `public/favicons/site.webmanifest`, `public/favicons/browserconfig.xml`
+- Historical behavior: both files reference `/android-chrome-192x192.png`, `/android-chrome-512x512.png`
+  and `/mstile-150x150.png` at the site root, while the files are served from `/favicons/`.
+- Evidence: `webapp/public/favicons/*` (no copies at the root of `public/`).
+- Severity/impact: Trivial — "add to home screen" and Windows tiles get 404s instead of the icons.
+- Classification: **Fix**
+- Intended Nusszopf 2 behavior: the same files with `/favicons/…` paths.
 - Regression test: `tests/Feature/Seo/SeoTagsTest.php`.

@@ -30,6 +30,7 @@ use Throwable;
 #[Layout('components.layout', [
     'mainClass' => 'bg-steel-100 text-steel-700',
     'footerBg' => 'bg-steel-100',
+    'noindex' => true,
 ])]
 class Profile extends Component
 {

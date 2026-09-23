@@ -1,5 +1,5 @@
 {{-- `pages/newsletter/subscribe/[token].js`, `newsletterData.subscribeConfirm`. --}}
-<x-layout title="Nusszopf" main-class="bg-white sm:bg-steel-100" footer-bg="bg-white sm:bg-steel-100" noindex>
+<x-layout main-class="bg-white sm:bg-steel-100" footer-bg="bg-white sm:bg-steel-100" noindex>
     <x-framed-card class="bg-white text-steel-700" data-test="newsletter-subscribe-confirm">
         <x-newsletter-logo />
         <x-text as="h1" variant="textLgSemi" class="mt-10 mb-5 sm:mt-12">Juhuu! Nussige News!</x-text>

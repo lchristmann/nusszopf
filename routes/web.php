@@ -8,6 +8,8 @@ use App\Http\Controllers\Auth\UnblockLoginController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\LegalPageController;
 use App\Http\Controllers\Newsletter\ConfirmationController;
+use App\Http\Controllers\Seo\RobotsController;
+use App\Http\Controllers\Seo\SitemapController;
 use App\Livewire\Auth\ForgotPassword;
 use App\Livewire\Auth\LoginRegister;
 use App\Livewire\Auth\ResetPassword;
@@ -47,6 +49,11 @@ Route::get('/health', function (Request $request, HealthChecker $health) {
 
     return response()->json($body, $healthy ? 200 : 503);
 })->withoutMiddleware([StartSession::class, ShareErrorsFromSession::class, PreventRequestForgery::class])->name('health');
+
+// `robots.txt` and the sitemap (`pages/api/sitemap.js`, rate-limited to 10
+// requests / 15 min per IP as historically) — both on APP_URL (BUG-035).
+Route::get('/robots.txt', RobotsController::class)->name('robots');
+Route::get('/sitemap.xml', SitemapController::class)->middleware('throttle:10,15')->name('sitemap');
 
 Route::get('/search', Search::class)->name('search');
 Route::get('/projects/{project}', ProjectDetail::class)->name('projects.show');

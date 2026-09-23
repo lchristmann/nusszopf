@@ -223,6 +223,10 @@ class ProjectDetail extends Component
             'views' => $project->analytics()->value('views'),
             // `requests(order_by: { created_at: desc })`, through the BUG-002 scope like every read.
             'requests' => $project->requests()->visible()->orderByDesc('created_at')->orderByDesc('id')->get(),
+        ])->layoutData([
+            // `pages/projects/[id].js`: `<Page title={title} description={goal}>`.
+            'title' => $project->title,
+            'description' => (string) $project->goal,
         ]);
     }
 }

@@ -33,6 +33,7 @@ use Throwable;
     'goBackUri' => '/user/projects',
     'mainClass' => 'bg-white text-lilac-800 lg:bg-steel-100',
     'footerBg' => 'bg-steel-100',
+    'noindex' => true,
 ])]
 class ProjectEdit extends Component
 {

@@ -55,9 +55,12 @@ it('answers a private project exactly like a missing one', function () {
     // Livewire prints its styles and scripts once per process; a real request starts fresh.
     app(FrontendAssets::class)->hasRenderedScripts = false;
     app(FrontendAssets::class)->hasRenderedStyles = false;
-    $missingResponse = $this->get('/projects/'.Str::uuid())->assertNotFound();
+    $missingId = (string) Str::uuid();
+    $missingResponse = $this->get('/projects/'.$missingId)->assertNotFound();
 
-    expect($privateResponse->getContent())->toBe($missingResponse->getContent());
+    // Identical apart from the canonical URL, which echoes each request's own path.
+    expect(str_replace($private->id, '{id}', $privateResponse->getContent()))
+        ->toBe(str_replace($missingId, '{id}', $missingResponse->getContent()));
     assertErrorPage($privateResponse, '404');
 });
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\User;
 use Illuminate\Support\Facades\File;
 
 /**
@@ -74,7 +75,7 @@ it('sends the Privacy back chevron home, or back in history with ?back', functio
 });
 
 it('links Profile\'s newsletter consent to Privacy with ?back=history, as historically', function () {
-    $this->actingAs(App\Models\User::factory()->create())
+    $this->actingAs(User::factory()->create())
         ->get(route('profile'))
         ->assertSee('href="'.url('/privacy?back=history').'"', false);
 });
