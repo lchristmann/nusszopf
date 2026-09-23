@@ -36,4 +36,18 @@ return [
     */
     'heartbeat_max_age' => 180,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Newsletter consent version
+    |--------------------------------------------------------------------------
+    |
+    | Stored with every newsletter subscription as part of its consent record
+    | (decision A-1): which version of the privacy text the person agreed to.
+    | The operator owns that text (decision A-4), so the operator names the
+    | version — change it whenever the Datenschutz text changes.
+    |
+    */
+
+    'newsletter_consent_version' => env('NEWSLETTER_CONSENT_VERSION', '1'),
+
 ];
