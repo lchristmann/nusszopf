@@ -55,13 +55,14 @@ Fixed (two commits, `d8627a9` and `9b81dad`, plus `b46ffdc` for the edit skeleto
 The accepted differences, each tied to an existing decision, are listed in
 `docs/testing/visual-regression.md`, "Accepted differences".
 
-## Pending (human)
+## Human review
 
-The roadmap requires a person to review the diffs. To do so, run the three commands in
-`docs/testing/visual-regression.md` → "Reviewing against the historical app" (the side-by-side images
-are written to a folder of your choice), or open `tests/Visual/reference/` next to
-`tests/Visual/baselines/`. Record the result here.
+**Approved by the maintainer on 2026-09-23.** The maintainer compared the historical captures
+(`tests/Visual/reference/`) with the Nusszopf 2 baselines (`tests/Visual/baselines/`, commit `16348a1`)
+and accepted the result, including the accepted differences listed in
+`docs/testing/visual-regression.md`. The magenta box in the screenshots is the mask over the visitor
+counter, which changes with every visit.
 
 ## Status
 
-**Done (automated part).** The maintainer's review of the side-by-sides is pending.
+**Done.**
