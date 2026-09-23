@@ -16,7 +16,7 @@
     </div>
     <div class="mt-5">
         <x-checkbox wire:model="privacy" name="privacy" data-test="checkbox_newsletter-privacy" aria-label="Bestätigung der Datenschutzerklärung" class="whitespace-normal">
-            Ich stimme den <a href="{{ route('privacy') }}" title="Zum Datenschutz" aria-label="Zum Datenschutz" class="underline">Datenschutzbestimmungen</a> zu
+            Ich stimme den <a href="{{ route('privacy') }}" title="Zum Datenschutz" aria-label="Zum Datenschutz" class="nz-text-sm cursor-pointer text-current border-b-2 active:border-current hover:border-current">Datenschutzbestimmungen</a> zu
         </x-checkbox>
     </div>
     <x-input-error :message="$errors->first('privacy')" class="!ml-8" />

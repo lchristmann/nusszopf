@@ -25,20 +25,9 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
-/*
-|--------------------------------------------------------------------------
-| Home
-|--------------------------------------------------------------------------
-|
-| The historical landing page (docs/design/screens.md, "Home") is out of
-| scope for this first vertical slice (docs/rewrite/first-slice.md) — it is
-| a large CMS-driven marketing page, not part of the acceptance criteria.
-| Redirecting to /search keeps the app navigable without inventing interim
-| marketing-page UI. This is temporary scaffolding, not a product decision
-| that Home is unnecessary.
-|
-*/
-Route::redirect('/', '/search')->name('home');
+// Home (docs/design/screens.md, "Home"; docs/rewrite/tenth-slice.md) — static
+// apart from the newsletter form it embeds.
+Route::view('/', 'home')->name('home');
 
 /*
 | Dependency health for operators and monitoring (docs/deployment/operations.md). `/up` is the

@@ -27,10 +27,7 @@ it('deletes the account, its projects, requests and analytics', function () {
 
     Livewire::actingAs($user)->test(Profile::class)
         ->call('deleteAccount')
-        // Not `route('home')`: it is itself a redirect to `/search`
-        // (routes/web.php scaffolding), which would swallow the flashed
-        // toast before anything renders it.
-        ->assertRedirect(route('search'));
+        ->assertRedirect(route('home'));
 
     expect(User::find($user->id))->toBeNull()
         ->and(Project::find($project->id))->toBeNull()

@@ -54,7 +54,8 @@ test('deletes the account', async ({ page }) => {
     page.once('dialog', (dialog) => void dialog.accept());
     await page.getByTestId('btn_delete-account_settings-page').click();
 
-    await expect(page).toHaveURL(/\/search$/);
+    // Logout lands on Home, as historically (`/api/logout`).
+    await expect(page).toHaveURL((url) => url.pathname === '/');
     await expect(page.getByText('Dein Account wurde gelöscht!')).toBeVisible();
 
     // Logged out for real — the profile page (and everything else that

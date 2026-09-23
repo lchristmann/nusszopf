@@ -157,12 +157,8 @@ class Profile extends Component
 
         session()->flash('toast', ['type' => 'success', 'message' => 'Dein Account wurde gelöscht!']);
 
-        // Not `route('home')`: `/` is itself a redirect to `/search`
-        // (routes/web.php, temporary scaffolding until Home exists — slice
-        // 10), and a flashed session value only survives *one* subsequent
-        // request — routing through that extra hop would lose the toast
-        // before anything ever renders it.
-        $this->redirectRoute('search');
+        // `logout()` → `/api/logout`, which lands on Home.
+        $this->redirectRoute('home');
     }
 
     public function render(): View
