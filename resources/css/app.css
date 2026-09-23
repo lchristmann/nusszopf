@@ -332,3 +332,46 @@
 .nz-avatar-cropper .cropper-view-box {
     outline: 1px solid rgba(255, 255, 255, 0.75);
 }
+
+/*
+ * Legal pages (`pages/{legalNotice,legalPolicy,privacy}.js`): the operator's
+ * Markdown mapped onto the historical section styles — headings `titleSmSemi
+ * mb-3` with `mb-10` between sections, body `textSm`, `list-decimal pl-4` /
+ * `list-disc pl-6` lists, `steel` links with the medium underline.
+ */
+.nz-legal {
+    @apply text-lg;
+}
+.nz-legal :is(h2, h3, h4) {
+    @apply mb-3 text-xl font-semibold leading-snug;
+}
+.nz-legal > :is(h2, h3, h4):not(:first-child) {
+    @apply mt-10;
+}
+.nz-legal > :is(p, ul, ol) + :is(p, ul, ol) {
+    @apply mt-3;
+}
+.nz-legal ol {
+    @apply pl-4 list-decimal;
+}
+.nz-legal ul {
+    @apply pl-6 list-disc;
+}
+.nz-legal ol > li {
+    @apply mt-3;
+}
+.nz-legal ul > li {
+    @apply mt-1;
+}
+.nz-legal li > :is(ul, ol) {
+    @apply pl-5;
+}
+.nz-legal a {
+    @apply border-b-2 cursor-pointer border-steel-700 bg-steel-100 text-steel-700;
+}
+.nz-legal em {
+    @apply italic;
+}
+.nz-legal strong {
+    @apply font-semibold;
+}

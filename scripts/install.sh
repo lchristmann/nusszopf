@@ -47,6 +47,8 @@ set_value() {
 }
 
 cp .env.production.example .env
+# Your Impressum, Rechtliches and Datenschutz texts go here (mounted by docker-compose.yaml).
+mkdir -p legal
 chmod 600 .env
 set_value APP_URL "$APP_URL"
 set_value APP_KEY "base64:$(openssl rand -base64 32)"
@@ -74,7 +76,11 @@ Nusszopf is configured in $(pwd):
   .env                 secrets were generated — back this file up (it holds APP_KEY)
   docker-compose.yaml  the stack
 
-Optionally edit .env now: MAIL_*, LOCATIONIQ_KEY, APP_BIND=127.0.0.1 when a reverse proxy runs on this host.
+Optionally edit .env now: MAIL_*, NUSSZOPF_CONTACT_EMAIL, LOCATIONIQ_KEY, APP_BIND=127.0.0.1 when a reverse
+proxy runs on this host.
+
+Put your own legal texts into legal/ as legal-notice.md (Impressum), legal-policy.md (Rechtliches) and
+privacy.md (Datenschutz). Until then those pages say they are not configured (docs/deployment/README.md).
 
 Then start it and check it:
   docker compose up -d

@@ -39,7 +39,7 @@
                                 <form wire:submit="subscribeNewsletter">
                                     <x-text variant="textSm" class="mb-2">Wir versorgen Dich mit backfrischen Nusszopf­neuigkeiten, inspirierenden Projekten und allem, was uns sonst noch so einfällt.</x-text>
                                     <x-checkbox wire:model="newsletterPrivacy" name="newsletterPrivacy" data-test="checkbox_newsletter_settings-page" aria-label="Datenschutzerklärung" class="whitespace-normal">
-                                        Ich stimme den <a href="{{ route('privacy') }}?back=1" title="Zum Datenschutz" aria-label="Zum Datenschutz" class="italic underline">Datenschutzbedingungen</a> zu
+                                        Ich stimme den <a href="{{ route('privacy', ['back' => 'history']) }}" title="Zum Datenschutz" aria-label="Zum Datenschutz" class="italic underline">Datenschutzbedingungen</a> zu
                                     </x-checkbox>
                                     <x-input-error :message="$errors->first('newsletterPrivacy')" class="!mt-1 mb-3 !ml-6" />
                                     <x-button

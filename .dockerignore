@@ -16,3 +16,5 @@ storage/framework/sessions/*
 storage/framework/views/*
 test-results
 playwright-report
+# An operator's own legal texts (docker-compose.yaml mounts ./legal at run time instead)
+legal

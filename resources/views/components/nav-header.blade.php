@@ -17,7 +17,12 @@
                 <x-icon name="nusszopf-header-logo" :size="25" class="text-steel-100 lg:hidden" />
                 <x-icon name="nusszopf-header-logo" :size="30" class="hidden text-steel-100 lg:block" />
             </a>
-            @if ($goBackUri)
+            {{-- `goBackUri === 'back'` is `router.back()` (Privacy with `?back`). --}}
+            @if ($goBackUri === 'back')
+                <a href="{{ route('home') }}" onclick="history.back(); return false;" data-test="btn_go-back_nav-header" aria-label="Zurück" title="Zurück" class="ml-6 focus:outline-none">
+                    <x-icon name="chevron-left" :size="28" :stroke-width="2" />
+                </a>
+            @elseif ($goBackUri)
                 <a href="{{ $goBackUri }}" data-test="btn_go-back_nav-header" aria-label="Zurück" title="Zurück" class="ml-6 focus:outline-none">
                     <x-icon name="chevron-left" :size="28" :stroke-width="2" />
                 </a>

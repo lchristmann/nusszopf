@@ -7,6 +7,8 @@
     // `bg-white text-lilac-800 lg:bg-steel-100` / `bg-steel-100`.
     'mainClass' => '',
     'footerBg' => 'bg-steel-200',
+    // `footer.variant`: `classy` on Home only (docs/design/navigation.md).
+    'footerVariant' => 'default',
     // Historical `Page`'s `noindex` prop; the newsletter pages set it.
     'noindex' => false,
 ])
@@ -42,7 +44,7 @@
         {{ $slot }}
     </main>
 
-    <x-footer :bg="$footerBg" />
+    <x-footer :bg="$footerBg" :variant="$footerVariant" />
 
     <x-toast-container />
 

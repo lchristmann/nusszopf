@@ -22,6 +22,9 @@ x-app: &app
     - .env
   volumes:
     - laravel-storage:/var/www/storage/app
+    # Your Impressum, Rechtliches and Datenschutz texts (legal-notice.md, legal-policy.md,
+    # privacy.md) — see docs/deployment/README.md, "Legal pages". Edits show up immediately.
+    - ./legal:/var/www/legal:ro
 
 services:
   # Serves the static assets and passes everything else to php-fpm. It is the only service that

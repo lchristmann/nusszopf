@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\ResendVerificationController;
 use App\Http\Controllers\Auth\UnblockLoginController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\LegalPageController;
 use App\Http\Controllers\Newsletter\ConfirmationController;
 use App\Livewire\Auth\ForgotPassword;
 use App\Livewire\Auth\LoginRegister;
@@ -68,7 +69,11 @@ Route::get('/newsletter/subscribe/{token}', [ConfirmationController::class, 'sub
 Route::get('/newsletter/unsubscribe/lead', UnsubscribeByEmail::class)->name('newsletter.unsubscribe');
 Route::get('/newsletter/unsubscribe/{token}', [ConfirmationController::class, 'unsubscribe'])->name('newsletter.unsubscribe.confirm');
 
-Route::get('/privacy', fn () => view('legal.pending', ['title' => 'Datenschutz']))->name('privacy');
+// Impressum, Rechtliches, Datenschutz at their historical paths — the
+// operator's own text (decision A-4, App\Support\LegalText).
+Route::get('/legalNotice', [LegalPageController::class, 'notice'])->name('legal.notice');
+Route::get('/legalPolicy', [LegalPageController::class, 'policy'])->name('legal.policy');
+Route::get('/privacy', [LegalPageController::class, 'privacy'])->name('privacy');
 
 // `public/contact/nusszopf-vcard.vcf`, generated from this instance's own
 // addresses (App\Support\Operator, decision A-5).
