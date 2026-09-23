@@ -10,6 +10,7 @@ This directory documents the full lifecycle:
 - [`docker-images.md`](docker-images.md) — image naming, tagging, registry, build/publish
 - [`upgrades.md`](upgrades.md) — the operator-facing upgrade procedure
 - [`breaking-changes.md`](breaking-changes.md) — how breaking changes are flagged and handled
+- [`parity/`](parity/README.md) — the finish-line parity report (roadmap §7.7): one page per phase P-1…P-16, then the maintainer sign-off
 
 ## Process reference
 

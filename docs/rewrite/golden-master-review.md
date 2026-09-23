@@ -61,14 +61,14 @@ palette/type scale: `../historical/web-nusszopf/tailwind.config.js` (the real ro
 |---|---|---|---|---|---|
 | Structure/background/sticky | `NavHeader.organism.js` — `bg-steel-400 text-steel-800`, `sticky top-0`, `h-10 lg:h-12`, hamburger-triggered dropdown, no separate desktop link row | `nav-header.blade.php` | None on structure/background/height/sticky/single-hamburger-menu-at-every-breakpoint | Match | None |
 | Top-bar action buttons | Icon-only (Feather `Search`, a custom `Nuss` logo-mark icon for "my projects"), no text labels in the always-visible row | Text labels ("Suche", "Meine Projekte") instead of icons; hamburger rendered as a Unicode `☰` character instead of Feather's `Menu` glyph; "go back" rendered as a Unicode `←` instead of `ChevronLeft` | **Real, visible discrepancy** — the always-visible bar looks completely different (a text-driven nav vs. a minimal icon bar) | Implementation discrepancy | **Not fixed** — needs an icon-asset strategy (see below); flagging only |
-| Dropdown menu items | Suche, (create project, if `mode==='internal'` — always true in-app), Meine Projekte / Einloggen-Registrieren, Ausloggen (warning-colored) | Same item set, same conditional auth/guest branching | None in content/order; profile/"Settings" item correctly absent (no profile screen exists yet this slice) | Match / Intentional scaffolding | None |
+| Dropdown menu items | Suche, (create project, if `mode==='internal'` — always true in-app), Meine Projekte / Einloggen-Registrieren, Ausloggen (warning-colored) | Same item set, same conditional auth/guest branching | None in content/order; profile/"Settings" item correctly absent (no profile screen exists yet this slice) | Match (closed: the "Account" item arrived with Profile, slice 8) | None |
 | Scroll shadow | `hasScrolled` adds a `shadow` class once the page is scrolled | Not implemented | Minor, JS-only micro-interaction | Implementation discrepancy (low priority) | Not fixed — flagging only |
 
 ### Footer
 
 | Area | Historical reference | Implementation | Discrepancy | Classification | Action |
 |---|---|---|---|---|---|
-| Variant applicability | `Footer.organism.js` has `vercel`/`auth0`/`classy` variants; none of this slice's screens (Search, Project detail, My Projects, Login) map to a directly-evidenced footer variant in the archaeology read so far | `footer.blade.php` — a bare `© {year} Nusszopf` line, explicitly self-documented in-code as deliberate minimal scaffolding (legal routes largely don't exist yet) | Legitimate, already-documented gap, not a silent invention | Intentional scaffolding | None — already correctly self-documented; revisit once `/legalNotice`/`/legalPolicy` routes exist |
+| Variant applicability | `Footer.organism.js` has `vercel`/`auth0`/`classy` variants; none of this slice's screens (Search, Project detail, My Projects, Login) map to a directly-evidenced footer variant in the archaeology read so far | `footer.blade.php` — a bare `© {year} Nusszopf` line, explicitly self-documented in-code as deliberate minimal scaffolding (legal routes largely don't exist yet) | Legitimate, already-documented gap, not a silent invention | ~~Intentional scaffolding~~ Closed in slice 10 | Done — `default`/`classy` variants reproduced (`tenth-slice.md`) |
 
 ### Frame / FramedGridCard / FramedCard
 
@@ -176,11 +176,11 @@ the first-slice review used.
 | Rich-text rendering | `serializeJSX` | `RichText::toHtml` | None (https forcing, classes reproduced) | Match | None |
 | Edit: views, per-view save, dirty/confirm, delete | `edit.js`, `EditProjectViews/*` | `ProjectEdit` | None | Match | None |
 | Edit: owner-only, 404 | BUG-021 | `ProjectEdit::mount()` | (already a fix) | Historical bug fix | BUG-021 |
-| Detail: header, body sections, requests column, avatar, banner | `[id].js`, `Banner.js`, `Avatar` | `project-detail.blade.php` | See scaffolding table | Match / Intentional scaffolding | None |
+| Detail: header, body sections, requests column, avatar, banner | `[id].js`, `Banner.js`, `Avatar` | `project-detail.blade.php` | See scaffolding table | Match (scaffolds closed in slices 3, 5, 6, 8) | None |
 | Copy typos | `project-form.data.js`, `edit-projects-views.data.js` | — | "Peronen", "gepeichert" corrected | Historical bug fix | BUG-025 |
 | Requests step/view, request cards, request dialog | `RequestsStep.js`, `RequestsView.js` | inert button + empty state (second slice) → the full feature (third slice, `third-slice.md`) | — | Match (was intentional scaffolding) | Done |
-| ContactDialog (contact via Nusszopf) | `ContactDialog.js` | `mailto:mail@nusszopf.org` | Out of scope (server e-mail) | Intentional scaffolding | E-mail slice |
-| VisitorCounter, "Projekt melden" | `[id].js` | absent | Out of scope | Intentional scaffolding | Later slice |
+| ContactDialog (contact via Nusszopf) | `ContactDialog.js` | `mailto:mail@nusszopf.org` | Out of scope (server e-mail) | ~~Intentional scaffolding~~ Closed in slice 6 | Done |
+| VisitorCounter, "Projekt melden" | `[id].js` | absent | Out of scope | ~~Intentional scaffolding~~ Closed in slice 5 | Done |
 
 ## Visual comparison
 
@@ -200,11 +200,11 @@ the first-slice review used.
 | Combobox (search/X icon, popover, hover/selected option) | `Combobox.organism.js` | `project-form/location.blade.php` | None | Match | None |
 | Project detail header (title, goal, MapPin/Calendar rows, Kontaktieren/Teilen `small` buttons, responsive stacking) | `[id].js` | `project-detail.blade.php` | None | Match | None |
 | Project detail body (section titles `textLg`, `text-lg` rich text, requests column, `row-start-1` mobile ordering) | `[id].js` | same | None | Match | None |
-| Author block | `Avatar.molecule.js` (`project`) | initial-on-grey circle | External image service dropped | Intentional scaffolding | Avatar slice |
+| Author block | `Avatar.molecule.js` (`project`) | initial-on-grey circle | External image service dropped | ~~Intentional scaffolding~~ Closed in slice 8 (uploaded avatar; the circle stays the no-picture fallback, `intentional-changes.md`) | Done |
 | Banner close icon | `Banner.js` (`X`, aria "Information ausblenden") | `<x-icon name="x">` | Was a Unicode ×, aria "Banner schließen" | Implementation discrepancy | **Fixed** |
 | Toast stacking (`opacity-50` on older toasts) and enter animation | `Toasts.service.js` | `app.js`, `app.css` | Was missing (first-slice follow-up #3) | Implementation discrepancy | **Fixed** |
 | Toast "loading" then result | `Toasts.service.js` | `nzToast` | None — nothing replaces a toast historically; all close after 3 s | Match | Doc corrected (`states.md`) |
-| Footer (sponsor badges) | `Footer.organism.js` | one-line footer | Documented minimal scaffolding | Intentional scaffolding | Unchanged |
+| Footer (sponsor badges) | `Footer.organism.js` | one-line footer | Documented minimal scaffolding | ~~Intentional scaffolding~~ Closed in slice 10 (Vercel badge Replaced) | Done |
 | Scroll shadow on the sticky nav | `NavHeader.organism.js` | absent | Low-priority micro-interaction | Implementation discrepancy | Not fixed — not on a Slice 2 screen's critical path |
 | Search scroll-to-top button, login password reveal | first-slice review | absent | Not Slice 2 screens | Implementation discrepancy | Not fixed — outside this slice |
 

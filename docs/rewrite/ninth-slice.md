@@ -71,8 +71,8 @@ against the historical `FramedCard` layout (big logo, headings, copy, buttons).
 
 ## Remaining gaps
 
-- The public sign-up form has no page until Home exists (slice 10); it is covered by Feature tests only.
-- An invalid link shows the framework's plain 404 page until slice 10 builds the historical `ErrorPage`.
+- ~~The public sign-up form has no page until Home exists (slice 10)~~ — closed in slice 10 (Home places it; E2E in `public-shell.spec.ts`).
+- ~~An invalid link shows the framework's plain 404 page~~ — closed in slice 10 (historical `ErrorPage`).
 - No "link expired" message (Preserve — historically a bare 404 too, `docs/design/states.md`).
 - The throttle budget is per IP and shared, as historically; many visitors behind one NAT share it.
 - Confirming via GET means a mail scanner that prefetches links could confirm a subscription — the same

@@ -168,7 +168,7 @@ service, never the live API.
 | ~~Wizard step 3 and edit view "Gesuche": inert button, empty state~~ | Removed by the third slice (`third-slice.md`) | — |
 | ~~Detail: "Kontaktieren" (on the project and in a request's dialog) is a `mailto:` for every project; for "Über Nusszopf" it goes to `mail@nusszopf.org`~~ | Removed by the sixth slice (`sixth-slice.md`) | — |
 | ~~Detail: no visitor counter, no "Projekt melden" link~~ | Removed by the fifth slice (`fifth-slice.md`) | — |
-| Author avatar is an initial-on-grey circle (same colors) instead of the ui-avatars.com image | External service dropped (self-hosting); avatar upload is out of scope | Avatar slice |
+| ~~Author avatar is an initial-on-grey circle (same colors) instead of the ui-avatars.com image~~ | Uploaded avatars arrived in the eighth slice; the circle remains only as the no-picture fallback (`intentional-changes.md`) | — |
 
 ## Spec corrections made while implementing
 

@@ -97,7 +97,7 @@ Actual search behavior in the historical product is exercised **only incidentall
 > **Nusszopf 2:** both paths below are now double opt-in (BUG-011, decision A-1) and there is no list-sync job
 > (decision A-6). Covered by `tests/E2E/specs/visitor/newsletter.spec.ts`: registration checkbox → mailbox → confirm →
 > unsubscribe by address → mailbox → confirm; Profile subscribe → mailbox → confirm → Profile unsubscribe; unknown or
-> tampered links → 404. The public Home form itself is driven by Feature tests until Home exists (slice 10).
+> tampered links → 404. The public Home form is covered by `tests/E2E/specs/visitor/public-shell.spec.ts` since slice 10.
 > The historical description follows unchanged.
 
 

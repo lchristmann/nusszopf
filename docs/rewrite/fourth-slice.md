@@ -72,6 +72,6 @@ journey ends at the detail page's `mailto:` scaffold until then), My Projects (s
 ## Remaining gaps
 
 - Masonry ordering (decision 7), to be judged in the parity audit.
-- The contact-from-result journey ends at the `mailto:` scaffold until slice 6.
+- ~~The contact-from-result journey ends at the `mailto:` scaffold until slice 6.~~ Closed in slice 6.
 - The recovery E2E needs the reindex command and Meilisearch's URL in the environment (CI sets them; locally it is skipped
   unless `E2E_REINDEX_COMMAND`/`E2E_MEILISEARCH_URL` are given, `docs/testing/README.md`).

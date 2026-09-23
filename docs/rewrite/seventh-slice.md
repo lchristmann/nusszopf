@@ -39,7 +39,7 @@ below); breached-password detection (register C2, deferred indefinitely); Apple 
 | 9 | New accounts from Google get a generated username (Google's `nickname`/`name`, sanitized to the same no-whitespace/15-char rule as manual registration, numeric suffix on collision) | **New functionality**, Inferred | Auth0's own nickname derivation was platform-internal and unrecoverable; this is a reasonable, documented engineering choice, not a guess presented as fact |
 | 10 | A password-visibility (eye/eye-off) toggle (`<x-password-field>`) was added to **every** password field, including the two that already existed from the first slice (login, register) | **Fidelity catch-up**, Inferred positioning | `docs/design/components.md` lists `InputGroup` as "Listed, not Read" — the historical pattern (`LoginForm.js`, `SignUpForm.js`, `PasswordForm.js` all pair every password field with this toggle) is reproduced structurally (Alpine `x-data`, no new JS dependency), not pixel-traced, since no component archaeology pass measured its exact geometry |
 | 11 | `NavHeader mode="external"` / `Footer variant="auth0"` (the historical auth-app-only chrome) are **not** reproduced | **Preserve absence** (documented, not silently dropped) | `docs/design/navigation.md` itself already concludes the Auth0 sponsor badge inside that footer variant doesn't need reproducing since Auth0 is gone, and the "Create project" menu item difference `mode="external"` produced is moot here: Nusszopf 2's login screen is `guest`-only, so the shared `NavHeader`'s own authenticated-only items are already absent without a second mode. The `auth-login`/`auth-password` chrome existed only because those were separate deployed apps; the single-monolith rewrite has no second app to give a distinct shell to |
-| 12 | The registration "newsletter" checkbox renders but is wired to nothing | **Intentional scaffolding** | The `Lead` model doesn't exist until slice 9; see below |
+| 12 | The registration "newsletter" checkbox renders but is wired to nothing | ~~**Intentional scaffolding**~~ Closed in slice 9 | The `Lead` model didn't exist until slice 9; the checkbox now requests a double opt-in (`ninth-slice.md`) |
 
 ## Implementation
 
@@ -80,7 +80,7 @@ below); breached-password detection (register C2, deferred indefinitely); Apple 
 | Item | Why | Ends with |
 |---|---|---|
 | Registration's "Nussigen Newsletter abonnieren" checkbox renders, records nothing | The `Lead` model, double opt-in and consent record don't exist until slice 9 (register A-1) | Slice 9 — **resolved** (`docs/rewrite/ninth-slice.md`) |
-| The only in-app place to resend a verification e-mail is next to the wizard/edit "Persönlich" error | `/user/profile` (where a "resend" affordance would naturally also live) is slice 8 | Slice 8 |
+| ~~The only in-app place to resend a verification e-mail is next to the wizard/edit "Persönlich" error~~ | Final (finish-line reconciliation, 2026-09-23): the historical Profile has no verification affordance to reproduce, and A-3 gates only the personal contact, so the resend stays where the gate applies | — (closed, no Profile UI) |
 
 ## Test map
 

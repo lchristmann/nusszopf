@@ -30,6 +30,10 @@ Limits, stated plainly:
 
 ## 1. Where the rewrite stands (Confirmed, repo)
 
+> **Snapshot of 2026-09-21, kept for the record.** Every "Not implemented" cell below was delivered by
+> slices 3–10 and the operational track O-1/O-2 (see each slice document); the finish-line phases (§4)
+> start from that state. Current status: `docs/release/parity/README.md`.
+
 | Area | Implemented | Not implemented |
 |---|---|---|
 | Auth | Register (username/email/password, 5-rule policy), login (email or username), logout, server-side route gate (BUG-003), password reset, Google login (Socialite, hidden if unconfigured), welcome/reset/blocked-account/verification emails, per-account login lockout with notice (B-7/B-12), avatar sync (BUG-004), e-mail verification gating the personal contact (BUG-030, A-3) | Profile-page resend-verification UI (only reachable from the project contact field so far — slice 8) |
@@ -138,17 +142,17 @@ and any admin UI for it (pending A-6).
 
 ### 2.3 Known deviations and doc debts to reconcile
 
-- Author avatar: ui-avatars.com replaced by an initial circle in slice 2. That is a self-hosting
-  replacement (category "dependency dropped") but has **no `intentional-changes.md` entry**; add one.
-- `bugs.md` still shows BUG-013/014/015 as **Unknown** while the register (B10/B11) adopts
-  "Preserve" for 013/015 and says nothing on 014. Reconcile (see B-1).
-- Password policy: `open-questions.md` says "record as architecture decision once approved"; it is
-  implemented (`App\Rules\PasswordPolicy`) and absent from the register. Record it (B-2).
-- `composer.json` requires `php ^8.3` and declared `"license": "MIT"` (corrected 2026-09-21, see A-8); `CLAUDE.md` targets PHP 8.5 and
-  the historical repositories are **GPL-3.0**. Reconcile the PHP constraint (B-3); license is A-8 (decided: GPL-3.0-or-later).
-- `docs/rewrite/README.md` lists "Infrastructure foundation — not started" although dev infrastructure
-  exists; the *operator* infrastructure is what is not started. Clarify when that doc is next touched.
-- `docs/deployment/operations.md` still says "Nothing here is implemented".
+All reconciled (last check 2026-09-23, at the start of the finish-line phases):
+
+- Author avatar: the ui-avatars.com replacement has its `intentional-changes.md` entry ("Author avatar fallback
+  no longer calls ui-avatars.com"); since slice 8 the circle is only the no-picture fallback.
+- `bugs.md` BUG-013/014/015 are classified (Preserve / Preserve, dead vocabulary / Preserve), matching B-1.
+- Password policy is recorded in the register (B-2) and the open question is marked Resolved.
+- `composer.json` requires `php ^8.5` and declares `GPL-3.0-or-later` (B-3, A-8).
+- `docs/rewrite/README.md` distinguishes the contributor stack (since slice 1) from the operator stack (O-1).
+- `docs/deployment/operations.md` is implemented documentation; only its backup/restore part waits for the
+  P-10 drill.
+- Slice documents: every "Intentional scaffolding" row is struck through with the slice that closed it (§7.1.6).
 
 ### 2.4 Cross-cutting concerns to run through every slice
 
