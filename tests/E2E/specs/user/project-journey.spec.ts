@@ -209,5 +209,12 @@ test('creates, publishes, edits and re-verifies a project through the historical
     await expect(page.getByText('Das Projekt wurde gelöscht.')).toBeVisible();
     expect((await strangerPage.goto(`/projects/${projectId}`))?.status()).toBe(404);
 
+    // Journey 3 "Delete", last step: the project is gone from search too.
+    await search.goto();
+    await expect(async () => {
+        await search.search(newTitle);
+        await expect(search.resultLink(newTitle)).toHaveCount(0);
+    }).toPass({ timeout: 30_000 });
+
     await stranger.close();
 });

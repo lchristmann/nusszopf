@@ -3,6 +3,7 @@
 use App\Models\Project;
 use App\Models\User;
 use App\Support\RichText;
+use Illuminate\Support\Facades\File;
 
 /**
  * The Slice 2 content of the project detail screen (`pages/projects/[id].js`):
@@ -116,6 +117,24 @@ it('links the contact button to the owner\'s address for a personal contact', fu
         ->assertSee('href="mailto:owner@example.test?subject=Nusszopf%20%E2%80%93%20Nussige%20Nachricht"', false)
         ->assertSee('Kontaktieren')
         ->assertSee('Teilen');
+});
+
+it('hands the share button the truncated title as data, not an uncompiled Blade directive', function () {
+    $project = Project::factory()->public()->create(['title' => 'Ein "Titel" mit <Zeichen>']);
+
+    $this->get(route('projects.show', $project))
+        ->assertSee('data-share-title="Ein &quot;Titel&quot; mit &lt;Zeichen&gt;" x-on:click="nzShare($el.dataset.shareTitle)"', false)
+        ->assertDontSee('@js(', false);
+});
+
+it('never puts a Blade directive inside a component tag, where Blade does not compile it', function () {
+    $offenders = collect(File::allFiles(resource_path('views')))
+        ->filter(fn ($file) => preg_match('/<x-[\w.:-]+(?:[^>"]|"[^"]*")*?@(?:js|json)\(/s', $file->getContents()))
+        ->map(fn ($file) => $file->getRelativePathname())
+        ->values()
+        ->all();
+
+    expect($offenders)->toBe([]);
 });
 
 it('opens the contact dialog for a contact through Nusszopf, and never shows the owner\'s e-mail', function () {

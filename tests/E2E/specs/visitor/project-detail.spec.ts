@@ -89,3 +89,45 @@ test('a visitor contacts a project through the dialog, and the owner receives it
     expect(html).toContain(title);
     expect(html).toContain(`Eine Testnachricht ${suffix}.`);
 });
+
+/**
+ * "Teilen" (`handleShare` in `pages/projects/[id].js`): the native share sheet where the browser
+ * has one, otherwise the URL is copied and a toast confirms it. Both browser APIs are stubbed —
+ * headless engines differ in which they offer, and the real share sheet cannot be driven.
+ */
+test('shares a project through the share sheet, or copies its link where there is none', async ({ page, browser }) => {
+    const title = `Teilprojekt ${uniqueSuffix()}`;
+    await registerFreshUser(page);
+    await createPublicProject(page, { title });
+    await new MyProjectsPage(page).openProject(title);
+    const detailUrl = page.url();
+
+    const withoutShare = await browser.newContext();
+    await withoutShare.addInitScript(() => {
+        Object.defineProperty(navigator, 'share', { value: undefined, configurable: true });
+        Object.defineProperty(navigator, 'clipboard', {
+            value: { writeText: async (text: string) => { (window as any).__copied = text; } },
+            configurable: true,
+        });
+    });
+    const copyPage = await withoutShare.newPage();
+    await copyPage.goto(detailUrl);
+    await copyPage.getByTestId('btn_share_project-detail').click();
+    await expect(copyPage.getByText('Link zum Teilen kopiert!')).toBeVisible();
+    expect(await copyPage.evaluate(() => (window as any).__copied)).toBe(detailUrl);
+    await withoutShare.close();
+
+    const withShare = await browser.newContext();
+    await withShare.addInitScript(() => {
+        Object.defineProperty(navigator, 'share', {
+            value: async (data: ShareData) => { (window as any).__shared = data; },
+            configurable: true,
+        });
+    });
+    const sharePage = await withShare.newPage();
+    await sharePage.goto(detailUrl);
+    await sharePage.getByTestId('btn_share_project-detail').click();
+    await expect.poll(() => sharePage.evaluate(() => (window as any).__shared?.url)).toBe(detailUrl);
+    await expect(sharePage.getByText('Link zum Teilen kopiert!')).toHaveCount(0);
+    await withShare.close();
+});

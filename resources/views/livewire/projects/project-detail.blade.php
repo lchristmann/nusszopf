@@ -89,7 +89,7 @@
                                 Kontaktieren
                             </x-button>
                         @endif
-                        <x-button data-test="btn_share_project-detail" size="small" color="lilac" x-on:click="nzShare(@js($shareTitle))">
+                        <x-button data-test="btn_share_project-detail" size="small" color="lilac" data-share-title="{{ $shareTitle }}" x-on:click="nzShare($el.dataset.shareTitle)">
                             <x-slot:iconLeft><x-icon name="share-2" :size="21" class="mt-px mr-2 -ml-1" /></x-slot:iconLeft>
                             Teilen
                         </x-button>

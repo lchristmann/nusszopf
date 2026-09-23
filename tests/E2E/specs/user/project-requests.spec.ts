@@ -149,6 +149,12 @@ test('creates requests in the wizard and shows, edits and deletes them through t
     await expect(page.getByText('Gesuch wurde aktualisiert.')).toBeVisible();
     await expect(requests.card('Lagerraum')).toBeVisible();
 
+    // Journey 3 "Update": the edited request title shows on the My Projects card's preview too.
+    await myProjects.goto();
+    await expect(myProjects.card(title).getByTestId('text_title_preview-request-card')).toContainText(['Lagerraum']);
+    await page.goto(`/user/project/${projectId}/edit`);
+    await edit.selectView('Gesuche');
+
     // Saving unchanged just closes; invalid input keeps the dialog open.
     await requests.menuItem('Lagerraum', 0);
     await requests.title.fill('');

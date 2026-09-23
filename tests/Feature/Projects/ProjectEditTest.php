@@ -294,7 +294,7 @@ it('discards unsaved edits when the view changes', function () {
         ->assertSet('title', 'Nachbarschaftsgarten');
 });
 
-it('shows the Gesuche view with its historical copy (scaffolding until ProjectRequests exist)', function () {
+it('shows the Gesuche view with its historical copy and the empty state', function () {
     editing(fullProject(User::factory()->create()))
         ->call('selectView', 'Gesuche')
         ->assertSee('Projektgesuche')
