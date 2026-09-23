@@ -6,9 +6,11 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\ResendVerificationController;
 use App\Http\Controllers\Auth\UnblockLoginController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\Newsletter\ConfirmationController;
 use App\Livewire\Auth\ForgotPassword;
 use App\Livewire\Auth\LoginRegister;
 use App\Livewire\Auth\ResetPassword;
+use App\Livewire\Newsletter\UnsubscribeByEmail;
 use App\Livewire\Profile\Profile;
 use App\Livewire\Projects\MyProjects;
 use App\Livewire\Projects\ProjectDetail;
@@ -57,6 +59,13 @@ Route::get('/health', function (Request $request, HealthChecker $health) {
 
 Route::get('/search', Search::class)->name('search');
 Route::get('/projects/{project}', ProjectDetail::class)->name('projects.show');
+
+// Newsletter (docs/design/screens.md): the two mail-link pages and the
+// unsubscribe-by-address form — all public, no session needed. `lead` is
+// registered before `{token}` so it is never read as a token.
+Route::get('/newsletter/subscribe/{token}', [ConfirmationController::class, 'subscribe'])->name('newsletter.subscribe.confirm');
+Route::get('/newsletter/unsubscribe/lead', UnsubscribeByEmail::class)->name('newsletter.unsubscribe');
+Route::get('/newsletter/unsubscribe/{token}', [ConfirmationController::class, 'unsubscribe'])->name('newsletter.unsubscribe.confirm');
 
 Route::get('/privacy', fn () => view('legal.pending', ['title' => 'Datenschutz']))->name('privacy');
 

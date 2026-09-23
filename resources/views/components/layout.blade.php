@@ -7,6 +7,8 @@
     // `bg-white text-lilac-800 lg:bg-steel-100` / `bg-steel-100`.
     'mainClass' => '',
     'footerBg' => 'bg-steel-200',
+    // Historical `Page`'s `noindex` prop; the newsletter pages set it.
+    'noindex' => false,
 ])
 
 <!DOCTYPE html>
@@ -14,7 +16,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="robots" content="{{ app()->isProduction() ? 'index,follow' : 'noindex,nofollow' }}" />
+    <meta name="robots" content="{{ app()->isProduction() && ! $noindex ? 'index,follow' : 'noindex,nofollow' }}" />
     <title>{{ $title }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
