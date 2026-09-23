@@ -681,6 +681,31 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 
 ---
 
+### Registration is throttled per IP instead of Auth0's bot-detection captcha
+
+- Status: Approved — Replace (obsolete infrastructure); Claude-decidable under roadmap B-7 ("throttle
+  thresholds"); implemented in the finish-line phase P-1/P-4 (2026-09-23)
+- Date: 2026-09-23
+- Historical behavior: registration and login ran through Auth0, whose invisible bot-detection captcha
+  (`webAuth.renderCaptcha`) appeared only when Auth0 judged an attempt risky
+  (`docs/authentication/README.md` §2). No app code limited sign-ups.
+- Why it changes: the captcha was part of the Auth0 service, which is gone. Without a replacement anyone
+  could script unlimited sign-ups, and every sign-up sends two e-mails (welcome and verification). A
+  hosted captcha (hCaptcha, Turnstile) would add a mandatory third-party service, which `CLAUDE.md`
+  rules out.
+- New behavior: each IP address may create 10 accounts per 15 minutes, the historical budget of the other
+  public forms (contact, newsletter). Submissions that fail validation do not count. Once the limit is
+  reached, the form shows "Zu viele Versuche. Bitte warte kurz." under the username (the login throttle's
+  copy). Operators can change the number with `NUSSZOPF_REGISTER_LIMIT`; the development/CI stack raises
+  it because its browser tests register many accounts from one address.
+- Affected screens: Login/Register (register tab), only when the limit is hit.
+- Affected domain/workflows: account creation. Migration implications: none.
+- Tests: `tests/Feature/Auth/RegistrationTest.php` ("limits each IP to 10 new accounts…", "does not spend
+  the registration budget…").
+- Approval: Approved (Replace of a dropped dependency; no visible behavior for a normal visitor).
+
+---
+
 ## Explicitly deferred (not proposed here, need a product decision first — see `docs/rewrite/open-questions.md` / `docs/rewrite/architecture-decisions.md`)
 
 The following were identified during archaeology as *possible* candidates for change but are deliberately **not** proposed above, because reasonable product intent could explain the historical behavior as-is:

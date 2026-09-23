@@ -44,5 +44,6 @@
         <env name="NIGHTWATCH_ENABLED" value="false" force="true"/>
         <env name="NUSSZOPF_CONTACT_EMAIL" value="mail@nusszopf.org" force="true"/>
         <env name="NUSSZOPF_LEGAL_PATH" value="" force="true"/>
+        <env name="NUSSZOPF_REGISTER_LIMIT" value="10" force="true"/>
     </php>
 </phpunit>

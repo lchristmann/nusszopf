@@ -83,4 +83,18 @@ return [
 
     'legal_path' => env('NUSSZOPF_LEGAL_PATH') ?: base_path('legal'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Registration limit
+    |--------------------------------------------------------------------------
+    |
+    | New accounts one IP address may create per 15 minutes. Replaces Auth0's
+    | invisible bot-detection captcha with the historical budget of the other
+    | public forms. Only the development/CI stack raises it, because its
+    | browser tests register many accounts from one address.
+    |
+    */
+
+    'register_limit' => (int) (env('NUSSZOPF_REGISTER_LIMIT') ?: 10),
+
 ];

@@ -128,6 +128,17 @@ class LoginRegister extends Component
 
     public function register(): void
     {
+        // Replaces Auth0's invisible bot-detection captcha (docs/authentication/README.md §7,
+        // docs/rewrite/intentional-changes.md): each IP may create `nusszopf.register_limit`
+        // (10) accounts per 15 minutes — the historical budget of the other public forms.
+        $ipKey = 'register:'.request()->ip();
+
+        if (RateLimiter::tooManyAttempts($ipKey, maxAttempts: config('nusszopf.register_limit'))) {
+            $this->addError('username', 'Zu viele Versuche. Bitte warte kurz.');
+
+            return;
+        }
+
         $this->validate([
             // 'bail': the historical Yup schema shows only the first
             // failing rule at a time (verified against SignUpForm.js in
@@ -154,6 +165,8 @@ class LoginRegister extends Component
             'email.unique' => 'Diese E-Mail-Adresse wird bereits verwendet.',
             'privacy.accepted' => 'Stimme den Datenschutzbestimmungen zu',
         ]);
+
+        RateLimiter::hit($ipKey, decaySeconds: 900);
 
         $user = User::create([
             'name' => $this->username,

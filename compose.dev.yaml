@@ -16,6 +16,8 @@ x-app-environment: &app-environment
   environment:
     LOCATIONIQ_URL: ${LOCATIONIQ_URL:-http://locationiq-stub/v1/autocomplete.php}
     LOCATIONIQ_KEY: ${LOCATIONIQ_KEY:-nusszopf-dev-stub-key}
+    # The browser tests register many accounts from one address; production keeps the default 10.
+    NUSSZOPF_REGISTER_LIMIT: ${NUSSZOPF_REGISTER_LIMIT:-10000}
   user: "${UID:-1000}:${GID:-1000}"
 
 x-app-volumes: &app-volumes

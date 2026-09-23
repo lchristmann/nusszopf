@@ -109,16 +109,20 @@ Three Auth0-side behaviors surface as email notifications only (full template co
 | Auth0 rule: lazy `users` row provisioning on first login | Ordinary `User::create()` at registration time — no more JIT provisioning gap |
 | Auth0 rule: newsletter opt-in side effect | Direct side effect of the registration action itself |
 | Auth0 rule: Hasura JWT claims (`user`/`anonymous` roles) | Laravel policies/gates + guest access, per `docs/domain/permissions.md` |
-| Auth0 Attack Protection (IP block) | Laravel rate limiting on auth routes (`throttle` middleware) — exact thresholds Unknown, needs an explicit decision |
-| Auth0 breached-password detection | Optional: a Laravel password-breach check — needs an explicit decision, not assumed in scope |
+| Auth0 Attack Protection (IP block) | Laravel rate limiting: 5 failed logins per IP per minute, and a per-account lock after 5 with the notice mail (register B-7/B-12, seventh slice) |
+| Auth0 breached-password detection | Deferred (register C2) — not built |
 | Google social login | Laravel Socialite (Google provider) |
 | Apple social login (button existed, never wired) | **Do not implement** unless separately approved — historically incomplete, not a real historical capability (see `docs/rewrite/open-questions.md`) |
-| Invisible Auth0 bot-detection captcha | Needs an explicit decision (e.g. hCaptcha/Turnstile, or rely on rate limiting) — Unknown what, if anything, replaces it |
+| Invisible Auth0 bot-detection captcha | Replaced by a per-IP registration limit (10 accounts / 15 min, `NUSSZOPF_REGISTER_LIMIT`); no hosted captcha (`docs/rewrite/intentional-changes.md`, 2026-09-23) |
 
 ## 8. Open items requiring a decision (cross-reference `docs/rewrite/open-questions.md`)
 
-- No email verification was ever enforced historically (Confirmed) — approve whether Nusszopf 2 preserves this (product-fidelity default) or treats it as a security gap to close (would be a product change, not a bug fix, since nothing here is "broken").
-- The exact Auth0 password policy is only known via its client-side mirror (5 composed rules); the authoritative dashboard configuration is Unknown.
-- Apple login was incomplete/disabled historically — confirm it should not be reproduced.
-- IP-block thresholds and breached-password-check scope are Unknown and were enforced by Auth0 platform features, not app code.
-- Whether the 8-hour rolling session duration should be preserved exactly or is an arbitrary historical default is Unknown.
+All decided (reconciled 2026-09-23, finish-line phase P-1):
+
+- E-mail verification: A-3 — verify, gate only the personal contact (BUG-030, seventh slice).
+- Password policy: the five client-mirrored rules (register B-2).
+- Apple login: not reproduced (BUG-012).
+- IP-block thresholds: register B-7/B-12 (seventh slice); breached-password check deferred (C2).
+- 8-hour rolling session: kept (register B-13).
+- Captcha: replaced by the per-IP registration limit (§7).
+

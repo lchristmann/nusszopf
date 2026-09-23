@@ -129,3 +129,51 @@ it('still registers when the newsletter side effect fails (fail-open, as histori
     $this->assertAuthenticated();
     expect(User::where('email', 'nussknacker@example.com')->exists())->toBeTrue();
 });
+
+it('limits each IP to 10 new accounts per 15 minutes, in place of Auth0\'s bot-detection captcha', function () {
+    foreach (range(1, 10) as $i) {
+        auth()->logout();
+        Livewire::test(LoginRegister::class, ['tab' => 'register'])
+            ->set('username', "nutzer{$i}")
+            ->set('email', "nutzer{$i}@example.test")
+            ->set('registerPassword', 'Str0ng!Passw0rd')
+            ->set('privacy', true)
+            ->call('register')
+            ->assertHasNoErrors();
+    }
+
+    auth()->logout();
+    Livewire::test(LoginRegister::class, ['tab' => 'register'])
+        ->set('username', 'nutzer11')
+        ->set('email', 'nutzer11@example.test')
+        ->set('registerPassword', 'Str0ng!Passw0rd')
+        ->set('privacy', true)
+        ->call('register')
+        ->assertHasErrors(['username'])
+        ->assertSee('Zu viele Versuche. Bitte warte kurz.');
+
+    expect(User::where('name', 'nutzer11')->exists())->toBeFalse();
+
+    $this->travel(15)->minutes();
+    Livewire::test(LoginRegister::class, ['tab' => 'register'])
+        ->set('username', 'nutzer11')
+        ->set('email', 'nutzer11@example.test')
+        ->set('registerPassword', 'Str0ng!Passw0rd')
+        ->set('privacy', true)
+        ->call('register')
+        ->assertHasNoErrors();
+});
+
+it('does not spend the registration budget on a submission that fails validation', function () {
+    foreach (range(1, 12) as $i) {
+        Livewire::test(LoginRegister::class, ['tab' => 'register'])->call('register')->assertHasErrors(['username']);
+    }
+
+    Livewire::test(LoginRegister::class, ['tab' => 'register'])
+        ->set('username', 'geduldig')
+        ->set('email', 'geduldig@example.test')
+        ->set('registerPassword', 'Str0ng!Passw0rd')
+        ->set('privacy', true)
+        ->call('register')
+        ->assertHasNoErrors();
+});
