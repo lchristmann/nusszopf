@@ -16,7 +16,8 @@ test('registers, logs out and logs back in with the username, all from the nav m
     await page.goto('/search');
     await page.getByTestId('btn_burger_nav-header').click();
     await page.getByTestId('btn_login_nav-header').click();
-    await expect(page).toHaveURL(/\/login$/);
+    // waitForURL also waits for the load: filling earlier races Livewire binding `wire:model`.
+    await page.waitForURL(/\/login$/);
 
     await login.register(username, testEmail(suffix), TEST_PASSWORD);
     await expect(page).toHaveURL(/\/user\/projects$/);
@@ -28,6 +29,7 @@ test('registers, logs out and logs back in with the username, all from the nav m
     await page.goto('/search');
     await page.getByTestId('btn_burger_nav-header').click();
     await page.getByTestId('btn_login_nav-header').click();
+    await page.waitForURL(/\/login$/);
     await login.login(username, TEST_PASSWORD);
     await expect(page).toHaveURL(/\/user\/projects$/);
 

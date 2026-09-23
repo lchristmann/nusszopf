@@ -47,8 +47,13 @@ export class SearchPage {
         // Explicit-submit search (matches the historical SearchInput.js
         // mechanism: Enter/blur or the search-icon click, never
         // live-as-you-type) — fill, then press Enter to submit the form.
+        // Wait for this search's own round trip: until it answers, the page still shows the previous results,
+        // which can satisfy a count by coincidence (with a small page size the unfiltered first page can hold
+        // exactly the cards a test waits for).
         await this.input.fill(query);
+        const answered = this.page.waitForResponse((response) => response.url().includes('/livewire') && response.request().method() === 'POST');
         await this.input.press('Enter');
+        await answered;
     }
 
     resultLink(title: string): Locator {

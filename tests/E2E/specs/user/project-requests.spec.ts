@@ -15,6 +15,8 @@ import { uniqueSuffix } from '../../support/env';
  * Against the real Compose stack (PostgreSQL, Redis, Meilisearch, queue worker).
  */
 test('creates requests in the wizard and shows, edits and deletes them through the project', async ({ page, browser }) => {
+    // A whole journey, including waits of up to 30s for the queued search index: more than the default 30s.
+    test.setTimeout(120_000);
     const suffix = uniqueSuffix();
     const title = `Streuobstwiese ${suffix}`;
     const searchWord = `Baumschnittleiter${suffix.replace(/\W/g, '')}`;

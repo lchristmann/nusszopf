@@ -29,6 +29,8 @@ export class ProjectEditPage {
     }
 
     async selectView(view: 'Beschreibung' | 'Gesuche' | 'Einstellungen'): Promise<void> {
+        // The screen opens on `SkeletonView` and loads in a second round trip; switch views only once it has.
+        await expect(this.page.getByTestId('skeleton_edit-project')).toHaveCount(0);
         await this.viewSelect.selectOption(view);
         await this.expectView(view);
     }
@@ -37,8 +39,14 @@ export class ProjectEditPage {
         await this.page.getByTestId('btn_save_project-view').click();
     }
 
+    /**
+     * Waits for the save's own Livewire round trip: the success toast of an earlier save may still be
+     * showing, and navigating away before the response would drop this one.
+     */
     async saveSettings(): Promise<void> {
+        const saved = this.page.waitForResponse((response) => response.url().includes('/livewire') && response.request().method() === 'POST');
         await this.page.getByTestId('btn_save_settings-view').click();
+        await saved;
     }
 
     async deleteProject(): Promise<void> {

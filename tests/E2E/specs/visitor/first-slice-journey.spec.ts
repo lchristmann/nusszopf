@@ -15,6 +15,8 @@ import { uniqueSuffix, testUsername, testEmail, TEST_PASSWORD } from '../../supp
  * (CLAUDE.md, §16: "Do not mock the core application path").
  */
 test('register, create, publish, view, and find a project in search', async ({ page, browser }) => {
+    // A whole journey, including waits of up to 30s for the queued search index: more than the default 30s.
+    test.setTimeout(120_000);
     const suffix = uniqueSuffix();
     const username = testUsername(suffix);
     const email = testEmail(suffix);

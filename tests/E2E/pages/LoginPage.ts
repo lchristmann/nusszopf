@@ -26,6 +26,7 @@ export class LoginPage {
     }
 
     async register(username: string, email: string, password: string, { newsletter = false } = {}): Promise<void> {
+        await this.page.waitForLoadState('load');
         await this.page.getByTestId('tab_register').click();
         await this.page.getByTestId('input_username').fill(username);
         await this.page.getByTestId('input_email').fill(email);
@@ -38,6 +39,7 @@ export class LoginPage {
     }
 
     async login(emailOrName: string, password: string): Promise<void> {
+        await this.page.waitForLoadState('load');
         await this.page.getByTestId('input_email-or-name').fill(emailOrName);
         await this.page.getByTestId('input_login-password').fill(password);
         await this.page.getByTestId('btn_login').click();

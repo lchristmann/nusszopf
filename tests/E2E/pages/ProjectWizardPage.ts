@@ -71,9 +71,17 @@ export class ProjectWizardPage {
      * The historical Radiobox keeps a visually-hidden native input inside a
      * <label>; users click the visible label, so that is what is clicked.
      */
+    /**
+     * The location, period and contact radios `$set` on the server; wait for that round trip, or its late
+     * answer can reset fields filled meanwhile. The visibility radios are a deferred `wire:model`.
+     */
     async pick(testId: string): Promise<void> {
+        const roundTrip = testId.includes('visibility')
+            ? null
+            : this.page.waitForResponse((response) => response.url().includes('/livewire') && response.request().method() === 'POST');
         await this.page.getByTestId(testId).locator('xpath=ancestor::label[1]/span').click();
         await expect(this.page.getByTestId(testId)).toBeChecked();
+        await roundTrip;
     }
 
     async chooseRemote(): Promise<void> {

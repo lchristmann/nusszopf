@@ -14,6 +14,8 @@ import { uniqueSuffix } from '../../support/env';
  * for, by the stack's own `locationiq-stub` service (docs/testing/README.md).
  */
 test('creates, publishes, edits and re-verifies a project through the historical wizard', async ({ page, browser }) => {
+    // A whole journey, including waits of up to 30s for the queued search index: more than the default 30s.
+    test.setTimeout(120_000);
     const suffix = uniqueSuffix();
     const title = `Nachbarschaftsgarten ${suffix}`;
     await registerFreshUser(page);
