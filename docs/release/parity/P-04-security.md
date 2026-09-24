@@ -104,7 +104,7 @@ Nothing High or Medium remains open.
   a worker and 256 MB. Any registered user could repeat it.
 - **Fix:** the header is read first (`getimagesizefromstring`). Anything above 4096 px on a side, or unreadable, is
   refused before decoding (`AvatarUploader::MAX_SOURCE_DIMENSION`) with the existing toast "Bild konnte nicht
-  gespeichert werden.". The crop dialog uploads 512×512, so no genuine upload is affected.
+  gespeichert werden.". The crop dialog uploads 150×150 (512×512 until P-6), so no genuine upload is affected.
 - **Tests:** `tests/Feature/Profile/AvatarUploadTest.php`:
   - the 157-byte flood through the real Livewire upload, a test that would crash the test process on regression;
   - a real 4097×10 image refused, and a 4096×10 one accepted.

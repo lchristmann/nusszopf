@@ -89,6 +89,20 @@ A small number of important user journeys through the real UI, per role/actor, t
 - **Rate-limit budgets:** "Passwort vergessen" has its own per-IP budget of 10 per 15 minutes. A full three-engine run
   spends 3 of it (the password-reset spec), so three full runs fit before `cache:clear` is needed.
 
+### Performance conventions (P-6, `docs/release/parity/P-06-performance.md`)
+
+- `Model::preventLazyLoading()` is on outside production: a relation loaded lazily on a model from a list throws in
+  the tests and in development. Eager-load it (`with()`, or `makeAllSearchableUsing()` for Scout's bulk import). A test
+  that calls `->searchable()` on a collection it built itself must eager-load `user` too.
+- `tests/Feature/Performance/QueryCountTest.php`: every list screen issues as many queries for twenty items as for
+  one. Add a new list screen to it.
+- `tests/E2E/specs/visitor/page-weight.spec.ts`: TipTap and cropperjs load only where they are used. A new page that
+  needs one of them loads it with `import()` (`resources/js/lazy/`), never with a static import in `app.js`.
+- An Alpine component that sets a property in `init()` or later must declare it in its data object. Otherwise Alpine
+  writes it onto an enclosing scope that other components share (PERF-04).
+- `Database\Seeders\PerformanceDatasetSeeder` (2,000 projects) exists for measuring. It replaces the dev database,
+  so run `tests/Visual/reseed.sh` afterwards.
+
 ### Tenth-slice conventions
 
 - `tests/E2E/specs/visitor/public-shell.spec.ts` spends one more of the shared newsletter budget per engine (the Home

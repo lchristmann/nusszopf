@@ -32,13 +32,19 @@ final class AvatarUploader
 {
     public const DISK = 'public';
 
-    /** Side length (px) a stored avatar is capped to. The client already crops to 150×150. */
-    public const MAX_DIMENSION = 512;
+    /**
+     * Side length (px) a stored avatar is capped to, and its JPEG quality: the historical 150×150 at 0.6
+     * (`Cropper/utils/index.js`, compressorjs). The avatar is shown at 56px; P-6 (PERF-02) restored this after the
+     * rewrite had stored 512×512 at 85.
+     */
+    public const MAX_DIMENSION = 150;
+
+    public const JPEG_QUALITY = 60;
 
     /**
      * Side length (px) an upload may declare at most, read from its header before anything is decoded
      * (P-4, SEC-05). GD allocates the full bitmap on decode: a 400 KB PNG that declares 20000×20000 would need
-     * 1.6 GB and end the PHP process with a fatal error. The crop dialog uploads 512×512.
+     * 1.6 GB and end the PHP process with a fatal error. The crop dialog uploads 150×150.
      */
     public const MAX_SOURCE_DIMENSION = 4096;
 
@@ -110,7 +116,7 @@ final class AvatarUploader
     private static function encodeJpeg(GdImage $image): string
     {
         ob_start();
-        imagejpeg($image, quality: 85);
+        imagejpeg($image, quality: self::JPEG_QUALITY);
 
         return ob_get_clean();
     }

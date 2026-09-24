@@ -41,7 +41,27 @@ it('center-crops and caps an oversized, non-square source image', function () {
     $path = Storage::disk('public')->path($user->fresh()->picture);
     [$width, $height] = getimagesize($path);
 
-    expect($width)->toBe($height)->and($width)->toBeLessThanOrEqual(512);
+    expect($width)->toBe(150)->and($height)->toBe(150);
+});
+
+it('stores the historical 150×150 avatar, not a larger one, whatever the client sends (P-6, PERF-02)', function () {
+    Storage::fake('public');
+    $user = User::factory()->create();
+
+    AvatarUploader::store($user, UploadedFile::fake()->image('big.jpg', 512, 512));
+
+    [$width, $height, $type] = getimagesize(Storage::disk('public')->path($user->fresh()->picture));
+    expect([$width, $height, $type])->toBe([150, 150, IMAGETYPE_JPEG]);
+});
+
+it('keeps a source smaller than 150px at its own size instead of scaling it up', function () {
+    Storage::fake('public');
+    $user = User::factory()->create();
+
+    AvatarUploader::store($user, UploadedFile::fake()->image('small.png', 100, 120));
+
+    [$width, $height] = getimagesize(Storage::disk('public')->path($user->fresh()->picture));
+    expect([$width, $height])->toBe([100, 100]);
 });
 
 it('replaces the previous file and increments the version on a second upload', function () {

@@ -40,7 +40,7 @@ public shell (slice 10).
 
 - **Migration** `database/migrations/2026_09_23_090000_add_avatar_version_to_users_table.php`: `users.avatar_version` (unsigned int, default 0).
 - **`App\Models\User`**: `avatarUrl()` (Google's absolute URL as-is, or `Storage::disk('public')->url($picture)` for a local path; `null` renders the initial-on-grey fallback) and `isSocialAccount()` (`google_id !== null`).
-- **`App\Support\AvatarUploader`**: GD decode → center-square-crop → cap at 512×512 → re-encode JPEG(85) → store `avatars/{user}-v{n}.jpg` → delete the previous file only after the new one is written.
+- **`App\Support\AvatarUploader`**: GD decode → center-square-crop → cap at 150×150 → re-encode JPEG(60) (corrected in P-6, PERF-02: the slice had used 512×512 at 85, larger than the historical avatar) → store `avatars/{user}-v{n}.jpg` → delete the previous file only after the new one is written.
 - **`App\Support\AccountDeleter`**: deletes every owned `Project` through Eloquent (de-indexing via existing model events), then the avatar file, then the `users` row, in one transaction.
 - **`App\Policies\UserPolicy`**: `update`/`delete`, self-only (`docs/security/authorization-matrix.md`).
 - **`App\Livewire\Profile\Profile`** (`WithFileUploads`): `saveAvatar()` (validates, delegates to `AvatarUploader`, dispatches `toast`/`avatar-saved`) and `deleteAccount()` (authorizes, deletes a *separate* freshly-fetched `User` instance — see "A real bug found and fixed" below — logs out, flashes a toast, redirects to `/search` — Home since slice 10).

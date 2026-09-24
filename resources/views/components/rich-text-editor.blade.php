@@ -23,6 +23,8 @@
         'nz-rte-stone border-stone-800 hover:ring-stone-800/25' => $color === 'stone',
     ]) }}
 >
+    {{-- P-6, PERF-01: TipTap is its own chunk; start fetching it with the page instead of when Alpine starts. --}}
+    <link rel="modulepreload" href="{{ \Illuminate\Support\Facades\Vite::asset('resources/js/lazy/tiptap.js') }}">
     <div @class(['flex items-center px-1 py-1', 'bg-lilac-300' => $color === 'lilac', 'bg-stone-400' => $color === 'stone']) role="toolbar" aria-label="Textformatierung">
         @foreach ([
             ['bold', 'Schrift dick', 'bold', 'p-2 mx-1'],

@@ -611,7 +611,7 @@ directly from `web-nusszopf/projects/webapp/src/containers/user/ProjectForm/*` a
 - Classification: **Fix**
 - Intended Nusszopf 2 behavior: the server still accepts whatever the client crops and uploads, but
   `App\Support\AvatarUploader` decodes every upload with GD, rejects anything that doesn't decode as a
-  raster image, center-crops it to a square, caps it at 512×512, and re-encodes it as a fresh JPEG
+  raster image, center-crops it to a square, caps it at 150×150 (the historical size; 512×512 until P-6, PERF-02), and re-encodes it as a fresh JPEG
   before it is ever stored or served — independent of what the client claimed.
 - Implementation consequence: Livewire's built-in temporary-upload mechanism replaces the historical
   two-step signed-POST dance (register B8 — local disk, not S3); the 1 MB cap becomes a Livewire

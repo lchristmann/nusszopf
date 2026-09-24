@@ -1,14 +1,3 @@
-import { Editor } from '@tiptap/core';
-import StarterKit from '@tiptap/starter-kit';
-import Placeholder from '@tiptap/extension-placeholder';
-import Bold from '@tiptap/extension-bold';
-import Italic from '@tiptap/extension-italic';
-import Underline from '@tiptap/extension-underline';
-import BulletList from '@tiptap/extension-bullet-list';
-import OrderedList from '@tiptap/extension-ordered-list';
-import ListItem from '@tiptap/extension-list-item';
-import Link from '@tiptap/extension-link';
-
 /**
  * The historical project rich-text editor (`RichTextEditor.organism.js`),
  * rebuilt on TipTap and configured down to exactly its six-tool toolbar:
@@ -24,6 +13,9 @@ import Link from '@tiptap/extension-link';
  * server with the next request, as with the historical single Formik form.
  * The server re-normalizes it (App\Support\RichText) — this file is a UI, not
  * a trust boundary.
+ *
+ * TipTap itself is a separate chunk (`lazy/tiptap.js`), fetched when the first editor starts, so pages without an
+ * editor do not download it (P-6, PERF-01). Until it has arrived the toolbar does nothing.
  */
 
 // `protocolAndDomainRE` etc. from the historical `withLinks` util: pasted text
@@ -42,9 +34,15 @@ document.addEventListener('alpine:init', () => {
 
         return {
             tick: 0,
+            // Declared here so that they stay this editor's own: Alpine writes a property the data object lacks
+            // onto an enclosing scope, where every other editor on the page would see it.
+            destroyed: false,
+            errorObserver: null,
 
-            init() {
+            async init() {
                 const wire = this.$wire;
+                const { Editor, StarterKit, Placeholder, ...tiptap } = await import('./lazy/tiptap.js');
+                if (this.destroyed) return;
 
                 editor = new Editor({
                     element: this.$refs.editor,
@@ -70,7 +68,7 @@ document.addEventListener('alpine:init', () => {
                             listItem: false,
                             link: false,
                         }),
-                    ].concat(this.marksAndLists()).concat([
+                    ].concat(this.marksAndLists(tiptap)).concat([
                         Placeholder.configure({ placeholder }),
                     ]),
                     editorProps: {
@@ -117,6 +115,7 @@ document.addEventListener('alpine:init', () => {
             },
 
             destroy() {
+                this.destroyed = true;
                 this.errorObserver?.disconnect();
                 editor?.destroy();
                 editor = null;
@@ -124,7 +123,7 @@ document.addEventListener('alpine:init', () => {
 
             // Bold/italic/underline/lists/link, with package-default hotkeys and
             // markdown input/paste rules stripped (the historical editor had none).
-            marksAndLists() {
+            marksAndLists({ Bold, Italic, Underline, BulletList, OrderedList, ListItem, Link }) {
                 const plain = (extension) =>
                     extension.extend({
                         addKeyboardShortcuts() {
@@ -167,6 +166,7 @@ document.addEventListener('alpine:init', () => {
             },
 
             toggle(name) {
+                if (!editor) return;
                 const chain = editor.chain().focus();
                 ({
                     bold: () => chain.toggleBold(),
@@ -178,6 +178,7 @@ document.addEventListener('alpine:init', () => {
             },
 
             promptLink() {
+                if (!editor) return;
                 const url = window.prompt('Gib die URL des Links ein.');
                 if (!url) return;
                 this.insertLink(url);

@@ -99,7 +99,7 @@ it('pages through the results by the historical page size, and stops exactly at 
     ProjectRequest::withoutSyncingToSearch(fn () => Project::withoutSyncingToSearch(
         fn () => Project::factory()->count($total)->public()->create(['title' => "Seiten {$word}"])
     ));
-    Project::where('title', "Seiten {$word}")->get()->searchable();
+    Project::where('title', "Seiten {$word}")->with('user')->get()->searchable();
 
     $page = fn (int $pages) => app(ProjectSearch::class)->search($word, [], $pages);
     expect(awaitIndex(fn () => count($page(3)->hits) === $total))->toBeTrue();

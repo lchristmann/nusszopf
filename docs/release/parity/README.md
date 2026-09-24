@@ -16,7 +16,7 @@ person is listed as pending), **In progress**, **Not started**.
 | P-3 Accessibility | [`P-03-accessibility.md`](P-03-accessibility.md) | Done (closed by the maintainer 2026-09-24; screen-reader listening pass is a post-1.0 opportunity, not performed) |
 | P-4 Security review | [`P-04-security.md`](P-04-security.md) | Done (closed by the maintainer 2026-09-24; one High, four Medium, six Low/Info findings, all fixed; SEC-10 approved) |
 | P-5 Browser/device verification | [`P-05-browsers-devices.md`](P-05-browsers-devices.md) | Done (closed by the maintainer 2026-09-24 on emulated evidence; DEV-01 and DEV-02 fixed; the real-device pass is deferred to P-16, not waived) |
-| P-6 Performance sanity | [`P-06-performance.md`](P-06-performance.md) | Not started |
+| P-6 Performance sanity | [`P-06-performance.md`](P-06-performance.md) | Done, awaiting the maintainer's review (PERF-01–04 fixed; four recommendations open) |
 | P-7 Production Compose verification | [`P-07-production-e2e.md`](P-07-production-e2e.md) | Not started |
 | P-8 Fresh install | [`P-08-fresh-install.md`](P-08-fresh-install.md) | Not started |
 | P-9 Upgrade/migration | [`P-09-upgrade.md`](P-09-upgrade.md) | Not started |

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Console\AboutCommand;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -22,6 +23,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         AboutCommand::add('Nusszopf', ['Version' => fn () => config('nusszopf.version')]);
+
+        // A relation loaded lazily on a model from a list is a query per item: fail loudly in development and in
+        // the tests, never in production (P-6, docs/release/parity/P-06-performance.md).
+        Model::preventLazyLoading(! $this->app->isProduction());
 
         // Every absolute URL is built from APP_URL, never from the request's Host header: the links in the
         // password-reset, verification, unblock and newsletter mails are generated during a visitor's request,

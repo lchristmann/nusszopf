@@ -175,7 +175,19 @@ class Project extends Model
      */
     public function shouldBeSearchable(): bool
     {
-        return $this->visibility === 'public' && ! $this->requests()->exists();
+        return $this->visibility === 'public' && ! ($this->requests_exists ?? $this->requests()->exists());
+    }
+
+    /**
+     * A bulk import (`search:reindex`) loads each chunk's owners and "has requests" flags in two queries, instead of
+     * two queries per project (P-6, docs/release/parity/P-06-performance.md).
+     *
+     * @param  Builder<Project>  $query
+     * @return Builder<Project>
+     */
+    protected function makeAllSearchableUsing(Builder $query): Builder
+    {
+        return $query->with('user')->withExists('requests');
     }
 
     /**

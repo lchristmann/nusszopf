@@ -465,9 +465,11 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
   dialog can upload any ≤1 MB file with a `.jpeg`-shaped key, of any actual content, format or dimensions — a real,
   demonstrable server-side trust gap (`.claude/rules/05-engineering-quality.md`: do not trust the client crop).
 - New behavior: `App\Support\AvatarUploader` decodes every upload with GD, rejects anything that does not decode as a
-  raster image, center-crops it to a square, caps it at 512×512, and re-encodes it as a fresh JPEG before it is ever stored
+  raster image, center-crops it to a square, caps it at 150×150, and re-encodes it as a fresh JPEG (quality 60, the historical
+  compressorjs setting) before it is ever stored
   or served — independent of what the client claimed. The historical outcome (a small, square, JPEG avatar) is unchanged;
-  only the trust boundary moves server-side.
+  only the trust boundary moves server-side. (Reconciled in P-6, PERF-02: the implementation had stored 512×512 at quality 85,
+  which contradicted "unchanged"; it now stores the historical 150×150 at 60. `docs/release/parity/P-06-performance.md`.)
 - Affected screens: Profile (avatar dialog).
 - Affected domain: `User.picture`.
 - Affected workflows: "profile picture replacement" (`docs/domain/workflows.md`).

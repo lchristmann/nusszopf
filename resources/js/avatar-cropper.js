@@ -1,5 +1,3 @@
-import Cropper from 'cropperjs';
-
 /**
  * The historical `AvatarDialog`/`Cropper` (`react-easy-crop`): pick an image,
  * crop it to a round 1:1 area with rotate/zoom-in/zoom-out controls, then
@@ -11,17 +9,22 @@ import Cropper from 'cropperjs';
  * The crop box itself is fixed (not draggable/resizable) matching the
  * historical UI, which only ever let the *image* move under a fixed circular
  * mask, never the crop area itself.
+ *
+ * cropperjs is a separate chunk, fetched when a picture is picked, so only the profile's avatar dialog ever downloads
+ * it (P-6, PERF-01 in docs/release/parity/P-06-performance.md). Its stylesheet stays in `app.css`.
  */
 document.addEventListener('alpine:init', () => {
     window.Alpine.data('nzAvatarCropper', () => ({
         hasImage: false,
         uploading: false,
         cropper: null,
+        cropperLibrary: null,
 
         pickFile(event) {
             const file = event.target.files?.[0];
             if (!file) return;
 
+            this.cropperLibrary ??= import('cropperjs').then((module) => module.default);
             const reader = new FileReader();
             reader.onload = () => {
                 this.hasImage = true;
@@ -41,8 +44,9 @@ document.addEventListener('alpine:init', () => {
             reader.readAsDataURL(file);
         },
 
-        startCropper(dataUrl) {
+        async startCropper(dataUrl) {
             const img = this.$refs.cropperImage;
+            const Cropper = await this.cropperLibrary;
 
             this.cropper?.destroy();
             this.cropper = null;
@@ -89,9 +93,11 @@ document.addEventListener('alpine:init', () => {
             this.uploading = true;
             window.nzToast('loading', 'Bild wird gespeichert.');
 
+            // The historical size (150×150). The server re-encodes it at the historical quality, so this is nearly
+            // lossless, like the historical crop canvas before compressorjs (P-6, PERF-02).
             const canvas = this.cropper.getCroppedCanvas({
-                width: 512,
-                height: 512,
+                width: 150,
+                height: 150,
                 imageSmoothingQuality: 'high',
             });
 
@@ -120,7 +126,7 @@ document.addEventListener('alpine:init', () => {
                     );
                 },
                 'image/jpeg',
-                0.85
+                0.92
             );
         },
     }));
