@@ -60,7 +60,7 @@ first `up`, so files the containers create are owned by you, not root.
 | Formatting (check, matches CI) | `composer lint:check` |
 | Static analysis | `composer larastan` |
 | Unit/Feature tests | `composer test` |
-| Browser/E2E tests | `docker compose -f compose.dev.yaml exec playwright npx playwright test` (or `npm run test:e2e:chromium`/`:firefox`/`:webkit` for one engine) |
+| Browser/E2E tests | `docker compose -f compose.dev.yaml exec playwright npx playwright test` (or `npm run test:e2e:chromium`/`:firefox`/`:webkit` for one engine, `npm run test:e2e:devices` for the emulated phones and tablet) |
 | Migrations | `php artisan migrate` |
 | Fresh DB + seed | `php artisan migrate:fresh --seed` |
 | Sync search index settings | `php artisan scout:sync-index-settings` |

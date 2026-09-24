@@ -25,6 +25,10 @@ it('renders the default title, description and Open Graph tags', function () {
         ->assertSee('<meta name="twitter:card" content="summary_large_image" />', false);
 });
 
+it('sends the historical viewport, which keeps phones from zooming out below 1 (P-5, DEV-02)', function () {
+    $this->get('/search')->assertSee('<meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1" />', false);
+});
+
 it('uses the bare domain as the canonical URL of Home', function () {
     $this->get('/')->assertSee('<link rel="canonical" href="https://nuss.example" />', false);
 });

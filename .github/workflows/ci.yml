@@ -131,7 +131,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project: [chromium, firefox, webkit]
+        # `browser` is the engine each Playwright project needs installed. The phone and tablet projects are
+        # phase P-5's emulated devices (docs/release/parity/P-05-browsers-devices.md).
+        include:
+          - { project: chromium, browser: chromium }
+          - { project: firefox, browser: firefox }
+          - { project: webkit, browser: webkit }
+          - { project: mobile-safari, browser: webkit }
+          - { project: mobile-chrome, browser: chromium }
+          - { project: tablet-safari, browser: webkit }
     steps:
       - uses: actions/checkout@v4
       - run: cp .env.example .env
@@ -187,7 +195,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps ${{ matrix.project }}
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
       - run: npx playwright test --project=${{ matrix.project }}
         env:
           PLAYWRIGHT_BASE_URL: http://localhost:8080

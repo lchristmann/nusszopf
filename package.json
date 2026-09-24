@@ -8,7 +8,8 @@
         "test:e2e": "playwright test",
         "test:e2e:chromium": "playwright test --project=chromium",
         "test:e2e:firefox": "playwright test --project=firefox",
-        "test:e2e:webkit": "playwright test --project=webkit"
+        "test:e2e:webkit": "playwright test --project=webkit",
+        "test:e2e:devices": "playwright test --project=mobile-safari --project=mobile-chrome --project=tablet-safari"
     },
     "devDependencies": {
         "@axe-core/playwright": "^4.13.0",

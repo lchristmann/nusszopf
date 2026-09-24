@@ -20,7 +20,8 @@
 <html lang="de">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {{-- `pages/_app.js`, verbatim (P-5, DEV-02). --}}
+    <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1" />
     @php
         // `Page.js`/next-seo: lodash `truncate` (60 / 150, "..." included),
         // canonical = domain + path (BUG-036: `og:url` is the same absolute

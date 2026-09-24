@@ -225,3 +225,11 @@ window.nzFocusInto = function nzFocusInto(container, selector) {
     };
     requestAnimationFrame(attempt);
 };
+
+/**
+ * iOS Safari only turns a tap into a `click` when the tapped element or an ancestor listens for clicks, so a tap on
+ * blank page never reached the `click.outside` handlers of the nav menu, the card menus and the search filter, and
+ * they stayed open (P-5, DEV-01 in docs/release/parity/P-05-browsers-devices.md). The historical React app listened
+ * at its root, which made every tap a click; this listener does the same.
+ */
+document.body.addEventListener('click', () => {});

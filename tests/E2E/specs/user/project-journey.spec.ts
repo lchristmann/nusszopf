@@ -24,7 +24,9 @@ test('creates, publishes, edits and re-verifies a project through the historical
     const myProjects = new MyProjectsPage(page);
 
     // --- Start creation from My Projects -----------------------------------
-    await page.getByTestId('route_create-project_projects-page').first().click();
+    // pages/user/projects.js renders this button twice, one per breakpoint (`hidden lg:block` / `lg:hidden`);
+    // take whichever the viewport shows, so the journey also runs on the phone projects (P-5).
+    await page.getByTestId('route_create-project_projects-page').filter({ visible: true }).click();
     await expect(page).toHaveURL(/\/user\/project\/create\?step=0$/);
     await expect(wizard.stepLabel('Beschreibung 1/2')).toBeVisible();
     await expect(page.getByRole('heading', { level: 1, name: 'Neues Projekt' })).toBeVisible();

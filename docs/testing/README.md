@@ -21,6 +21,19 @@ A small number of important user journeys through the real UI, per role/actor, t
 - **`data-testid` attributes** on interactive elements Playwright needs to target reliably, matched onto the historical UI structure (`docs/design/components.md`) rather than invented ad hoc.
 - A `global-setup` step that resets and seeds the database once per run, plus one-time sign-in per role with persisted `storageState`, so individual specs don't each repeat login.
 - Run against every browser engine Playwright supports in CI as separate parallel jobs (mirroring LCxHolz's per-engine matrix), not one job looping serially over engines.
+- **Emulated devices (P-5, `docs/release/parity/P-05-browsers-devices.md`).** Three more projects run as their own CI jobs:
+  `mobile-safari` (iPhone SE 3rd gen, WebKit, 375 px) and `mobile-chrome` (Galaxy S24, Chromium, 360 px) run every
+  journey spec plus `tests/E2E/specs/devices/`; `tablet-safari` (iPad Mini) runs only `specs/devices/`. The keyboard,
+  axe, ARIA and CSP specs stay on the desktop projects. Consequences for specs:
+  - Where the historical page renders a control twice, once per breakpoint (for example "Projekt starten" on My
+    Projects), take the visible one (`.filter({ visible: true })`), never `.first()`.
+  - `specs/devices/touch.spec.ts` uses `tap()`, which sends touch events. A tap "outside" must land on blank page,
+    because iOS Safari only turns a tap into a click where something listens for clicks (DEV-01).
+  - The phone projects also run the newsletter specs, and all projects share the per-IP newsletter budget. Locally,
+    run the desktop projects and `npm run test:e2e:devices` separately, with `php artisan cache:clear` in between.
+    In CI every project has its own stack, so this does not apply there.
+  - Emulation is not a real device. A-7 still requires a manual real-iPhone and real-Android smoke on each release
+    candidate; the checklist is in the P-5 page.
 
 ### Second-slice conventions
 
