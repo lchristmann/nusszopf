@@ -172,6 +172,8 @@ Of the empty page-1 query, 4.8 ms is the engine and 3.5 ms is the database and g
   pattern as the historical react-feather icons.
 - The framework's own floor on this stack is about 20 ms (time to first byte of `/login`).
 - Most of the rest is rendering the cards, about 2 ms per card (mount alone 10 ms; mount plus 26 cards 77 ms).
+  **Corrected in P-7:** this benchmark ran in the CLI with OPcache off. With OPcache on, as in PHP-FPM, a card costs about
+  0.75–1 ms, the same in development and production (`P-07-production-e2e.md`, "Performance on the production images").
 
 **"Mehr laden" deep in the results.** Each click re-renders every result shown so far, because the fourth slice chose
 `limit = 50 × pages` from offset 0 (a decided design, not re-opened here). So the cost grows with depth:

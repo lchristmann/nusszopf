@@ -17,7 +17,7 @@ person is listed as pending), **In progress**, **Not started**.
 | P-4 Security review | [`P-04-security.md`](P-04-security.md) | Done (closed by the maintainer 2026-09-24; one High, four Medium, six Low/Info findings, all fixed; SEC-10 approved) |
 | P-5 Browser/device verification | [`P-05-browsers-devices.md`](P-05-browsers-devices.md) | Done (closed by the maintainer 2026-09-24 on emulated evidence; DEV-01 and DEV-02 fixed; the real-device pass is deferred to P-16, not waived) |
 | P-6 Performance sanity | [`P-06-performance.md`](P-06-performance.md) | Done (closed by the maintainer 2026-09-24; PERF-01–04 fixed; four recommendations kept open and non-blocking, production re-measurement in P-7) |
-| P-7 Production Compose verification | [`P-07-production-e2e.md`](P-07-production-e2e.md) | Not started |
+| P-7 Production Compose verification | [`P-07-production-e2e.md`](P-07-production-e2e.md) | Done, awaiting the maintainer's review (whole suite green on the production images; P7-01 fixed) |
 | P-8 Fresh install | [`P-08-fresh-install.md`](P-08-fresh-install.md) | Not started |
 | P-9 Upgrade/migration | [`P-09-upgrade.md`](P-09-upgrade.md) | Not started |
 | P-10 Backup/restore drill | [`P-10-backup-restore.md`](P-10-backup-restore.md) | Not started |
@@ -32,7 +32,8 @@ person is listed as pending), **In progress**, **Not started**.
 ## Carried forward to later phases
 
 - **P-7 (production Compose verification):** re-measure the search round trip and the render cost per card on the
-  production images (P-6, recommendation 4). The other three P-6 recommendations stay open and non-blocking.
+  production images (P-6, recommendation 4). Done in P-7. The other three P-6 recommendations stay open and
+  non-blocking, and so does P-7's recommendation 5 (OPcache timestamps).
 
 - **P-16 (release candidate testing):** the real-iPhone (iOS Safari) and real-Android (Chrome) smoke pass that P-5 could
   not perform. The maintainer deferred it on 2026-09-24; it is not waived. P-16 must run the eight-step checklist in

@@ -2,7 +2,7 @@
 # Entrypoint of the production application image (docker/php/Dockerfile, `php-fpm` stage).
 #
 # Only the web-serving container (`php-fpm`) prepares the application: it applies pending database
-# migrations and warms the framework caches, then hands over to PHP-FPM. The queue worker and the
+# migrations, warms the framework caches and applies the search index settings, then hands over to PHP-FPM. The queue worker and the
 # scheduler run the same image with their own command and start straight away — the Compose file
 # makes them wait for `php-fpm` to be healthy, i.e. for this script to have finished.
 set -e
@@ -22,6 +22,13 @@ if [ "$1" = "php-fpm" ]; then
     php artisan route:cache
     php artisan view:cache
     php artisan event:cache
+
+    # The search index's settings (config/scout.php: the category filter's attribute, the ranking, the hit cap) live
+    # in source control (BUG-008); apply them on every start, so a fresh install and an upgrade both get them without
+    # a manual step (P-7, finding P7-01). Unchanged settings are a no-op. Search being down must not keep the site
+    # from starting: then warn, and `php artisan search:reindex` applies them later.
+    php artisan scout:sync-index-settings --no-interaction \
+        || echo "Warning: could not apply the search index settings; run 'php artisan search:reindex' once Meilisearch is reachable." >&2
 fi
 
 exec "$@"

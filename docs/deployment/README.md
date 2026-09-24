@@ -44,7 +44,7 @@ value pins the release, so an upgrade is one line (see `docs/deployment/operatio
 | Service | Image | Role |
 |---|---|---|
 | `web` | `ghcr.io/lchristmann/nusszopf-web` — nginx built `FROM` the application image's own assets | HTTP; serves static assets, passes PHP to `php-fpm`. The only published port (`APP_BIND`:`APP_PORT`) |
-| `php-fpm` | `ghcr.io/lchristmann/nusszopf-php-fpm` (PHP 8.5-FPM, Laravel 13, Livewire 4, non-root) | Request handling. Its entrypoint refuses to start without `APP_KEY`, runs `migrate --force --isolated`, then warms the config, route, view and event caches |
+| `php-fpm` | `ghcr.io/lchristmann/nusszopf-php-fpm` (PHP 8.5-FPM, Laravel 13, Livewire 4, non-root) | Request handling. Its entrypoint refuses to start without `APP_KEY`, runs `migrate --force --isolated`, warms the config, route, view and event caches, and applies the search index settings (`scout:sync-index-settings`; only a warning if Meilisearch is unreachable) |
 | `queue-worker` | same application image | `queue:work --tries=5 --backoff=10,30,60,120`: background jobs (search indexing, contact-form mail). Healthy while it processes the scheduler's heartbeat job |
 | `scheduler` | same application image | `schedule:work`. Its only tasks are the two heartbeats (`routes/console.php`) — the historical product had no periodic work. Healthy while its heartbeat is fresh |
 | `postgres` | `postgres:16-alpine` | Primary datastore |
@@ -148,7 +148,7 @@ sh install.sh https://nusszopf.example.org          # or: sh install.sh https://
 (`APP_KEY`, `DB_PASSWORD`, `MEILISEARCH_KEY`, `HEALTH_TOKEN`; mode 600), and refuses to overwrite an existing `.env`. Then:
 
 1. Optionally edit `.env` — `MAIL_*`, `LOCATIONIQ_KEY`, `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`, `APP_BIND=127.0.0.1` when a reverse proxy runs on this host. Everything a first-time operator *must* set is marked `REQUIRED` in the file, and Compose refuses to start with a clear message if one is missing.
-2. `docker compose up -d` — the first start pulls the images, waits for PostgreSQL, Redis and Meilisearch, migrates the database and starts everything.
+2. `docker compose up -d` — the first start pulls the images, waits for PostgreSQL, Redis and Meilisearch, migrates the database, applies the search index settings and starts everything.
 3. `docker compose ps` — every service `healthy` (the queue worker and scheduler need up to a few minutes, they prove themselves with a heartbeat per minute).
 4. `docker compose exec php-fpm php artisan nusszopf:health` — the version and every dependency `ok`.
 5. Open the app and register a normal account through the ordinary registration screen — **there is

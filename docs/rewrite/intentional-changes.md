@@ -217,6 +217,9 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 - Migration implications: none.
 - Tests: a CI check that the checked-in index-settings config matches what's actually applied (drift check).
 - Approval: Approved (2026-09-18). The CI drift check is tracked with the CI milestone; `tests/Feature/Search/MeilisearchIntegrationTest.php` exercises the applied settings (ranking rules, searchable attributes) against a real Meilisearch instance.
+- Reconciled in P-7 (P7-01): "on deploy" had not been implemented. The production entrypoint (`docker/php/entrypoint.sh`) now runs
+  `scout:sync-index-settings` on every `php-fpm` start and only warns if Meilisearch is unreachable. `scripts/smoke-test.sh` checks
+  that a freshly started production stack has the filterable `req_type`, the raised hit cap and the `updated_at:desc` rule.
 
 ---
 

@@ -45,7 +45,8 @@ services:
       php-fpm:
         condition: service_healthy
 
-  # Applies pending migrations and warms the caches on start (its entrypoint), then serves PHP.
+  # Applies pending migrations, warms the caches and applies the search index settings on start (its
+  # entrypoint), then serves PHP.
   # The long start period leaves room for a slow migration on upgrade.
   php-fpm:
     <<: *app

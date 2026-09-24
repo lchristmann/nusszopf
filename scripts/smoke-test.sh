@@ -45,6 +45,12 @@ grep -q "^APP_KEY=base64:" .env || fail "install.sh did not generate APP_KEY"
 step "Build the images and start the stack (waits for every healthcheck)"
 compose up -d --build --wait --wait-timeout 420 || fail "the stack did not become healthy"
 
+step "The search index has its configured settings from the first start, before any reindex (P-7, P7-01)"
+settings="$(compose exec -T php-fpm sh -c 'curl -s -H "Authorization: Bearer $MEILISEARCH_KEY" "$MEILISEARCH_HOST/indexes/items/settings"')"
+echo "$settings" | grep -q '"filterableAttributes":\[[^]]*"req_type"' || fail "the index cannot filter by request category: $settings"
+echo "$settings" | grep -q '"maxTotalHits":100000' || fail "the index caps its hits at Meilisearch's default: $settings"
+echo "$settings" | grep -q '"updated_at:desc"' || fail "the index lacks the updated_at ranking rule: $settings"
+
 step "The release is baked into the images"
 for image in nusszopf-php-fpm nusszopf-web; do
     found="$(docker image inspect "ghcr.io/lchristmann/$image:$VERSION" --format '{{ index .Config.Labels "org.opencontainers.image.version" }}')"

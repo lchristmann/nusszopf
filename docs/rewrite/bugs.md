@@ -179,6 +179,10 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 - Classification: **Fix**
 - Full spec: `docs/rewrite/intentional-changes.md` → "Meilisearch index settings become versioned
   application config".
+- Reconciled in P-7 (finding P7-01, `docs/release/parity/P-07-production-e2e.md`): the production image never
+  applied the settings. A fresh install ran with an unconfigured index, so the category filter showed no hits, hits
+  were capped at 1,000 and the ranking tie-break was missing, until someone ran `search:reindex`. The `php-fpm`
+  entrypoint now applies them on every start, and the smoke test checks a freshly started stack.
 
 ### BUG-009 — Sync webhooks retry 3 times then silently give up
 

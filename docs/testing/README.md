@@ -129,7 +129,21 @@ A small number of important user journeys through the real UI, per role/actor, t
 `scripts/smoke-test.sh` (run from the host, needs Docker, curl and openssl; CI job "Production stack") builds the two production images from the working copy, installs into a fresh temporary directory exactly
 as an operator would (`install.sh` against the repository's own `docker-compose.yaml` and `.env.production.example`), starts the stack, waits for every healthcheck, and checks: the release is baked into the images,
 `/up`, `/search`, `/login` and a built stylesheet are served, migrations ran and the caches are warm, an unknown page is a plain 404, the security headers are present once with no PHP or nginx version and no link built from a forged `Host` (P-4), `/health` turns 200 and only the token reveals details, and `search:reindex` runs.
-`SMOKE_KEEP=1` leaves the stack running for manual drills (`docs/deployment/operations.md`). The Playwright suite has not yet been run against these images (phase P-7).
+`SMOKE_KEEP=1` leaves the stack running for manual drills (`docs/deployment/operations.md`). 
+`scripts/prod-e2e.sh` (phase P-7, `docs/release/parity/P-07-production-e2e.md`; CI job `production-e2e`) runs the whole
+Playwright suite, every project, against those images. It installs `docker-compose.yaml` with `install.sh` as the smoke
+test does and layers `tests/E2E/production/compose.e2e.yaml` on it, which adds only test doubles: Mailpit as the SMTP
+relay and the LocationIQ stub. It then runs Playwright from the pinned image on the host network, so the browser's origin
+is `APP_URL`, and runs the desktop and device projects in two passes with `cache:clear` between them (the newsletter
+budget).
+
+Test-only settings are appended to the installed `.env`:
+- the two test doubles;
+- `NUSSZOPF_REGISTER_LIMIT=10000`, as in `compose.dev.yaml`;
+- `SEARCH_PAGE_SIZE=5` for the paging spec.
+
+The aria-snapshot dump (`zz-aria.spec.ts`) is left out: it reads the visual reference dataset, which production refuses to
+seed. `PROD_E2E_KEEP=1` leaves the stack running.
 
 ## Visual parity
 
