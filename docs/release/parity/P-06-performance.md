@@ -235,5 +235,9 @@ test in WebKit.
 
 ## Status
 
-**Done.** Awaiting the maintainer's review. PERF-01 to PERF-04 are fixed with regression coverage. The recommendations
-above are open for a decision and none of them blocks the phase.
+**Done.** Closed by the maintainer on 2026-09-24 on the evidence above. PERF-01 to PERF-04 are fixed with regression
+coverage.
+
+The four recommendations stay open as non-blocking recommendations: the maintainer decided not to apply them now.
+Recommendation 4, re-measuring the search round trip and the render cost per card on the production images, is part of
+P-7.
