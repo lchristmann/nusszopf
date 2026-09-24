@@ -255,6 +255,8 @@ The P-6 recommendations stay open and non-blocking, as the maintainer decided. O
 
 ## Status
 
-**Done.** Awaiting the maintainer's review. The production images pass the whole Playwright suite, the operator path,
-the drills and the header/debug/version checks. The one defect found, P7-01, is fixed with regression coverage. Nothing
-needs a decision to close the phase; recommendation 5 is optional.
+**Done.** Closed by the maintainer on 2026-09-24 on the evidence above. P7-01 is fixed with regression coverage.
+
+The limitations above belong to the later phases that own them (TLS and the fresh install to P-8/P-16, the GHCR pull
+to P-16, real SMTP to P-13, the known queue item to P-12). They do not reopen P-7. Recommendation 5 stays optional and
+non-blocking.
