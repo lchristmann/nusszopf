@@ -53,6 +53,9 @@ These are established and should not be silently re-litigated by a future contri
   Addendum (maintainer, 2026-09-24, closing P-3): a listening pass with a real screen reader (NVDA/VoiceOver) is
   not a release blocker. It is a documented post-1.0 manual verification opportunity; none has been performed
   (`docs/release/parity/P-03-accessibility.md`). Contrast decisions: BUG-042–044 fixed, BUG-045 waived.
+  Addendum (maintainer, 2026-09-24, closing P-5): P-5 closed on emulated evidence (no real device was available). The
+  real-iPhone and real-Android smoke is **deferred to P-16**, not waived: P-16 runs the checklist in
+  `docs/release/parity/P-05-browsers-devices.md` on real devices before release.
 - Legal pages and branding (decided by the maintainer 2026-09-21; A-4/A-5):
   - **Rights**: confirmed. The Nusszopf name, logos, og-image and the historical German copy may be used
     (the maintainer is an original author or has their agreement).

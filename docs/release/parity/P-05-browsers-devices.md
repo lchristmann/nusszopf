@@ -136,10 +136,11 @@ P-4 used SEC-xx. No historical defect was found, so `docs/rewrite/bugs.md` has n
   - the scroll-to-top button works;
   - the native `confirm()` dialogs appear when deleting.
 
-## Real-device pass: not performed
+## Real-device pass: not performed, deferred to P-16
 
 A-7 requires a manual smoke on a real iPhone and a real Android phone for each release candidate. No device was
-available for this phase, so that pass is still open. Emulation cannot show:
+available for this phase. On 2026-09-24 the maintainer **deferred** this pass to P-16 (release candidate testing). It
+is a deferral, not a waiver: P-16 must run the checklist below on real devices before release. Emulation cannot show:
 
 - the on-screen keyboard and autocorrect in the rich-text editor;
 - a real pinch on iOS in the cropper;
@@ -200,6 +201,9 @@ its own stack. Locally, run the desktop and the device projects separately and c
 
 ## Status
 
-**Done (automated part).** The emulated matrix runs in CI on every push, and both findings are fixed with regression
-tests. The manual real-device pass (the checklist above) is pending and assigned to a person under A-7. Whether P-5
-can close without it is the maintainer's decision.
+**Done.** Closed by the maintainer on 2026-09-24 on the automated and emulated evidence above. The emulated matrix runs in
+CI on every push, and both findings are fixed with regression tests.
+
+**Limitation carried forward:** no real device was tested in P-5. The real-iPhone and real-Android pass (the eight-step
+checklist above, including the DEV-01 confirmation in item 3) is **deferred to P-16**. P-16 is responsible for running it
+on each release candidate before release, and for recording the device, OS and browser versions here.
