@@ -4,6 +4,7 @@ namespace App\Livewire\Auth;
 
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -28,6 +29,19 @@ class ForgotPassword extends Component
             'email.required' => 'Bitte gib eine E-Mail-Adresse ein',
             'email.email' => 'Bitte gib eine valide E-Mail-Adresse ein',
         ]);
+
+        // Each IP may ask for 10 reset mails per 15 minutes, the budget of the other public forms (P-4, SEC-03).
+        // The broker's own throttle only spaces mails to one address; without this, one client could have a
+        // mail sent to every account in turn. The answer names no address, so it reveals nothing about one.
+        $ipKey = 'password-reset:'.request()->ip();
+
+        if (RateLimiter::tooManyAttempts($ipKey, maxAttempts: 10)) {
+            $this->addError('email', 'Zu viele Versuche. Bitte warte kurz.');
+
+            return;
+        }
+
+        RateLimiter::hit($ipKey, decaySeconds: 900);
 
         // Enumeration-safe (master-roadmap Slice 7 tests): the historical
         // screen always toasted "E-Mail verschickt!" regardless of whether

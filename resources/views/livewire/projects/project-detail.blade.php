@@ -33,7 +33,7 @@
                     <button
                         type="button"
                         aria-label="Information ausblenden"
-                        onclick="document.getElementById('nz-project-banner').classList.add('hidden')"
+                        data-hide="nz-project-banner"
                         class="focus:outline-none"
                     ><x-icon name="x" :size="21" class="absolute top-0 right-0" /></button>
                 </div>

@@ -55,6 +55,27 @@ A small number of important user journeys through the real UI, per role/actor, t
   worker has a backlog.
 - The three whole-story journeys set a 120s timeout.
 
+### Security conventions (P-4)
+
+- `tests/Feature/Security/` holds the P-4 regression tests (`docs/release/parity/P-04-security.md`):
+  - `HostHeaderTest`: mailed links are rooted at `APP_URL`;
+  - `TrustedProxiesTest`: the shipped proxy default;
+  - `SecurityHeadersTest`: headers, CSP, no inline scripts;
+  - `AuthorizationCoverageTest`: bound models, e-mail exposure, and the route inventory.
+- **Route inventory:** it lists every HTTP entry point with its gate. Adding a route means adding it there *and* to
+  `docs/security/authorization-matrix.md`.
+- **Tests outside the local environment:** Feature tests run as `testing`, so every URL is rooted at `APP_URL` (SEC-01).
+  To test what a request under another host produces, forge the request as `HostHeaderTest::forgeHost()` does;
+  Livewire's test requests always use `APP_URL`.
+- **Signed-in sessions:** since `AuthenticateSession` (SEC-10), a test of what a real session does after a password
+  change signs in through the session (`withSession([Auth::guard('web')->getName() => $id])`), not `actingAs()`,
+  which bypasses it.
+- **`tests/E2E/specs/security/csp.spec.ts`** fails on any Content-Security-Policy violation. A new inline `<script>`
+  or `on…=` handler, or a resource from another host, fails it (and `SecurityHeadersTest`). Use a `data-` attribute
+  and a listener in `resources/js/app.js` instead.
+- **Rate-limit budgets:** "Passwort vergessen" has its own per-IP budget of 10 per 15 minutes. A full three-engine run
+  spends 3 of it (the password-reset spec), so three full runs fit before `cache:clear` is needed.
+
 ### Tenth-slice conventions
 
 - `tests/E2E/specs/visitor/public-shell.spec.ts` spends one more of the shared newsletter budget per engine (the Home
@@ -80,7 +101,7 @@ A small number of important user journeys through the real UI, per role/actor, t
 
 `scripts/smoke-test.sh` (run from the host, needs Docker, curl and openssl; CI job "Production stack") builds the two production images from the working copy, installs into a fresh temporary directory exactly
 as an operator would (`install.sh` against the repository's own `docker-compose.yaml` and `.env.production.example`), starts the stack, waits for every healthcheck, and checks: the release is baked into the images,
-`/up`, `/search`, `/login` and a built stylesheet are served, migrations ran and the caches are warm, an unknown page is a plain 404, `/health` turns 200 and only the token reveals details, and `search:reindex` runs.
+`/up`, `/search`, `/login` and a built stylesheet are served, migrations ran and the caches are warm, an unknown page is a plain 404, the security headers are present once with no PHP or nginx version and no link built from a forged `Host` (P-4), `/health` turns 200 and only the token reveals details, and `search:reindex` runs.
 `SMOKE_KEEP=1` leaves the stack running for manual drills (`docs/deployment/operations.md`). The Playwright suite has not yet been run against these images (phase P-7).
 
 ## Visual parity

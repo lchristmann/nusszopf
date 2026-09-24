@@ -42,6 +42,35 @@ Evidence base for this pass: `../historical/be-nusszopf/hasura/metadata/tables.y
 - Confirmed: the Hasura Dockerfile explicitly drops root (`RUN adduser -D nzuser` / `USER nzuser`) before running the engine — a good practice worth preserving in the rewrite's own Docker images.
 - Confirmed: `HASURA_GRAPHQL_DEV_MODE: "true"` and `HASURA_GRAPHQL_ENABLE_CONSOLE: "true"` are set in the **local dev** compose file only (`hasura/docker-compose.yml`); no evidence in this repository shows whether production disabled these (the Heroku env vars are not committed) — flagged as Unknown, must not be assumed either way, and the rewrite must independently ensure its own production configuration disables debug/console surfaces regardless of what historical production did.
 
+## Nusszopf 2 security properties (P-4 review, 2026-09-24)
+
+The review of the rewrite itself, its findings and the evidence are in `docs/release/parity/P-04-security.md`. What
+now holds:
+
+- **Links:** every absolute URL, above all in mails, starts with `APP_URL` and never with the request's `Host`
+  (SEC-01).
+- **Proxy trust:** only proxies on loopback or the private networks are believed about the client address and scheme,
+  unless the operator lists more (SEC-02).
+- **Rate limits:**
+
+  | Surface | Limit |
+  |---|---|
+  | Login | 5 per IP per minute, plus a per-account lock with a notice mail |
+  | Registration | 10 accounts per IP per 15 minutes |
+  | Contact, newsletter and "Passwort vergessen" | 10 per IP per 15 minutes each (SEC-03) |
+  | Newsletter mails | 3 per recipient address per hour (SEC-04) |
+  | Verification resend | 6 per minute, to one's own address only |
+  | Sitemap | 10 per IP per 15 minutes |
+
+- **Uploads:** avatars are dimension-checked from the header (at most 4096 px a side), then decoded, cropped and
+  re-encoded (BUG-031, SEC-05).
+- **Browser headers:** `SAMEORIGIN` framing, `nosniff`, Referrer-Policy, Permissions-Policy, and a CSP without
+  inline scripts (`'unsafe-eval'` for Livewire's Alpine) on every response. No PHP or nginx version is disclosed
+  (BUG-046, SEC-06).
+- **Sessions:** a password reset ends every other session of the account (SEC-10).
+- **HTTP surface:** the complete list of HTTP entry points and their gates is pinned by
+  `tests/Feature/Security/AuthorizationCoverageTest.php`.
+
 ## Authorization matrix
 
 The full action-by-action authorization ruleset (who can view/create/update/delete every resource, and how each historical defect is fixed rather than ported) lives in `docs/security/authorization-matrix.md`. This document covers backend-visible security *properties* (secrets, CORS, rate limiting, data exposure); the matrix covers *authorization decisions* per action. Read both together.

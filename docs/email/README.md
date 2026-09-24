@@ -187,6 +187,7 @@ These four are triggered directly by `web-nusszopf`'s Next.js API routes calling
 > **Nusszopf 2 (slice 9):** `App\Mail\NewsletterSubscribeMail` / `resources/views/mail/newsletter-subscribe.blade.php`,
 > verbatim except BUG-006. Sent on every subscription path (public form, registration checkbox, Profile — BUG-011),
 > from `MAIL_FROM_ADDRESS` like every other mail; the link is `App\Support\NewsletterToken` (7 days), not a JWT.
+> At most 3 per address per hour, whoever asks (P-4, SEC-04); past that the form answers as usual and sends nothing.
 
 - **Trigger (Confirmed):** `newsletter.function.js` → `handleSubscribe()`, called from the
   `/api/newsletter` route with `action: 'subscribe'`. A double-opt-in flow: submitting the
@@ -214,7 +215,7 @@ These four are triggered directly by `web-nusszopf`'s Next.js API routes calling
 ### 7. Newsletter unsubscribe confirmation (`sendgrid/newsletter/unsubscribe.mjml`)
 
 > **Nusszopf 2 (slice 9):** `App\Mail\NewsletterUnsubscribeMail` / `resources/views/mail/newsletter-unsubscribe.blade.php`,
-> verbatim except BUG-006; sent only when the address has a lead (BUG-033).
+> verbatim except BUG-006; sent only when the address has a lead (BUG-033), and at most 3 per address per hour (P-4, SEC-04).
 
 - **Trigger (Confirmed):** `handleUnsubscribe()`, action `unsubscribe`; also double-
   confirmation — clicking the link calls `handleUnsubscribeConfirm` (action
@@ -273,6 +274,10 @@ These four are triggered directly by `web-nusszopf`'s Next.js API routes calling
   evidence surfaces.
 
 ## Cross-cutting observations
+
+- **Links in Nusszopf 2 mails (P-4, SEC-01):** every link starts with `APP_URL`, never with the host of the request that
+  triggered the mail, so a forged `Host` header cannot redirect a reset or confirmation token
+  (`docs/release/parity/P-04-security.md`).
 
 - **From-address consistency (Confirmed):** every app-triggered send uses the same sender —
   `Nusszopf (noreply) <noreply@nusszopf.org>`. The Auth0-triggered emails do not show a

@@ -77,3 +77,16 @@ it('shares one throttle budget with the sign-up form (Preserve)', function () {
         ->call('unsubscribe')
         ->assertDispatched('toast', type: 'error', message: SubscribeForm::error());
 });
+
+it('mails one address at most three unsubscribe links per hour, with an unchanged answer (SEC-04)', function () {
+    Lead::factory()->confirmed()->create(['email' => 'victim@example.com']);
+
+    foreach (range(1, 5) as $ignored) {
+        Livewire::test(UnsubscribeByEmail::class)
+            ->set('email', 'victim@example.com')
+            ->call('unsubscribe')
+            ->assertDispatched('toast', type: 'success', message: 'E-Mail verschickt! Bitte bestätige deine Abmeldung.');
+    }
+
+    Mail::assertQueued(NewsletterUnsubscribeMail::class, 3);
+});

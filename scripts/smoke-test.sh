@@ -81,6 +81,17 @@ step "Debug mode is off and details are not leaked"
 curl -s "$BASE/no-such-page" | grep -qi "stack trace\|vendor/laravel" && fail "an error page leaks debug output"
 curl -s "$BASE/no-such-page" | grep -q "404 – Nusszopf verknetet..." || fail "an unknown page does not show the Nusszopf error page"
 
+step "Security headers, no version disclosure, links on APP_URL whatever the Host (P-4)"
+headers="$(curl -sI "$BASE/login")"
+for header in "Content-Security-Policy: default-src 'self'" "X-Content-Type-Options: nosniff" "X-Frame-Options: SAMEORIGIN" "Referrer-Policy: strict-origin-when-cross-origin"; do
+    echo "$headers" | grep -qiF "$header" || fail "a page is missing the header '$header'"
+done
+[ "$(echo "$headers" | grep -ciF "X-Content-Type-Options")" = "1" ] || fail "a page carries X-Content-Type-Options twice"
+echo "$headers" | grep -qi "^X-Powered-By" && fail "a page names the PHP version (X-Powered-By)"
+echo "$headers" | grep -qi "^Server: nginx/" && fail "a page names the nginx version"
+curl -sI "$BASE/storage/avatars/smoke.txt" | grep -qi "X-Content-Type-Options: nosniff" || fail "an uploaded file is served without nosniff"
+curl -s -H "Host: evil.example" "$BASE/login" | grep -q "evil.example" && fail "a page builds links from a forged Host header"
+
 step "Dependencies, scheduler and queue worker report healthy (they heartbeat once a minute)"
 i=0
 until [ "$(curl -s -o /dev/null -w '%{http_code}' "$BASE/health")" = "200" ]; do

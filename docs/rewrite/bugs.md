@@ -58,6 +58,7 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 | BUG-043 | Accessibility / contrast: Home newsletter button | Trivial | Fix (maintainer-approved 2026-09-23) | Implemented — P-3 (`steel-800` text, 6.0:1) |
 | BUG-044 | Accessibility / contrast: "Ausloggen" in the menu | Low | Fix (maintainer-approved 2026-09-23) | Implemented — P-3 (`warning-900`, 4.6:1) |
 | BUG-045 | Accessibility / contrast: dimmed older toasts | Trivial  | Preserve (waived by the maintainer 2026-09-23) | Decided — historical dimming kept |
+| BUG-046 | Security / browser security headers         | Low      | Fix                                 | Implemented — P-4 (2026-09-24), `docs/release/parity/P-04-security.md` SEC-06 |
 
 ---
 
@@ -830,3 +831,18 @@ directly from `web-nusszopf/projects/webapp/src/containers/user/ProjectForm/*` a
   passes, and the dimming is historical.
 - Regression test: the axe contrast gate exempts only the toast container (`#nz-toasts`) for this reason.
 
+### BUG-046 — No browser security headers at all
+
+- Affected area: Security, every page.
+- Historical behavior (Confirmed by absence): `web-nusszopf` defines no `headers()` in its Next.js configuration and
+  sends no Content-Security-Policy, `X-Frame-Options`, `X-Content-Type-Options`, Referrer-Policy or
+  Permissions-Policy. Its search results rendered stored markup as HTML (BUG-029). Nothing in the browser would
+  have stopped an injected script.
+- Found: the P-4 security review (2026-09-24), finding SEC-06 of `docs/release/parity/P-04-security.md`.
+- Classification: **Fix**. The headers change nothing a visitor sees; they only take away what an injected script,
+  a framing site or content sniffing could do.
+- Corrected behavior: `App\Http\Middleware\SecurityHeaders` sends the headers on every response, including a policy
+  that allows scripts only from the instance itself, with no inline scripts. nginx sends the non-CSP headers on the
+  static files and names no versions.
+- Regression tests: `tests/Feature/Security/SecurityHeadersTest.php`, `tests/E2E/specs/security/csp.spec.ts`, and the
+  smoke test's P-4 step.

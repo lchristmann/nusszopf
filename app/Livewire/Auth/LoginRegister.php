@@ -85,9 +85,10 @@ class LoginRegister extends Component
         // error toast (`cms.notify.error[0]`), never a field message that would tell the fields apart.
         $this->dispatch('toast', type: 'loading', message: 'Du wirst einloggt.');
 
-        $user = User::where('email', $this->emailOrName)
-            ->orWhere('name', $this->emailOrName)
-            ->first();
+        // The address first: a username may itself look like an address (it only has to be free of
+        // whitespace), and one query for either would then pick an arbitrary account of the two (P-4, SEC-09).
+        $user = User::where('email', $this->emailOrName)->first()
+            ?? User::where('name', $this->emailOrName)->first();
 
         $accountKey = $user ? 'login-account:'.$user->id : null;
 

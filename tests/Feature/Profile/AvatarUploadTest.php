@@ -117,3 +117,42 @@ it('shows the edit affordance for a non-social account', function () {
     Livewire::actingAs($user)->test(Profile::class)
         ->assertSee('btn_edit-avatar_settings-page', false);
 });
+
+/**
+ * P-4, SEC-05: a PNG of a few hundred bytes can declare 20000×20000 pixels. Decoding it made GD allocate the
+ * whole bitmap (1.6 GB) and ended the PHP process with a fatal "Allowed memory size exhausted" — nothing
+ * catches that. The header is read first now; if this test ever regresses, it takes the test process down.
+ */
+function pixelFloodPng(int $side): string
+{
+    $chunk = fn (string $type, string $data) => pack('N', strlen($data)).$type.$data.pack('N', crc32($type.$data));
+
+    return "\x89PNG\r\n\x1a\n"
+        .$chunk('IHDR', pack('NNCCCCC', $side, $side, 8, 0, 0, 0, 0))
+        .$chunk('IDAT', gzcompress(str_repeat("\0", ($side + 1) * 4)))
+        .$chunk('IEND', '');
+}
+
+it('refuses an image that declares more than 4096 pixels on a side, before decoding it (SEC-05)', function () {
+    Storage::fake('public');
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)->test(Profile::class)
+        ->set('avatarUpload', UploadedFile::fake()->createWithContent('flood.png', pixelFloodPng(20000)))
+        ->call('saveAvatar')
+        ->assertDispatched('toast', type: 'error', message: 'Bild konnte nicht gespeichert werden.')
+        ->assertNotDispatched('avatar-saved');
+
+    expect($user->fresh()->picture)->toBeNull();
+});
+
+it('refuses a real, decodable image that is too long on one side', function () {
+    Storage::fake('public');
+    $user = User::factory()->create();
+
+    expect(fn () => AvatarUploader::store($user, UploadedFile::fake()->image('strip.png', 4097, 10)))
+        ->toThrow(RuntimeException::class);
+
+    AvatarUploader::store($user, UploadedFile::fake()->image('edge.png', 4096, 10));
+    expect($user->fresh()->picture)->not->toBeNull();
+});

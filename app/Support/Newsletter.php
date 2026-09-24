@@ -7,6 +7,7 @@ use App\Mail\NewsletterUnsubscribeMail;
 use App\Models\Lead;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 
 /**
@@ -22,6 +23,12 @@ final class Newsletter
 {
     /** Unconfirmed leads older than this (since their latest request) are purged. */
     public const PURGE_AFTER_DAYS = 14;
+
+    /**
+     * Confirmation mails of one kind one address receives per hour, however many senders ask (P-4, SEC-04).
+     * The per-IP budget of the forms cannot stop a sender that changes its address.
+     */
+    public const MAILS_PER_ADDRESS_PER_HOUR = 3;
 
     /**
      * `handleSubscribe`, for all three sources. New address → pending lead +
@@ -48,6 +55,10 @@ final class Newsletter
                 'consent_version' => self::consentVersion(),
                 'requested_at' => now(),
             ]);
+        }
+
+        if (! self::mayMail(NewsletterToken::SUBSCRIBE, $lead->email)) {
+            return;
         }
 
         Mail::send(new NewsletterSubscribeMail(
@@ -78,7 +89,7 @@ final class Newsletter
     {
         $lead = Lead::where('email', $email)->first();
 
-        if ($lead === null) {
+        if ($lead === null || ! self::mayMail(NewsletterToken::UNSUBSCRIBE, $lead->email)) {
             return;
         }
 
@@ -118,6 +129,23 @@ final class Newsletter
         return Lead::whereNull('confirmed_at')
             ->where('requested_at', '<', now()->subDays(self::PURGE_AFTER_DAYS))
             ->delete();
+    }
+
+    /**
+     * Counts one mail of `$purpose` to `$email` and says whether it may go out. Past the limit the caller
+     * answers exactly as before and simply sends nothing, so the answer still reveals nothing.
+     */
+    private static function mayMail(string $purpose, string $email): bool
+    {
+        $key = 'newsletter-mail:'.$purpose.':'.hash('sha256', mb_strtolower($email));
+
+        if (RateLimiter::tooManyAttempts($key, self::MAILS_PER_ADDRESS_PER_HOUR)) {
+            return false;
+        }
+
+        RateLimiter::hit($key, decaySeconds: 3600);
+
+        return true;
     }
 
     public static function consentVersion(): string

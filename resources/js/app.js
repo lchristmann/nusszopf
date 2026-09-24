@@ -24,10 +24,12 @@ window.nzToast = function nzToast(type, message) {
     el.innerHTML = `
         <div class="flex items-start">
             <span class="flex-shrink-0 mr-2">${ICONS[type] ?? ICONS.success}</span>
-            <span class="nz-text-sm leading-snug text-left">${message}</span>
+            <span class="nz-text-sm leading-snug text-left"></span>
         </div>
         <span class="flex-shrink-0 ml-5" aria-hidden="true">&times;</span>
     `;
+    // Text, never markup: every message today is a fixed string, and none may ever become HTML (P-4, SEC-11).
+    el.querySelector('.nz-text-sm').textContent = message;
     el.className += ' mb-2 nz-toast-in';
     const dimOlder = () => {
         // Toasts.service.js: every toast but the newest is `opacity-50`.
@@ -53,6 +55,31 @@ window.nzToast = function nzToast(type, message) {
 
 document.addEventListener('livewire:init', () => {
     Livewire.on('toast', ({ type, message }) => window.nzToast(type, message));
+});
+
+// A toast flashed into the session before a full-page redirect (x-toast-container).
+document.addEventListener('DOMContentLoaded', () => {
+    const flashed = document.getElementById('nz-toasts')?.dataset.flashToast;
+    if (flashed) {
+        const toast = JSON.parse(flashed);
+        window.nzToast(toast.type, toast.message);
+    }
+});
+
+// The two former inline `onclick` handlers, which the Content-Security-Policy blocks (P-4, SEC-06):
+// the nav header's "Zurück" on Privacy (`router.back()`) and the project page's banner close button.
+document.addEventListener('click', (event) => {
+    const back = event.target.closest('[data-history-back]');
+    if (back) {
+        event.preventDefault();
+        history.back();
+        return;
+    }
+
+    const hide = event.target.closest('[data-hide]');
+    if (hide) {
+        document.getElementById(hide.dataset.hide)?.classList.add('hidden');
+    }
 });
 
 /**

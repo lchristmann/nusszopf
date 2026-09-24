@@ -196,3 +196,17 @@ it('shows a published project on the search results page and never a private one
     expect($found)->toBeTrue();
     $test->assertSee('Ganz einzigartiges Suchseiten-Projekt')->assertDontSee('Verstecktes Projekt Zwiebelfisch');
 })->group('meilisearch');
+
+it('refuses a page count set by the client, which only "Mehr laden" may raise (SEC-08)', function () {
+    $pagesAsked = [];
+    fakeSearch(function (string $query, array $categories, int $pages) use (&$pagesAsked) {
+        $pagesAsked[] = $pages;
+
+        return new SearchResults([], false);
+    });
+
+    expect(fn () => Livewire::test(Search::class)->call('load')->set('pages', 2000))
+        ->toThrow('Cannot update locked property: [pages]');
+
+    expect(max($pagesAsked))->toBe(1);
+});

@@ -14,13 +14,5 @@
     auto-dismiss is 3000ms, matching `Toasts.service.js`'s `AUTO_CLOSE_MS`.
 --}}
 
-<div id="nz-toasts" class="fixed z-50 right-0 w-full p-3 top-10 lg:top-12 sm:w-auto" aria-live="polite"></div>
-
-@if (session('toast'))
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const toast = @json(session('toast'));
-            window.nzToast(toast.type, toast.message);
-        });
-    </script>
-@endif
+{{-- A flashed toast travels as data, not as an inline script, which the Content-Security-Policy blocks (P-4, SEC-06). --}}
+<div id="nz-toasts" class="fixed z-50 right-0 w-full p-3 top-10 lg:top-12 sm:w-auto" aria-live="polite" @if (session('toast')) data-flash-toast="{{ json_encode(session('toast')) }}" @endif></div>

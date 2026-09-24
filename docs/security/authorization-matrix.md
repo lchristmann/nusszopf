@@ -120,10 +120,14 @@ into the same Policy/Scope enforcement as every other row in this table — ther
 "API authorization" surface to design. If a public API is ever added, it is a new product decision,
 not a historical requirement, and needs its own authorization design at that time.
 
+**Coverage (P-4, 2026-09-24):** `docs/release/parity/P-04-security.md` maps every row of this document to its
+enforcement and its tests. `tests/Feature/Security/AuthorizationCoverageTest.php` pins the complete route list with
+each route's `auth`/`guest`/`signed`/`throttle` gate. A new route fails that test until it is added there, and here.
+
 ## What this table does not cover
 
-- Rate limiting (see `docs/security/README.md`, "Rate limiting" — historically absent everywhere,
-  a fresh decision for Nusszopf 2, not a port).
+- Rate limiting (see `docs/security/README.md`: the historical findings under "Rate limiting", and the limits
+  Nusszopf 2 applies under "Nusszopf 2 security properties").
 - CSRF (Laravel's default protection applies uniformly; no historical equivalent to translate since
   the historical frontend was a client-rendered SPA calling a GraphQL API with a bearer token, not a
   form-posting server-rendered app).

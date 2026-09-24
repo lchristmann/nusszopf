@@ -68,10 +68,11 @@ it('sends the header back chevron home from Impressum and Rechtliches', function
 it('sends the Privacy back chevron home, or back in history with ?back', function () {
     $this->get('/privacy')
         ->assertSee('<a href="/" data-test="btn_go-back_nav-header"', false)
-        ->assertDontSee('history.back()', false);
+        ->assertDontSee('data-history-back', false);
 
+    // resources/js/app.js turns a click on `data-history-back` into `history.back()` (no inline handler, P-4 SEC-06).
     $this->get('/privacy?back=history')
-        ->assertSee('onclick="history.back(); return false;" data-test="btn_go-back_nav-header"', false);
+        ->assertSee('data-history-back data-test="btn_go-back_nav-header"', false);
 });
 
 it('links Profile\'s newsletter consent to Privacy with ?back=history, as historically', function () {

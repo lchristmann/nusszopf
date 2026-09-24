@@ -168,9 +168,21 @@ and the database/search passwords first, Compose reads them).
 put whatever terminates TLS for your other services in front of it — Nginx Proxy Manager, Caddy or Traefik — and proxy your domain to
 `http://<host>:8080`. For a proxy on the same host set `APP_BIND=127.0.0.1` so only it can reach the port.
 
-The application must be told to believe the proxy about the original scheme and address: `TRUSTED_PROXIES=*` (or a comma-separated list of proxy
-addresses) in `.env`, `APP_URL` with `https://`, and `SESSION_SECURE_COOKIE=true` — all preset in `.env.production.example`. Without
-`TRUSTED_PROXIES` links and redirects would use `http://`. Caddy needs only `nusszopf.example.org { reverse_proxy 127.0.0.1:8080 }`.
+The application must be told to believe the proxy about the original scheme and address: `TRUSTED_PROXIES` in `.env`, `APP_URL` with
+`https://`, and `SESSION_SECURE_COOKIE=true` — all preset in `.env.production.example`. The preset `TRUSTED_PROXIES` lists loopback and the
+private networks (`127.0.0.1,::1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,fc00::/7`), which covers a proxy on the same host (it reaches the
+container through Docker's private bridge) or on the local network. A proxy with a public address elsewhere must be added to the list. Do not
+set `*` while the port is reachable from the internet: every client could then name its own address in `X-Forwarded-For` and slip past the
+per-address limits on login, registration and the public forms (`docs/release/parity/P-04-security.md`, SEC-02). An untrusted proxy also makes
+the signed links in e-mails (verification, unblock) fail, because the application then sees `http://` where the link says `https://`.
+Caddy needs only `nusszopf.example.org { reverse_proxy 127.0.0.1:8080 }`.
+
+Every link the application writes — in pages and above all in e-mails — starts with `APP_URL`, whatever address the visitor used, so
+`APP_URL` must be the exact public address.
+
+The application sends its own security headers, including a Content-Security-Policy (`docs/security/README.md`). HSTS
+(`Strict-Transport-Security`) is left to your TLS proxy, which knows whether the site is HTTPS-only for good. Once it is,
+enable HSTS there; Caddy, Traefik and Nginx Proxy Manager each have a setting for it.
 
 ## Persistent storage
 

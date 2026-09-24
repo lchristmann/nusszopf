@@ -4,6 +4,7 @@ use App\Livewire\Auth\ForgotPassword;
 use App\Livewire\Auth\ResetPassword;
 use App\Mail\ChangePasswordMail;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -100,4 +101,63 @@ it('reads the token from the route and the e-mail from the query string', functi
 
     $this->get(route('password.reset', ['token' => $token, 'email' => $user->email]))
         ->assertSeeLivewire(ResetPassword::class);
+});
+
+it('limits each IP to 10 reset requests per 15 minutes, with the throttle copy and no further mail (SEC-03)', function () {
+    Mail::fake();
+    $users = User::factory()->count(11)->create();
+
+    foreach ($users->take(10) as $user) {
+        Livewire::test(ForgotPassword::class)->set('email', $user->email)->call('send')->assertHasNoErrors();
+    }
+
+    Livewire::test(ForgotPassword::class)
+        ->set('email', $users->last()->email)
+        ->call('send')
+        ->assertHasErrors(['email'])
+        ->assertSee('Zu viele Versuche. Bitte warte kurz.')
+        ->assertNotDispatched('toast', type: 'success', message: 'E-Mail verschickt!');
+
+    Mail::assertQueued(ChangePasswordMail::class, 10);
+
+    $this->travel(16)->minutes();
+
+    Livewire::test(ForgotPassword::class)->set('email', $users->last()->email)->call('send')->assertHasNoErrors();
+    Mail::assertQueued(ChangePasswordMail::class, 11);
+});
+
+it('does not spend the reset budget on an invalid address', function () {
+    foreach (range(1, 12) as $ignored) {
+        Livewire::test(ForgotPassword::class)->set('email', 'not-an-email')->call('send');
+    }
+
+    Livewire::test(ForgotPassword::class)->set('email', 'nobody@example.com')->call('send')->assertHasNoErrors();
+});
+
+it('ends every other signed-in session of the account once its password is reset (SEC-10)', function () {
+    $user = User::factory()->create(['email' => 'nussknacker@example.com', 'password' => 'OldStr0ng!Pass']);
+
+    // A session signed in elsewhere (a stolen or forgotten device): signed in through the session itself,
+    // as a real login leaves it, not through the test helper that bypasses the session.
+    $this->withSession([Auth::guard('web')->getName() => $user->id])->get(route('profile'))->assertOk();
+
+    Livewire::test(ResetPassword::class, ['token' => Password::createToken($user)])
+        ->set('email', $user->email)
+        ->set('password', 'NewStr0ng!Pass')
+        ->call('save');
+
+    Auth::forgetGuards();
+
+    $this->get(route('profile'))->assertRedirect(route('login'));
+    $this->assertGuest();
+});
+
+it('keeps a session signed in while the password is unchanged', function () {
+    $user = User::factory()->create();
+
+    $this->withSession([Auth::guard('web')->getName() => $user->id])->get(route('profile'))->assertOk();
+    Auth::forgetGuards();
+
+    $this->get(route('profile'))->assertOk();
+    $this->assertAuthenticatedAs($user);
 });

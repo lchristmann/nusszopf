@@ -35,10 +35,23 @@ final class AvatarUploader
     /** Side length (px) a stored avatar is capped to. The client already crops to 150×150. */
     public const MAX_DIMENSION = 512;
 
+    /**
+     * Side length (px) an upload may declare at most, read from its header before anything is decoded
+     * (P-4, SEC-05). GD allocates the full bitmap on decode: a 400 KB PNG that declares 20000×20000 would need
+     * 1.6 GB and end the PHP process with a fatal error. The crop dialog uploads 512×512.
+     */
+    public const MAX_SOURCE_DIMENSION = 4096;
+
     public static function store(User $user, UploadedFile $file): string
     {
         $contents = $file->get();
-        $decoded = $contents === false ? false : @imagecreatefromstring($contents);
+        $size = $contents === false ? false : @getimagesizefromstring($contents);
+
+        if ($size === false || $size[0] > self::MAX_SOURCE_DIMENSION || $size[1] > self::MAX_SOURCE_DIMENSION) {
+            throw new RuntimeException('Die Datei ist kein gültiges Bild.');
+        }
+
+        $decoded = @imagecreatefromstring($contents);
 
         if (! $decoded instanceof GdImage) {
             throw new RuntimeException('Die Datei ist kein gültiges Bild.');

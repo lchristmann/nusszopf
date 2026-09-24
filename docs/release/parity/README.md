@@ -14,7 +14,7 @@ person is listed as pending), **In progress**, **Not started**.
 | P-1 Parity audit | [`P-01-parity-audit.md`](P-01-parity-audit.md) | Done |
 | P-2 Visual regression | [`P-02-visual-regression.md`](P-02-visual-regression.md) | Done (maintainer review approved 2026-09-23) |
 | P-3 Accessibility | [`P-03-accessibility.md`](P-03-accessibility.md) | Done (closed by the maintainer 2026-09-24; screen-reader listening pass is a post-1.0 opportunity, not performed) |
-| P-4 Security review | [`P-04-security.md`](P-04-security.md) | Not started |
+| P-4 Security review | [`P-04-security.md`](P-04-security.md) | Done (closed by the maintainer 2026-09-24; one High, four Medium, six Low/Info findings, all fixed; SEC-10 approved) |
 | P-5 Browser/device verification | [`P-05-browsers-devices.md`](P-05-browsers-devices.md) | Not started |
 | P-6 Performance sanity | [`P-06-performance.md`](P-06-performance.md) | Not started |
 | P-7 Production Compose verification | [`P-07-production-e2e.md`](P-07-production-e2e.md) | Not started |

@@ -19,7 +19,7 @@
             </a>
             {{-- `goBackUri === 'back'` is `router.back()` (Privacy with `?back`). --}}
             @if ($goBackUri === 'back')
-                <a href="{{ route('home') }}" onclick="history.back(); return false;" data-test="btn_go-back_nav-header" aria-label="Zurück" title="Zurück" class="ml-6 focus:outline-none">
+                <a href="{{ route('home') }}" data-history-back data-test="btn_go-back_nav-header" aria-label="Zurück" title="Zurück" class="ml-6 focus:outline-none">
                     <x-icon name="chevron-left" :size="28" :stroke-width="2" />
                 </a>
             @elseif ($goBackUri)

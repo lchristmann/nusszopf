@@ -33,7 +33,9 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            // No `storage/{path}` download/upload routes for the private disk: nothing uses them, and it holds
+            // Livewire's temporary uploads (P-4, SEC-07).
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],

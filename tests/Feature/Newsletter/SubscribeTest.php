@@ -136,3 +136,31 @@ it('keeps the name within the 50-character column on every path', function () {
 
     expect(mb_strlen(Lead::sole()->name))->toBe(50);
 });
+
+it('mails one address at most three confirmations per hour, whatever the sender, with an unchanged answer (SEC-04)', function () {
+    // Five requests stay inside one sender's budget of ten, so only the per-address cap can hold the mails back.
+    foreach (range(1, 5) as $ignored) {
+        subscribeViaForm('victim@example.com')
+            ->assertHasNoErrors()
+            ->assertDispatched('toast', type: 'success', message: 'E-Mail verschickt! Bitte bestätige deine Anmeldung.');
+    }
+
+    Mail::assertQueued(NewsletterSubscribeMail::class, 3);
+    expect(Lead::where('email', 'victim@example.com')->count())->toBe(1);
+
+    $this->travel(61)->minutes();
+
+    Newsletter::subscribe('victim@example.com', 'Nuss', Lead::SOURCE_FORM);
+    Mail::assertQueued(NewsletterSubscribeMail::class, 4);
+});
+
+it('counts the per-address cap case-insensitively and per address', function () {
+    foreach (['Victim@Example.com', 'victim@example.com', 'VICTIM@EXAMPLE.COM', 'victim@example.com'] as $email) {
+        Newsletter::subscribe($email, 'Nuss', Lead::SOURCE_FORM);
+    }
+
+    Newsletter::subscribe('other@example.com', 'Nuss', Lead::SOURCE_FORM);
+
+    Mail::assertQueued(NewsletterSubscribeMail::class, fn (NewsletterSubscribeMail $mail) => $mail->email === 'other@example.com');
+    Mail::assertQueued(NewsletterSubscribeMail::class, 4);
+});

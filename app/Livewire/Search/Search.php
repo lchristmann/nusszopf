@@ -7,6 +7,7 @@ use App\Services\Search\SearchResults;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -48,6 +49,11 @@ class Search extends Component
     #[Url(as: 'f')]
     public array $filter = [];
 
+    /**
+     * Only "Mehr laden" adds a page. Locked, because a client that set it directly could have one request
+     * fetch and render the whole index (up to `maxTotalHits`, config/scout.php) (P-4, SEC-08).
+     */
+    #[Locked]
     public int $pages = 1;
 
     public bool $ready = false;

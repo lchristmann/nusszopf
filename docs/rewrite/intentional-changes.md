@@ -756,6 +756,73 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 
 ---
 
+### Security headers and a Content-Security-Policy on every response (BUG-046)
+
+- Status: Approved — Fix, P-4 security review (2026-09-24), finding SEC-06 of `docs/release/parity/P-04-security.md`
+- Date: 2026-09-24
+- Historical behavior: no security headers at all (BUG-046).
+- Why it changes: nothing in the browser limited what an injected script, a framing site or MIME sniffing could do.
+  The web server also named its PHP and nginx versions.
+- New behavior:
+  - every response carries `X-Content-Type-Options`, `X-Frame-Options: SAMEORIGIN`, a Referrer-Policy, a
+    Permissions-Policy and a Content-Security-Policy that allows scripts only from the instance itself, with no
+    inline scripts;
+  - the one inline script (a toast flashed across a redirect) and the two inline `onclick` handlers became data
+    attributes read by `resources/js/app.js`;
+  - toasts show their message as text.
+- Visible change: none (the visual suite is unchanged, 69 of 69).
+- Affected screens: all (markup only: Privacy's "Zurück", the project banner's close button, flashed toasts).
+  Domain and migrations: none.
+- Tests: `tests/Feature/Security/SecurityHeadersTest.php`, `tests/E2E/specs/security/csp.spec.ts` (no CSP violation on
+  the journeys, three engines), `tests/Feature/Legal/LegalPagesTest.php`, the smoke test.
+- Approval: Approved (no visible behavior; Claude-decidable hardening, recorded for the maintainer's review with P-4).
+
+---
+
+### "Passwort vergessen" is limited per IP, newsletter mails per address (P-4)
+
+- Status: Approved — Replace of Auth0's own limits and a threshold choice under roadmap B-7 ("throttle thresholds");
+  P-4 findings SEC-03 and SEC-04 (2026-09-24)
+- Date: 2026-09-24
+- Historical behavior:
+  - reset mails were sent by Auth0, whose own sending limits are platform configuration and unrecoverable;
+  - the newsletter API was limited to 10 requests per 15 minutes per IP (Preserve, unchanged), with no limit per
+    recipient.
+- Why it changes: without Auth0, one client could have a reset mail sent to every registered address. A sender that
+  changes its address could mail one person newsletter links without end.
+- New behavior:
+  - "Passwort vergessen" accepts 10 requests per IP per 15 minutes, the budget of the other public forms. Past it,
+    the field shows "Zu viele Versuche. Bitte warte kurz."; invalid input does not count.
+  - One address receives at most 3 newsletter confirmation mails and 3 unsubscribe mails per hour. Past that the form
+    answers as before and sends nothing, so the answer still reveals nothing (BUG-032/033).
+- Affected screens: Passwort vergessen (only when the limit is hit); the newsletter forms (no visible change).
+- Domain and migrations: none.
+- Tests: `tests/Feature/Auth/PasswordResetTest.php`, `tests/Feature/Newsletter/SubscribeTest.php`,
+  `tests/Feature/Newsletter/UnsubscribeTest.php`.
+- Approval: Approved (B-7).
+
+---
+
+### A password reset ends the account's other sessions (P-4)
+
+- Status: **Approved by the maintainer on 2026-09-24** as intentional security behavior; implemented in P-4, finding SEC-10.
+  The unknown historical Auth0 behavior does not block the decision.
+- Date: 2026-09-24
+- Historical behavior: Unknown. Sessions were Auth0/`nextjs-auth0` cookies; whether a password change revoked them
+  is Auth0 tenant configuration that neither repository contains.
+- Why it changes: in Nusszopf 2 as built, a session signed in elsewhere (a stolen or forgotten device) stayed valid
+  for up to 8 rolling hours after the owner reset the password. Resetting the password is exactly what a person does
+  when they fear someone else is signed in.
+- New behavior: Laravel's `AuthenticateSession` runs on every web request. A session whose stored password hash no
+  longer matches the account is logged out on its next request and lands on the login screen. Accounts without a
+  password (Google-only) are unaffected.
+- Affected screens: any page opened on another device after a reset. Domain and migrations: none.
+- Tests: `tests/Feature/Auth/PasswordResetTest.php` ("ends every other signed-in session …", "keeps a session signed in
+  while the password is unchanged").
+- Approval: Approved (maintainer, 2026-09-24).
+
+---
+
 ## Explicitly deferred (not proposed here, need a product decision first — see `docs/rewrite/open-questions.md` / `docs/rewrite/architecture-decisions.md`)
 
 The following were identified during archaeology as *possible* candidates for change but are deliberately **not** proposed above, because reasonable product intent could explain the historical behavior as-is:

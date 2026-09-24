@@ -110,6 +110,8 @@ Three Auth0-side behaviors surface as email notifications only (full template co
 | Auth0 rule: newsletter opt-in side effect | Direct side effect of the registration action itself |
 | Auth0 rule: Hasura JWT claims (`user`/`anonymous` roles) | Laravel policies/gates + guest access, per `docs/domain/permissions.md` |
 | Auth0 Attack Protection (IP block) | Laravel rate limiting: 5 failed logins per IP per minute, and a per-account lock after 5 with the notice mail (register B-7/B-12, seventh slice) |
+| Auth0's own limits on password-reset mails (platform configuration, Unknown) | 10 "Passwort vergessen" requests per IP per 15 minutes plus the broker's 60 s per address (P-4, SEC-03) |
+| Session revocation on a password change (Auth0 configuration, Unknown) | `AuthenticateSession`: a reset ends every other session of the account on its next request (P-4, SEC-10, approved by the maintainer 2026-09-24) |
 | Auth0 breached-password detection | Deferred (register C2) — not built |
 | Google social login | Laravel Socialite (Google provider) |
 | Apple social login (button existed, never wired) | **Do not implement** unless separately approved — historically incomplete, not a real historical capability (see `docs/rewrite/open-questions.md`) |
