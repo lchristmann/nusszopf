@@ -1,7 +1,7 @@
 # Operations
 
 > **Status: health, logs, queue and scheduler, upgrades, rollback, search recovery and troubleshooting are implemented and verified
-> (operational track O-1/O-2, 2026-09-22); upgrades and rollback were tested again on populated installations in P-9 (2026-09-25).** The backup and restore sections remain a documented proposal until the backup drill (P-10).
+> (operational track O-1/O-2, 2026-09-22); upgrades were tested again on populated installations in P-9 (2026-09-25); backups, the restore onto an empty host and the rollback of an upgrade were drilled in P-10 (2026-09-25, `scripts/restore-test.sh`).**
 > Commands assume the operator's directory (`docker-compose.yaml` and `.env` next to each other); contributors add
 > `-f compose.dev.yaml` and use the `workspace` service.
 
@@ -112,54 +112,139 @@ Columns: `email`, `name`, `confirmed_at`, `requested_at`, `source` (`form`, `reg
 
 ## Backups
 
-**(needs approval — which tier to adopt for v1)**. Two demonstrated tiers, both Confirmed from evidence:
+Tested end to end in P-10 (`docs/release/parity/P-10-backup-restore.md`): a backup made by this script from root's
+crontab was restored onto a new, empty host with the commands in [Restore](#restore), and the restored installation
+matched the original. Tier 1 of decision B2 (`docs/rewrite/decisions-register.md`): a shell script run by cron.
+`spatie/laravel-backup` (encryption, thinning, a health check for stale backups) is the documented upgrade path, not
+part of v1.
 
-**Tier 1 — Waffle Dashboard's baseline** (`docs/code/backup.sh` in that repo): a plain shell script run via host crontab.
+**What a backup contains**, and why:
 
+| File | What | Why |
+|---|---|---|
+| `postgres.dump` | The whole database (`pg_dump`, custom format): accounts and password hashes, projects, requests, visitor counts, newsletter subscribers with their consent records, pending password resets, failed jobs | This is the application's data |
+| `storage.tar.gz` | The `laravel-storage` volume: the avatars (`public/avatars`) and Livewire's temporary uploads | Uploaded files exist nowhere else |
+| `installation.tar.gz` | The installation directory: `.env`, `docker-compose.yaml`, `legal/`, a `compose.override.yaml` and whatever else you keep there | `.env` holds `APP_KEY` (without it, links already mailed stop working) and the passwords the database was created with. `NUSSZOPF_VERSION` in it says which release the dump belongs to, and `docker-compose.yaml` is that release's |
+
+**What a backup does not contain**, on purpose:
+- **The search index** (`meilisearch-data`). It is derived from the database; the restore rebuilds it with
+  `search:reindex` (see [Search index recovery](#search-index-recovery)).
+- **Redis** (`redis-data`): sessions, queued jobs, the cache, rate-limit counters and the health heartbeats. After a
+  restore everyone signs in again, and a job that was still queued when the backup ran (for example a mail) is not
+  run. A mail that had failed is in `failed_jobs`, which is in the database.
+- **The Docker images.** They are downloaded again for the release named in `.env`.
+- **Your reverse proxy and its TLS certificates.** They are outside the installation; back them up with the proxy.
+
+Save the script as `/usr/local/bin/nusszopf-backup.sh` and make it executable (`chmod 700`). Set `NUSSZOPF_DIR` if
+your installation is not in `/opt/nusszopf`.
+
+<!-- P-10: scripts/restore-test.sh runs this block exactly as written. -->
 ```sh
 #!/bin/sh
-BACKUP_DIR="/opt/nusszopf-backups/$(date +%Y-%m-%d_%H-%M)"
-mkdir -p "$BACKUP_DIR"
-docker compose exec -T postgres sh -c 'pg_dump --format=custom -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > "$BACKUP_DIR/postgres.dump"
-docker run --rm -v nusszopf_laravel-storage:/data -v "$BACKUP_DIR:/backup" ubuntu tar czf "/backup/storage-volume.tar.gz" /data
-find /opt/nusszopf-backups -mindepth 1 -maxdepth 1 -type d -mtime +30 -exec rm -rf {} \;
+# Nusszopf backup: the database, the uploaded files and the installation directory (docs/deployment/operations.md, "Backups").
+set -eu
+NUSSZOPF_DIR=/opt/nusszopf        # your installation: docker-compose.yaml and .env
+BACKUP_ROOT=/opt/nusszopf-backups
+KEEP_DAYS=30
+
+umask 077                         # a backup holds .env, with APP_KEY and the passwords
+cd "$NUSSZOPF_DIR"                # cron starts elsewhere, and docker compose must run here
+BACKUP_DIR="$BACKUP_ROOT/$(date +%Y-%m-%d_%H-%M-%S)"
+mkdir -p "$BACKUP_DIR.incomplete"
+
+# The database first: a file uploaded while the rest runs is then an unused extra, never a missing avatar.
+docker compose exec -T postgres sh -c 'pg_dump --format=custom -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > "$BACKUP_DIR.incomplete/postgres.dump"
+docker compose exec -T postgres pg_restore --list < "$BACKUP_DIR.incomplete/postgres.dump" > /dev/null
+docker compose run --rm --no-deps -T --entrypoint tar php-fpm czf - -C /var/www/storage/app . > "$BACKUP_DIR.incomplete/storage.tar.gz"
+tar tzf "$BACKUP_DIR.incomplete/storage.tar.gz" > /dev/null
+tar czf "$BACKUP_DIR.incomplete/installation.tar.gz" .
+
+mv "$BACKUP_DIR.incomplete" "$BACKUP_DIR"
+find "$BACKUP_ROOT" -mindepth 1 -maxdepth 1 -type d -mtime +"$KEEP_DAYS" -exec rm -rf {} +
+echo "Backup written to $BACKUP_DIR"
 ```
 
-Scheduled with a root crontab entry (`crontab -e`), e.g. weekly. The `pg_dump` line reads the database name and user from the `postgres` container's own environment, because the shell running the script does not have the `.env` values. As first written (`-d "$DB_DATABASE" -U "$DB_USERNAME"`), the line failed with `role "root" does not exist` (P-9). The P-9 fix is also applied to Restore step 1; P-10 drills the whole procedure. This is the minimum viable, evidence-backed backup story and matches the "no unnecessary operational dependencies" principle in `.claude/rules/06-self-hosting.md`.
+Run it from root's crontab (`crontab -e`), for example every night at 3:00:
 
-**Tier 2 — LCxHolz's maturity level** (`spatie/laravel-backup`): encrypted archives (AES-256, gated on a `BACKUP_ARCHIVE_PASSWORD` env var), tiered retention (all backups for 7 days, then daily/weekly/monthly/yearly thinning), a `BackupsCheck` health-check integration that flags a missing/stale backup, and email notification on failure. Requires a PostgreSQL-compatible dump driver (the LCxHolz config is MySQL-specific; Nusszopf would need `pg_dump` wired through the same package).
+```
+0 3 * * * /usr/local/bin/nusszopf-backup.sh >> /var/log/nusszopf-backup.log 2>&1
+```
 
-**Neither tier backs up Meilisearch.** Meilisearch's index is fully derivable from PostgreSQL by reindexing (assuming Nusszopf's search indexing is idempotent and triggered from domain data, per standard Laravel Scout/Meilisearch integration patterns) — so the recommended default is **don't back up the index, document a reindex command as the recovery path**, but this is Unknown/unverified until `docs/search/README.md` establishes how indexing actually works.
+- **It needs the stack running** (it asks PostgreSQL for the dump) and takes a few seconds; the site stays up.
+- **A failed backup is visible:** the script stops at the first error with a non-zero exit status, the log says why,
+  and the folder keeps the suffix `.incomplete`. Only a folder without that suffix is a complete backup. Check the log
+  and the folder list now and then; nothing warns you on its own.
+- **Copy the backups to another machine.** A backup on the same disk does not survive the loss of the host. Copy
+  `/opt/nusszopf-backups` elsewhere, for example with `rsync` from the other machine's crontab. The folders are
+  readable by root only; keep the copies as private, since they contain `.env`.
+- The dump is consistent in itself. The uploaded files are copied a moment later, so an avatar uploaded in between is
+  in the backup but unused.
 
-What must always be backed up regardless of tier (Confirmed necessity from LCxHolz's reasoning, directly applicable): the database, the storage volume (user uploads), `.env` (contains `APP_KEY` — losing it makes any `APP_KEY`-encrypted data permanently unrecoverable), and the `legal/` folder with your Impressum/Rechtliches/Datenschutz texts (`docs/deployment/README.md`, "Legal pages").
+Two earlier versions of this script failed without saying so (P-9, P-10): the dump line read `$DB_DATABASE` from a
+shell that does not have it (`role "root" does not exist`), and from cron, which does not start in the installation's
+directory, every `docker compose` command found no `docker-compose.yaml` and wrote an empty dump while the script
+still ended with success. That version also left `.env` and `legal/` out.
 
 ## Restore
 
-Confirmed, tested procedure (adapted from Waffle Dashboard's, which is the only one of the three actually run end-to-end by a third party rather than just by the original author):
+Tested in P-10 on a new, empty host (no images, containers, volumes or files) and, as the rollback of an upgrade, on
+an existing installation with a newer database schema. The same commands do both. They restore the database, the
+uploaded files and the installation directory exactly as they were at the backup, and rebuild the search index.
+Everything written after the backup is lost.
 
+1. **Prepare.**
+   - **On a new host:** install Docker Engine with the Compose plugin (as for [Installation](README.md#installation-operator-path)),
+     copy the backup folder to it, and create the installation's directory: `mkdir -p /opt/nusszopf`.
+   - **On the existing installation** (rolling back, or going back to an earlier backup): stop it with
+     `docker compose down`, without `-v`.
+2. **Choose the backup:** `RESTORE_DIR=/opt/nusszopf-backups/2026-09-25_03-00-00` (a complete folder, without
+   `.incomplete`).
+3. **Restore**, as root:
+
+<!-- P-10: scripts/restore-test.sh runs this block exactly as written. -->
 ```bash
-# 1. Restore the database (stack running, or at least postgres up)
-cat "$RESTORE_DIR/postgres.dump" | docker compose exec -T postgres \
-  sh -c 'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists'
-
-# 2. Stop the app so nothing writes to storage mid-restore
-docker compose down
-
-# 3. Restore the storage volume
-docker run --rm \
-  -v nusszopf_laravel-storage:/data \
-  -v "$RESTORE_DIR:/backup" \
-  ubuntu bash -c "rm -rf /data/* /data/.[!.]* /data/..?* ; tar xzf /backup/storage-volume.tar.gz -C /data --strip-components=1"
-
-# 4. Start the app again and rebuild caches
-docker compose up -d
-docker compose exec php-fpm php artisan optimize
-
-# 5. The search index is not part of the backup: rebuild it (see "Search index recovery")
+cd /opt/nusszopf
+tar xzf "$RESTORE_DIR/installation.tar.gz"
+docker compose pull
+docker compose up -d --wait postgres redis
+docker compose exec -T redis redis-cli FLUSHALL
+docker compose exec -T postgres sh -c 'dropdb --if-exists -U "$POSTGRES_USER" "$POSTGRES_DB" && createdb -U "$POSTGRES_USER" "$POSTGRES_DB"'
+docker compose exec -T postgres sh -c 'pg_restore --exit-on-error -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < "$RESTORE_DIR/postgres.dump"
+docker compose run --rm --no-deps -T --entrypoint sh php-fpm -c 'find /var/www/storage/app -mindepth 1 -delete && tar xzf - -C /var/www/storage/app' < "$RESTORE_DIR/storage.tar.gz"
+docker compose up -d --wait
 docker compose exec php-fpm php artisan search:reindex
+docker compose exec php-fpm php artisan nusszopf:health
 ```
 
-An untested restore procedure is not a backup — LCxHolz's own documentation makes this point explicitly and recommends periodic restore drills against a disposable database; the same discipline applies here.
+What each line does:
+- **`tar xzf …installation.tar.gz`** brings back `.env`, `legal/`, your `compose.override.yaml`, and the
+  `docker-compose.yaml` of the release the backup was made with. `docker compose pull` then fetches that release's
+  images, so the code always matches the database. Files that are not in the backup stay where they are.
+- **Only PostgreSQL and Redis run** while the data goes back, so nothing else writes in between.
+- **`FLUSHALL` empties Redis:** jobs queued after the backup belong to data that no longer exists, and sessions are
+  signed out. On a new host it is empty anyway.
+- **`dropdb`/`createdb` start from an empty database.** Do not use `pg_restore --clean` instead. After an upgrade, the
+  database has tables the backup does not know. `--clean` then fails halfway: it cannot drop `projects` because the
+  newer `project_analytics` table refers to it. It leaves a mix of both versions whose `migrations` table no longer
+  matches, and the next upgrade then fails with `relation "project_analytics" already exists` (P-10, P10-03).
+- **The storage volume is emptied and refilled** through the `php-fpm` image, so the files keep their owner.
+- **`up -d --wait`** starts everything and returns once every service is healthy (about a minute). `php-fpm` applies
+  no migration, since the code is the backup's own release. `search:reindex` fills the search index again, through
+  the queue worker, within seconds to minutes.
+
+If a line fails, fix the cause (for example, `docker compose pull` needs network access) and run all of them again
+from the top: every line can be repeated.
+
+**After a restore**, as verified in P-10:
+- sign-in works with the passwords from the backup, but everybody has to sign in again;
+- links mailed before the backup still work: password reset, e-mail verification, newsletter confirmation;
+- public projects are found again and private ones are not;
+- the avatars are served;
+- the queue worker and the scheduler report healthy within a minute (`nusszopf:health`).
+
+To move to a newer release after restoring an older backup, upgrade as usual ([Upgrades](#upgrades)).
+
+Practise this now and then on a spare machine: an untested restore is not a backup.
 
 ## Upgrades
 
@@ -170,17 +255,14 @@ was signed in stays signed in, and work that was still queued is done by the new
 1. **Read the release notes.** Read the `CHANGELOG.md` section of every release between yours and the new one. Look for
    **Breaking:** and **Migration required:** entries (`docs/release/breaking-changes.md`).
 2. **Back up.** A migration cannot be undone by starting an older image; the way back is this backup (see
-   [Rollback](#rollback)). The database, your `.env`, and `legal/` are the minimum; add the storage volume for the
-   avatars (see [Backups](#backups)):
+   [Rollback](#rollback)). Run the backup script from [Backups](#backups) and note the folder it names:
 
    ```bash
-   mkdir -p /opt/nusszopf-backups/pre-upgrade
-   docker compose exec -T postgres sh -c 'pg_dump --format=custom -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > /opt/nusszopf-backups/pre-upgrade/postgres.dump
-   cp -rp .env legal /opt/nusszopf-backups/pre-upgrade/
+   /usr/local/bin/nusszopf-backup.sh      # "Backup written to /opt/nusszopf-backups/…"
    ```
 
-   Use `sh -c '…'` with the container's own `$POSTGRES_USER`/`$POSTGRES_DB`: your shell does not know the `.env`
-   values, and without `sh -c` the dump fails with `role "root" does not exist` (P-9).
+   It holds the database, the uploaded files and the installation directory with this release's `.env` and
+   `docker-compose.yaml`, which is everything a rollback needs (tested in P-10).
 3. **Upgrade.** In the installation's directory (replace `0.2.0` with the release):
 
    ```bash
@@ -253,11 +335,15 @@ mechanics.
 `php artisan migrate:rollback`. Its `down()` steps are untested, and some of them drop tables with their data, such as
 the newsletter subscribers and the visitor counts. To go back:
 1. Stop the stack: `docker compose down` (without `-v`).
-2. Restore the backup from step 2 of the upgrade (see [Restore](#restore); the restore drill is phase P-10).
-3. Put back `docker-compose.yaml.previous` as `docker-compose.yaml`, and `.env.previous` as `.env`.
-4. Start the stack: `docker compose up -d`.
+2. Restore the backup from step 2 of the upgrade with the commands in [Restore](#restore). They also bring back that
+   release's `docker-compose.yaml` and `.env` from the backup, and start the stack.
 
 Everything written after the upgrade is lost, because the database returns to the moment of the backup.
+
+P-10 tested this from the current release back to `8c4a2eb`, four migrations older. The database had the old schema
+again, exactly the backed-up rows, and none written after the upgrade; the old release ran, and upgrading again
+afterwards worked. The earlier instructions (`pg_restore --clean` into the running database, then the `.previous`
+files) left a mix of both schemas that could not be upgraded again (P10-03).
 
 **Starting the previous release without restoring**, which keeps the data written since the upgrade, is safe only when
 the release notes you are leaving list no migration, or explicitly say the previous release runs on the new schema. For

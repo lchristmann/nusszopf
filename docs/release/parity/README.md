@@ -20,7 +20,7 @@ person is listed as pending), **In progress**, **Not started**.
 | P-7 Production Compose verification | [`P-07-production-e2e.md`](P-07-production-e2e.md) | Done (closed by the maintainer 2026-09-24; whole suite green on the production images; P7-01 fixed; limitations deferred to P-8/P-12/P-13/P-16) |
 | P-8 Fresh install | [`P-08-fresh-install.md`](P-08-fresh-install.md) | Done (closed by the maintainer 2026-09-25; bare host to healthy in under 3 min of machine time; P8-03 fixed; the GitHub/GHCR download and the second-person install deferred to P-16, not waived) |
 | P-9 Upgrade/migration | [`P-09-upgrade.md`](P-09-upgrade.md) | Done (closed by the maintainer 2026-09-25; tested from `4de0194` and `8c4a2eb`, the closest builds to an N-1, because no release exists; P9-01 fixed; the true N-1 test and the real release download, GHCR pull and arm64 checks deferred to P-16, not waived; the restore drill stays in P-10) |
-| P-10 Backup/restore drill | [`P-10-backup-restore.md`](P-10-backup-restore.md) | Not started |
+| P-10 Backup/restore drill | [`P-10-backup-restore.md`](P-10-backup-restore.md) | Done, awaiting the maintainer's closure (restored onto an empty Docker host: data, files and search identical, the Chromium suite green; the rollback from `8c4a2eb` works and can be upgraded again; P10-01…P10-05 fixed; the GHCR pull, arm64 and a physically separate host go to P-16) |
 | P-11 Search index recovery | [`P-11-search-recovery.md`](P-11-search-recovery.md) | Not started |
 | P-12 Queue/scheduler | [`P-12-queue-scheduler.md`](P-12-queue-scheduler.md) | Not started |
 | P-13 E-mail delivery | [`P-13-email-delivery.md`](P-13-email-delivery.md) | Not started |
@@ -51,7 +51,13 @@ person is listed as pending), **In progress**, **Not started**.
 - **P-10 (backup/restore):** P-9 made the `pg_dump` line of "Backups" work (P9-02: the shell has no `$DB_DATABASE`)
   and applied the same fix to "Restore" step 1 without running it. The drill must run the restore as written. Restoring
   is also the rollback path of an upgrade (`operations.md`, "Rollback"), so the drill should include restoring a
-  pre-upgrade backup together with `docker-compose.yaml.previous` and `.env.previous`.
+  pre-upgrade backup together with `docker-compose.yaml.previous` and `.env.previous`. Done in P-10: the old restore could not run as written (P10-02), and on an upgraded
+  database it left a mix of schemas that could not be upgraded again (P10-03). Restore and rollback are now one
+  drilled block (`scripts/restore-test.sh`).
+
+- **P-16 (release):** run `sh scripts/restore-test.sh --rollback-from <previous tag>` next to the upgrade test, pull
+  the images from GHCR onto the new host, and restore once on a physically separate machine (`P-10-backup-restore.md`,
+  section 7).
 
 - **P-16 (release):** P-9 had no published release to start from. Run `sh scripts/upgrade-test.sh <previous tag> --suite`
   from the first real tag to the release candidate. Also check the real download path:

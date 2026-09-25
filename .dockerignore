@@ -14,6 +14,12 @@ storage/logs/*
 storage/framework/cache/*
 storage/framework/sessions/*
 storage/framework/views/*
+# Uploaded files (avatars, Livewire's temporary uploads). Docker copies an image's storage/app into every new
+# laravel-storage volume, so a working copy's uploads would reach each installation made from a local build (P-10, P10-04).
+storage/app/public/*
+!storage/app/public/.gitignore
+storage/app/private/*
+!storage/app/private/.gitignore
 test-results
 playwright-report
 # An operator's own legal texts (docker-compose.yaml mounts ./legal at run time instead)

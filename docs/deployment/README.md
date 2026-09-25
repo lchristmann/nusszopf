@@ -3,8 +3,8 @@
 > **Status: implemented and verified (operational track O-1/O-2, 2026-09-22).** The install path, the images, the
 > release workflow and the health checks below exist and are exercised by `scripts/smoke-test.sh` (run by CI on every
 > change). The whole Playwright suite runs against these images (P-7), and a fresh install on a clean host was
-> done from this page alone (P-8), and the upgrade from earlier builds was tested on installations filled with data (P-9). Not yet done, by roadmap: a real tag has never been published (the release workflow is
-> untested until the first one, P-16), and the backup scripts and restore drill (P-10).
+> done from this page alone (P-8), and the upgrade from earlier builds was tested on installations filled with data (P-9). The backup script and the restore were drilled onto an empty host, and as the rollback of an upgrade (P-10). Not yet done, by roadmap: a real tag has never been published (the release workflow is
+> untested until the first one, P-16).
 
 ## Table of contents
 
@@ -195,9 +195,10 @@ enable HSTS there; Caddy, Traefik and Nginx Proxy Manager each have a setting fo
 Named volumes, one per stateful concern (never one shared "data" volume, so that restoring or wiping one never risks another — this separation is explicit in LCxHolz's backup documentation):
 
 - `postgres-data` — database
-- `laravel-storage` — uploaded files: avatars (slice 8) are the only confirmed contents so far
+- `laravel-storage` — uploaded files: the avatars (slice 8) and Livewire's temporary uploads. Backed up by the backup script; a build never puts files into it (`.dockerignore`, P10-04), because Docker fills a new volume from the image
 - `./legal` (a bind mount, not a volume) — your legal texts; back it up with `.env`
-- `meilisearch-data` — search index (Nusszopf-original; rebuildable from Postgres via reindexing, so arguably lower backup priority than the database — see `docs/deployment/operations.md`)
+- `meilisearch-data` — search index. Derived from PostgreSQL: never backed up; a restore rebuilds it with `search:reindex` (`docs/deployment/operations.md`)
+- `redis-data` — sessions, queue, cache. Not backed up: after a restore everyone signs in again (`docs/deployment/operations.md`, "Backups")
 
 No shared assets volume — see [above](#why-a-dedicated-nginx-image-not-a-shared-assets-volume).
 
@@ -221,11 +222,13 @@ See `docs/deployment/operations.md` for the full procedures. Summary of what eac
 
 - **Waffle Dashboard**: the only reference actually written as an operator-facing guide — `pg_dump`/`tar` via a cron-scheduled shell script, with a tested restore procedure. This is the baseline UX bar for Nusszopf.
 - **LCxHolz**: a materially more mature mechanism (`spatie/laravel-backup`: encrypted archives, tiered retention, health-check monitoring, a restore procedure actually run end-to-end while implementing it) — the engineering-quality bar per `.claude/rules/05-engineering-quality.md`, but tied to MySQL/spatie's dumper in that project; Nusszopf would need the PostgreSQL equivalent.
-- **Neither reference covers Meilisearch backup.** Meilisearch supports its own dump mechanism (`meilisearch --dump-dir`, `POST /dumps`); whether Nusszopf backs up the search index or always rebuilds it from Postgres on restore is an open question — see below.
+- **Neither reference covers Meilisearch backup.** Nusszopf does not back up the index; the restore rebuilds it from PostgreSQL with `search:reindex`. P-10 verified that the rebuilt index equals the original document for document.
+
+Nusszopf v1 uses tier 1 (decision B2): the script in `operations.md`, "Backups", run by cron. It backs up the database, the storage volume and the installation directory (`.env`, `docker-compose.yaml`, `legal/`, overrides). Restoring it onto an empty host, and rolling an upgrade back with it, were drilled in P-10 (`scripts/restore-test.sh`).
 
 ## Open questions
 
 Resolved by the operational track (`docs/rewrite/architecture-decisions.md`): container registry (GHCR, `ghcr.io/lchristmann/nusszopf-*`), reverse proxy (operator-owned), health depth
 (own checks, no extra dependency), environment variables (`.env.production.example`), first administrator (none exists).
 
-Still open: whether Meilisearch's index is ever backed up rather than rebuilt (the documented answer is *rebuilt*, `search:reindex`), and the backup scripts themselves (phase P-10).
+Resolved by P-10: the search index is rebuilt, never backed up (`search:reindex`), and the backup script is the tier-1 script in `operations.md`, "Backups".

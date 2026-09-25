@@ -182,6 +182,43 @@ It then checks:
 `--suite` then runs the whole Playwright suite, on the desktop browsers, against the upgraded installation.
 `UPGRADE_KEEP=1` leaves the stack running.
 
+### Backup/restore drill (P-10, `docs/release/parity/P-10-backup-restore.md`)
+
+`sh scripts/restore-test.sh [--suite] [--rollback-from <ref>]` runs the backup and restore of
+`docs/deployment/operations.md`. It does not reimplement them: it takes the backup script and the Restore block out of
+`operations.md` by their markers and runs them as printed, so the page cannot drift from what is tested. The only
+change is `--ignore-pull-failures` on the `docker compose pull` line, because the Nusszopf images are built locally.
+Each host is a separate Docker daemon (`docker:dind`, privileged), so the target starts genuinely empty. CI does not
+run it; it is a release step, like the upgrade test. It does the following:
+1. On the source host, installs the working copy with `install.sh`, with the test doubles in a
+   `compose.override.yaml`. It fills the installation (`tests/Upgrade/seed.php`), signs a browser in and records the
+   state (`tests/Upgrade/snapshot.sh`).
+2. Installs the backup script and lets root's crontab run it. It checks the backup: the folder is private; the dump
+   is readable and has data for every application table; every referenced avatar is in `storage.tar.gz`; and
+   `installation.tar.gz` holds `.env` with the same `APP_KEY`, `docker-compose.yaml`, the override and `legal/`.
+3. Copies the backup off the host and destroys the source host.
+4. Checks that a new host has no images, containers, volumes or installation files, then runs the Restore block
+   there.
+5. Checks the restore:
+   - every table, stored file, search document, index setting and the migration status is identical to the source;
+   - every service is healthy and the scheduler lists its tasks;
+   - the old session is signed out (documented: Redis is not backed up);
+   - the journeys pass (`tests/Upgrade/journeys.mjs`), and so do the verification and newsletter links mailed before
+     the backup;
+   - the legal pages come from `legal/`;
+   - `php-fpm` writes to the restored volume and `web` serves the file;
+   - a mail queued after the restore is sent, and no job fails.
+
+`--suite` then runs the Playwright suite (Chromium) against the restored installation. `--rollback-from <ref>` also
+drills "Rollback":
+1. Installs `<ref>` and fills it.
+2. Takes the pre-upgrade backup, upgrades to the working copy and writes data.
+3. Rolls back with `docker compose down` and the Restore block.
+4. Checks that the tables, rows, stored files and migrations are exactly those from before the upgrade.
+5. Upgrades again, which must succeed.
+
+`RESTORE_KEEP=1` keeps the hosts.
+
 ## Visual parity
 
 Because visual fidelity is a hard requirement (`CLAUDE.md`, `.claude/rules/02-visual-fidelity.md`), every screen is compared with the running historical app. The suite is `docs/testing/visual-regression.md`: Playwright `toHaveScreenshot` (register B9), 23 screens × phone/tablet/desktop, exact baselines in `tests/Visual/baselines/` compared in CI (the `visual` job), and reference captures of the historical webapp from `tests/Visual/historical-harness/`. Zero differing pixels are tolerated (per-pixel colour threshold 0.05), because the screenshots always come from the same pinned Playwright image.

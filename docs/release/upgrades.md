@@ -40,7 +40,9 @@ populated data, and changed the procedure:
   that are new. `docker compose pull` and `docker compose up -d` follow, as before.
 - **Recommendation step 6 is settled as follows.** Rollback means restoring the pre-upgrade backup, never
   `migrate:rollback`. Starting the previous release on the newer schema is allowed only where the release notes say
-  so. Details: `docs/deployment/operations.md`, "Rollback".
+  so. Details: `docs/deployment/operations.md`, "Rollback". P-10 drilled that rollback from `8c4a2eb`: the restore
+  empties the database first, because `pg_restore --clean` onto a newer schema left a mix that could not be
+  upgraded again (P10-03).
 
 **Compatibility rules for release authors.** They follow from the above and from `versioning.md`:
 - Migrations are forward-only and additive within a major version. Every release since `8c4a2eb` is, and its four
@@ -50,7 +52,8 @@ populated data, and changed the procedure:
   Meilisearch, or a reindex because the search documents changed.
 - A release whose previous release cannot run on its schema says so in its notes. Operators then know that only the
   backup takes them back.
-- Before tagging, run `sh scripts/upgrade-test.sh <previous tag> --suite` (`release-process.md`).
+- Before tagging, run `sh scripts/upgrade-test.sh <previous tag> --suite` and
+  `sh scripts/restore-test.sh --rollback-from <previous tag>` (`release-process.md`).
 
 ## Status
 

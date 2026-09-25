@@ -17,8 +17,12 @@ BASE="http://127.0.0.1:$PORT"
 
 compose() { NUSSZOPF_BUILD_CONTEXT="$ROOT" docker compose -p "$PROJECT" -f docker-compose.yaml -f "$ROOT/compose.prod.yaml" "$@"; }
 
+# P-10, finding P10-04: files uploaded in this working copy must not reach the image (and so every new storage volume).
+PROBE="$ROOT/storage/app/public/smoke-build-context-probe-$$.txt"
+
 cleanup() {
     status=$?
+    rm -f "$PROBE"
     if [ "${SMOKE_KEEP:-0}" != "1" ]; then
         (cd "$WORK" && compose down -v --remove-orphans >/dev/null 2>&1) || true
         rm -rf "$WORK"
@@ -78,6 +82,7 @@ mkdir "$WORK/upgrade"
 rm -rf "$WORK/upgrade"
 
 step "Build the images and start the stack (waits for every healthcheck)"
+echo "an upload in the working copy" > "$PROBE"
 compose up -d --build --wait --wait-timeout 420 || fail "the stack did not become healthy"
 
 step "The search index has its configured settings from the first start, before any reindex (P-7, P7-01)"
@@ -92,6 +97,10 @@ for image in nusszopf-php-fpm nusszopf-web; do
     [ "$found" = "$VERSION" ] || fail "$image reports version '$found', expected '$VERSION'"
 done
 compose exec -T php-fpm php artisan nusszopf:health | grep -q "Nusszopf $VERSION" || fail "the app does not report version $VERSION"
+
+step "The image carries no uploaded files from the working copy (P-10, P10-04)"
+baked="$(docker run --rm --entrypoint find "ghcr.io/lchristmann/nusszopf-php-fpm:$VERSION" /var/www/storage/app -type f ! -name .gitignore)"
+[ -z "$baked" ] || fail "the image contains uploaded files from the build context: $baked"
 
 step "Pages and assets are served"
 [ "$(curl -s -o /dev/null -w '%{http_code}' "$BASE/up")" = "200" ] || fail "/up is not 200"

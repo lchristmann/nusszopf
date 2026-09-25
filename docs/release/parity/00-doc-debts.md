@@ -26,4 +26,4 @@ gates only the personal contact, so the resend stays where that gate applies. Ro
 
 ## Remaining
 
-Nothing in this scope. `operations.md`'s backup/restore banner is resolved by P-10.
+Nothing in this scope. `operations.md`'s backup/restore banner was resolved by P-10.
