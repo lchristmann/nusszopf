@@ -218,10 +218,11 @@ After the fixes, `sh scripts/smoke-test.sh` passed. Run 2 on a new clean host pa
 
 ## Status
 
-**Done.** Awaiting the maintainer's review. The documented install path works from a bare host to a healthy instance,
-signed in and searchable, in under three minutes of machine time. Every stumble is fixed in the documentation or the
-operator files. The one installation defect, P8-03, is fixed with regression coverage.
+**Done.** Closed by the maintainer on 2026-09-25 on the evidence above. P8-03 is fixed with regression coverage.
 
-Two parts cannot be done before a release exists, and both are deferred, not waived:
-- the real GitHub and GHCR download path (P8-01, P-16);
-- an install by a person who has not seen the code (P-16).
+Two parts are deferred to P-16, not waived. P-16 must complete both before release:
+- the real GitHub Release download and the pull from GHCR (P8-01);
+- an install by a person who has not seen the source.
+
+The other limitations above belong to the later phases that own them (P-9, P-10, P-11, P-12, P-13, P-14). They do not
+reopen P-8.
