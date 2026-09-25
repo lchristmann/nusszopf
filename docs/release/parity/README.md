@@ -19,7 +19,7 @@ person is listed as pending), **In progress**, **Not started**.
 | P-6 Performance sanity | [`P-06-performance.md`](P-06-performance.md) | Done (closed by the maintainer 2026-09-24; PERF-01–04 fixed; four recommendations kept open and non-blocking, production re-measurement in P-7) |
 | P-7 Production Compose verification | [`P-07-production-e2e.md`](P-07-production-e2e.md) | Done (closed by the maintainer 2026-09-24; whole suite green on the production images; P7-01 fixed; limitations deferred to P-8/P-12/P-13/P-16) |
 | P-8 Fresh install | [`P-08-fresh-install.md`](P-08-fresh-install.md) | Done (closed by the maintainer 2026-09-25; bare host to healthy in under 3 min of machine time; P8-03 fixed; the GitHub/GHCR download and the second-person install deferred to P-16, not waived) |
-| P-9 Upgrade/migration | [`P-09-upgrade.md`](P-09-upgrade.md) | Not started |
+| P-9 Upgrade/migration | [`P-09-upgrade.md`](P-09-upgrade.md) | Done, awaiting the maintainer's closure (tested from `4de0194` and `8c4a2eb`, the closest builds to an N-1, because no release exists; P9-01 fixed; the real N-1 test is deferred to P-16) |
 | P-10 Backup/restore drill | [`P-10-backup-restore.md`](P-10-backup-restore.md) | Not started |
 | P-11 Search index recovery | [`P-11-search-recovery.md`](P-11-search-recovery.md) | Not started |
 | P-12 Queue/scheduler | [`P-12-queue-scheduler.md`](P-12-queue-scheduler.md) | Not started |
@@ -45,8 +45,19 @@ person is listed as pending), **In progress**, **Not started**.
   `NUSSZOPF_BASE_URL`, the pull from GHCR (and its time), arm64, and an install by a second person on a real host with
   an ACME certificate (`P-08-fresh-install.md`).
 
-- **P-9 (upgrades):** `redis:alpine` and `postgres:16-alpine` in `docker-compose.yaml` are floating tags; judge whether
-  `redis:alpine` needs pinning to a major version (P-8 observation).
+- **P-9 (upgrades):** done in P-9. `redis:alpine` moved from 8.8.1 to 8.10.2 during one pull, so it is pinned to
+  `redis:8-alpine` (P9-03). `postgres:16-alpine` was already pinned to a major version.
+
+- **P-10 (backup/restore):** P-9 made the `pg_dump` line of "Backups" work (P9-02: the shell has no `$DB_DATABASE`)
+  and applied the same fix to "Restore" step 1 without running it. The drill must run the restore as written. Restoring
+  is also the rollback path of an upgrade (`operations.md`, "Rollback"), so the drill should include restoring a
+  pre-upgrade backup together with `docker-compose.yaml.previous` and `.env.previous`.
+
+- **P-16 (release):** P-9 had no published release to start from. Run `sh scripts/upgrade-test.sh <previous tag> --suite`
+  from the first real tag to the release candidate. Also check the real download path:
+  - `install.sh --upgrade` fetched from `releases/download/<version>/`;
+  - `--upgrade` without a version, which moves to `latest`;
+  - `docker compose pull` fetching the Nusszopf images from GHCR (`P-09-upgrade.md`, "Limitations").
 
 - **P-12 (queue):** a welcome or verification mail queued for an account that is deleted before the worker sends it
   fails with `ModelNotFoundException` and stays in `failed_jobs`. Observed during P-3 after quick

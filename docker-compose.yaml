@@ -5,8 +5,9 @@
 #     docker compose up -d
 #
 # next to a `.env` (copy `.env.production.example`, or run `install.sh`, which also generates the
-# secrets). Which release runs is decided by NUSSZOPF_VERSION in that `.env`; to upgrade, change it,
-# then `docker compose pull && docker compose up -d` (docs/deployment/operations.md).
+# secrets). Which release runs is decided by NUSSZOPF_VERSION in that `.env`. To upgrade, run the new release's
+# `sh install.sh --upgrade <version>`, which also replaces this file, then `docker compose pull && docker compose up -d`
+# (docs/deployment/operations.md, "Upgrades"). Keep your own changes in a compose.override.yaml, not here.
 #
 # Documentation (paths such as docs/deployment/README.md below): https://github.com/lchristmann/nusszopf
 #
@@ -113,8 +114,10 @@ services:
       timeout: 3s
       retries: 10
 
+  # Pinned to a major version, like postgres and meilisearch: `docker compose pull` then brings minor and patch
+  # releases only, never a new major one with a new data format (P-9).
   redis:
-    image: redis:alpine
+    image: redis:8-alpine
     restart: unless-stopped
     volumes:
       - redis-data:/data

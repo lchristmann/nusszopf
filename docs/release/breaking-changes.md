@@ -19,6 +19,19 @@ This is a gap, not a pattern to imitate: Waffle Dashboard is a single-maintainer
   - rollback considerations specific to that change (e.g. "this migration is not reversible; restore from backup to roll back")
 - The GitHub Release for a MAJOR version should surface these entries prominently rather than burying them in a flat bullet list, so an operator skimming release notes cannot miss them.
 
+## Operator action in practice (P-9, 2026-09-25)
+
+`install.sh --upgrade` (`docs/deployment/operations.md`, "Upgrades") already brings the new `docker-compose.yaml` and
+lists every setting `.env` lacks. So a new *optional* setting, or a changed compose file, needs no changelog tag.
+A **Migration required:** entry is needed when:
+- a new setting must be set and has no default (`docker compose` then refuses to start);
+- a default changes in a way an existing `.env` does not pick up, because that `.env` names the old value;
+- a pin of `postgres`, `redis` or `meilisearch` changes. Meilisearch cannot open a database written by another
+  version. The steps are then to stop the stack, remove the `meilisearch-data` volume, start the stack, and run
+  `search:reindex`. This is inferred from Meilisearch's documentation and was not exercised in P-9;
+- the search documents change, so `search:reindex` is needed;
+- the previous release cannot run on the new schema, so only the backup takes an operator back.
+
 ## Status
 
 Confirmed: no breaking-change documentation practice exists in Waffle Dashboard to adopt. Everything above is a recommendation (Inferred) and must be confirmed as an architecture/process decision — see `docs/rewrite/architecture-decisions.md`.

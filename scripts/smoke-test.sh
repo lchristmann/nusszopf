@@ -48,6 +48,35 @@ rm config.err
 sed -i "s|^MAIL_FROM_ADDRESS=.*|MAIL_FROM_ADDRESS=smoke@example.test|" .env
 grep -q "^APP_KEY=base64:" .env || fail "install.sh did not generate APP_KEY"
 
+step "install.sh --upgrade brings the release's own docker-compose.yaml and names what .env lacks (P-9, P9-01)"
+mkdir "$WORK/upgrade"
+(
+    cd "$WORK/upgrade"
+    # An installation of an earlier release: its own compose file, a .env with values earlier templates wrote,
+    # and without a setting the current template has.
+    printf 'name: nusszopf\n# an earlier release\n' > docker-compose.yaml
+    sed -e 's|^NUSSZOPF_VERSION=.*|NUSSZOPF_VERSION=0.0.1|' -e 's|^APP_KEY=.*|APP_KEY=base64:kept|' \
+        -e 's|^TRUSTED_PROXIES=.*|TRUSTED_PROXIES=*|' -e 's|^MAIL_FROM_ADDRESS=.*|MAIL_FROM_ADDRESS="mail@nusszopf.org"|' \
+        -e '/^NUSSZOPF_REGISTER_LIMIT=/d' "$WORK/assets/.env.production.example" > .env
+    chmod 600 .env
+    NUSSZOPF_BASE_URL="file://$WORK/assets" sh "$ROOT/scripts/install.sh" --upgrade > upgrade.out
+    cmp -s docker-compose.yaml "$WORK/assets/docker-compose.yaml" || fail "--upgrade kept the old docker-compose.yaml"
+    grep -q "an earlier release" docker-compose.yaml.previous || fail "--upgrade did not keep the old compose file"
+    grep -q "^NUSSZOPF_VERSION=$VERSION$" .env || fail "--upgrade did not set NUSSZOPF_VERSION"
+    grep -q "^APP_KEY=base64:kept$" .env || fail "--upgrade changed APP_KEY"
+    grep -q "^NUSSZOPF_VERSION=0.0.1$" .env.previous || fail "--upgrade did not keep the old .env"
+    [ "$(stat -c %a .env.previous)" = "600" ] || fail ".env.previous is readable by others"
+    [ -d legal ] || fail "--upgrade did not create legal/"
+    grep -q "^  NUSSZOPF_REGISTER_LIMIT$" upgrade.out || fail "--upgrade does not name a setting .env lacks: $(cat upgrade.out)"
+    grep -q "TRUSTED_PROXIES=\*" upgrade.out || fail "--upgrade does not flag TRUSTED_PROXIES=*"
+    grep -q "historical project's mailbox" upgrade.out || fail "--upgrade does not flag the historical sender address"
+    # Run again for the same release, it must keep the files of the release before it.
+    NUSSZOPF_BASE_URL="file://$WORK/assets" sh "$ROOT/scripts/install.sh" --upgrade > /dev/null
+    grep -q "^NUSSZOPF_VERSION=0.0.1$" .env.previous || fail "a second --upgrade overwrote .env.previous"
+    grep -q "an earlier release" docker-compose.yaml.previous || fail "a second --upgrade overwrote docker-compose.yaml.previous"
+)
+rm -rf "$WORK/upgrade"
+
 step "Build the images and start the stack (waits for every healthcheck)"
 compose up -d --build --wait --wait-timeout 420 || fail "the stack did not become healthy"
 

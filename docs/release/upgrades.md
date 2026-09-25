@@ -27,6 +27,34 @@ The recommended procedure exists and is verified as `docs/deployment/operations.
 applies pending migrations (`migrate --force --isolated`) and rebuilds the caches before it serves, so migrations are an explicit, tested behavior of Nusszopf's own entrypoint; `queue-worker` and `scheduler` wait for it.
 Verifying health afterwards is `docker compose ps` and `php artisan nusszopf:health`.
 
+## Tested (phase P-9, 2026-09-25)
+
+`docs/release/parity/P-09-upgrade.md` has the evidence. P-9 upgraded two earlier builds to the current one, with
+populated data, and changed the procedure:
+- **The operator's files are part of a release.** P-9 upgraded from `8c4a2eb` by setting only `NUSSZOPF_VERSION`, as
+  the procedure then said. The old `docker-compose.yaml` stayed, so the new release ran without its storage mount (new
+  avatars answered 404) and without its `./legal` mount (finding P9-01).
+- **`install.sh --upgrade <version>` is the upgrade step.** It replaces `docker-compose.yaml` and
+  `.env.production.example` with the release's, and sets `NUSSZOPF_VERSION`. It keeps the rest of `.env`, and keeps the
+  previous files as `*.previous`. It lists empty required settings, unsafe values from earlier templates, and settings
+  that are new. `docker compose pull` and `docker compose up -d` follow, as before.
+- **Recommendation step 6 is settled as follows.** Rollback means restoring the pre-upgrade backup, never
+  `migrate:rollback`. Starting the previous release on the newer schema is allowed only where the release notes say
+  so. Details: `docs/deployment/operations.md`, "Rollback".
+
+**Compatibility rules for release authors.** They follow from the above and from `versioning.md`:
+- Migrations are forward-only and additive within a major version. Every release since `8c4a2eb` is, and its four
+  migrations ran on populated data in about 40 ms in total.
+- Operator action beyond the three upgrade commands is a **Migration required:** changelog entry
+  (`breaking-changes.md`). Examples: a new required setting without a default, a changed pin of PostgreSQL, Redis or
+  Meilisearch, or a reindex because the search documents changed.
+- A release whose previous release cannot run on its schema says so in its notes. Operators then know that only the
+  backup takes them back.
+- Before tagging, run `sh scripts/upgrade-test.sh <previous tag> --suite` (`release-process.md`).
+
 ## Status
 
-Confirmed: reference upgrade mechanics (edit tag, `down`/`up`, volume persistence). Everything under "Recommendation for Nusszopf" is Inferred and depends on the entrypoint/migration design decided during infrastructure implementation — do not treat it as final until that design exists and this page is revisited.
+Confirmed: the reference upgrade mechanics (edit the tag, `down`/`up`, the volumes persist). Confirmed by P-9 on
+populated installations, which were release-equivalent builds, because no release has been published yet: Nusszopf's
+own procedure, `docs/deployment/operations.md`, "Upgrades" and "Rollback". Repeating it from the first real tag to the
+next is part of P-16. The "Recommendation" section above is kept as the reasoning that led to it.

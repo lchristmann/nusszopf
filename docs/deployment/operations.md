@@ -1,7 +1,7 @@
 # Operations
 
 > **Status: health, logs, queue and scheduler, upgrades, rollback, search recovery and troubleshooting are implemented and verified
-> (operational track O-1/O-2, 2026-09-22).** The backup and restore sections remain a documented proposal until the backup drill (P-10).
+> (operational track O-1/O-2, 2026-09-22); upgrades and rollback were tested again on populated installations in P-9 (2026-09-25).** The backup and restore sections remain a documented proposal until the backup drill (P-10).
 > Commands assume the operator's directory (`docker-compose.yaml` and `.env` next to each other); contributors add
 > `-f compose.dev.yaml` and use the `workspace` service.
 
@@ -120,12 +120,12 @@ Columns: `email`, `name`, `confirmed_at`, `requested_at`, `source` (`form`, `reg
 #!/bin/sh
 BACKUP_DIR="/opt/nusszopf-backups/$(date +%Y-%m-%d_%H-%M)"
 mkdir -p "$BACKUP_DIR"
-docker compose exec -T postgres pg_dump --format=custom -d "$DB_DATABASE" -U "$DB_USERNAME" > "$BACKUP_DIR/postgres.dump"
+docker compose exec -T postgres sh -c 'pg_dump --format=custom -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > "$BACKUP_DIR/postgres.dump"
 docker run --rm -v nusszopf_laravel-storage:/data -v "$BACKUP_DIR:/backup" ubuntu tar czf "/backup/storage-volume.tar.gz" /data
 find /opt/nusszopf-backups -mindepth 1 -maxdepth 1 -type d -mtime +30 -exec rm -rf {} \;
 ```
 
-Scheduled with a root crontab entry (`crontab -e`), e.g. weekly. This is the minimum viable, evidence-backed backup story and matches the "no unnecessary operational dependencies" principle in `.claude/rules/06-self-hosting.md`.
+Scheduled with a root crontab entry (`crontab -e`), e.g. weekly. The `pg_dump` line reads the database name and user from the `postgres` container's own environment, because the shell running the script does not have the `.env` values. As first written (`-d "$DB_DATABASE" -U "$DB_USERNAME"`), the line failed with `role "root" does not exist` (P-9). The P-9 fix is also applied to Restore step 1; P-10 drills the whole procedure. This is the minimum viable, evidence-backed backup story and matches the "no unnecessary operational dependencies" principle in `.claude/rules/06-self-hosting.md`.
 
 **Tier 2 — LCxHolz's maturity level** (`spatie/laravel-backup`): encrypted archives (AES-256, gated on a `BACKUP_ARCHIVE_PASSWORD` env var), tiered retention (all backups for 7 days, then daily/weekly/monthly/yearly thinning), a `BackupsCheck` health-check integration that flags a missing/stale backup, and email notification on failure. Requires a PostgreSQL-compatible dump driver (the LCxHolz config is MySQL-specific; Nusszopf would need `pg_dump` wired through the same package).
 
@@ -140,7 +140,7 @@ Confirmed, tested procedure (adapted from Waffle Dashboard's, which is the only 
 ```bash
 # 1. Restore the database (stack running, or at least postgres up)
 cat "$RESTORE_DIR/postgres.dump" | docker compose exec -T postgres \
-  pg_restore -d "$DB_DATABASE" -U "$DB_USERNAME" --clean --if-exists
+  sh -c 'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists'
 
 # 2. Stop the app so nothing writes to storage mid-restore
 docker compose down
@@ -163,27 +163,112 @@ An untested restore procedure is not a backup — LCxHolz's own documentation ma
 
 ## Upgrades
 
-1. Read the release's `CHANGELOG.md` section for **Breaking:** and **Migration required:** entries (`docs/release/breaking-changes.md`).
-2. Back up (see [Backups](#backups)) — a migration cannot be undone by starting an older image.
-3. Set `NUSSZOPF_VERSION` in `.env` to the new release, then:
+Tested from two earlier builds to the current one, on installations filled with data (P-9,
+`docs/release/parity/P-09-upgrade.md`). A release is moved to with three commands. Your data is kept, a browser that
+was signed in stays signed in, and work that was still queued is done by the new release.
 
-```bash
-docker compose pull
-docker compose up -d
-docker compose ps                                          # wait for "healthy"; a migration can make php-fpm take a while
-docker compose exec php-fpm php artisan nusszopf:health    # shows the new version
-```
+1. **Read the release notes.** Read the `CHANGELOG.md` section of every release between yours and the new one. Look for
+   **Breaking:** and **Migration required:** entries (`docs/release/breaking-changes.md`).
+2. **Back up.** A migration cannot be undone by starting an older image; the way back is this backup (see
+   [Rollback](#rollback)). The database, your `.env`, and `legal/` are the minimum; add the storage volume for the
+   avatars (see [Backups](#backups)):
 
-Nothing else is needed: the `php-fpm` container's entrypoint applies pending migrations (locked, so it happens once), rebuilds the caches and applies the release's search index settings before it serves; `queue-worker` and `scheduler`
-start after it; named volumes are untouched. If the changelog says the search index changed (Slice 3: index renamed `items`; Slice 4: `req_type` filterable), also run
-`docker compose exec php-fpm php artisan search:reindex` once. Upgrading across several releases in one step is supported the same way; read every changelog section in between.
+   ```bash
+   mkdir -p /opt/nusszopf-backups/pre-upgrade
+   docker compose exec -T postgres sh -c 'pg_dump --format=custom -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > /opt/nusszopf-backups/pre-upgrade/postgres.dump
+   cp -rp .env legal /opt/nusszopf-backups/pre-upgrade/
+   ```
 
-`docs/release/upgrades.md` and `docs/release/breaking-changes.md` own the compatibility policy; this document owns the mechanics.
+   Use `sh -c '…'` with the container's own `$POSTGRES_USER`/`$POSTGRES_DB`: your shell does not know the `.env`
+   values, and without `sh -c` the dump fails with `role "root" does not exist` (P-9).
+3. **Upgrade.** In the installation's directory (replace `0.2.0` with the release):
+
+   ```bash
+   curl -fsSLO https://github.com/lchristmann/nusszopf/releases/download/0.2.0/install.sh
+   sh install.sh --upgrade 0.2.0
+   docker compose pull
+   docker compose up -d
+   docker compose ps                                          # wait until every service is "healthy"
+   docker compose exec php-fpm php artisan nusszopf:health    # shows the new version
+   ```
+
+   `sh install.sh --upgrade` without a version moves to the latest release.
+
+`install.sh --upgrade` changes only these files:
+- **`docker-compose.yaml`:** replaced by the new release's. A release can change this file, for example with a new
+  mount or a new required setting. Setting only `NUSSZOPF_VERSION` would keep the old file, and the new release would
+  then run without those changes (P-9, finding P9-01).
+- **`.env`:** only `NUSSZOPF_VERSION` changes. Everything you set stays as it is.
+- **`.env.production.example`:** replaced by the new release's template, to compare with.
+- **`legal/`:** created if it does not exist.
+
+The previous files stay next to the new ones as `docker-compose.yaml.previous`, `.env.previous` (mode 600: it holds
+`APP_KEY`) and `.env.production.example.previous`. Running the command again for the same release keeps them. If you changed `docker-compose.yaml` yourself, your changes are in
+the `.previous` file. Keep such changes in a `compose.override.yaml`, which Compose reads as well and no upgrade replaces.
+
+The command then lists:
+- **Required settings that are empty in `.env`.** `docker compose` refuses to start until you set them.
+- **Values earlier releases wrote that are no longer safe**, such as `TRUSTED_PROXIES=*` or the historical project's
+  sender address `…@nusszopf.org`. Change them in `.env`.
+- **New settings your `.env` does not name.** Their defaults apply, so this is only for information.
+
+Edit `.env` before `docker compose up -d` if anything is listed.
+
+What `docker compose up -d` does:
+- It recreates the containers whose image or settings changed.
+- `php-fpm`'s entrypoint applies the pending migrations before it serves. The migrations are locked, so they run once.
+  The entrypoint also rebuilds the caches and applies the new release's search index settings (filter, ranking, hit
+  cap), so the index needs no reindex for them.
+- `web`, `queue-worker` and `scheduler` start after `php-fpm` is healthy.
+- The named volumes (database, storage, search index, Redis) are kept.
+
+**Downtime.** During the upgrade the site is unreachable: first a 502, then no connection at all, until `web` is
+running again. It lasted 7 s and 14 s in P-9's two runs, whose migrations took less than 0.1 s. A migration that
+rewrites a large table adds its own time; `php-fpm` has three minutes before it counts as unhealthy. There is no
+maintenance page.
+
+**What carries over:**
+- Sessions: they live in Redis, so signed-in visitors stay signed in.
+- Queued jobs: mails and index updates waiting in Redis are run by the new release.
+- Links already mailed: verification, password reset and newsletter links keep working. They are signed with
+  `APP_KEY`, which an upgrade never changes.
+
+**`docker compose pull` also updates PostgreSQL, Redis and Meilisearch** within the version `docker-compose.yaml` pins:
+`postgres:16-alpine`, `redis:8-alpine` and `getmeili/meilisearch:v1.11`. These pins receive patch and minor releases
+only, never a new major version with a new data format. P-9 saw `redis:8-alpine` move from 8.8.1 to 8.10.2 in one pull.
+A release that changes one of these pins says so as **Migration required:**, with the steps.
+
+**Search.** Only when the changelog says the search *documents* changed, also run
+`docker compose exec php-fpm php artisan search:reindex` once.
+
+**Several releases at once.** You can skip releases: run `install.sh --upgrade` with the newest version, and read every
+changelog section in between. Upgrading from `8c4a2eb`, four migrations behind, worked this way in P-9.
+
+`docs/release/upgrades.md` and `docs/release/breaking-changes.md` own the compatibility policy; this document owns the
+mechanics.
 
 ## Rollback
 
-Set `NUSSZOPF_VERSION` back to the previous release, `docker compose pull && docker compose up -d`. **This rolls back the application code only, not database migrations.** If the release you are leaving
-ran a migration that older code cannot live with, restore the pre-upgrade backup instead (the policy is "restore from backup, not migrate down"). Then run `search:reindex` if the index changed in between.
+**Rollback means restoring the pre-upgrade backup.** Migrations are never undone: do not run
+`php artisan migrate:rollback`. Its `down()` steps are untested, and some of them drop tables with their data, such as
+the newsletter subscribers and the visitor counts. To go back:
+1. Stop the stack: `docker compose down` (without `-v`).
+2. Restore the backup from step 2 of the upgrade (see [Restore](#restore); the restore drill is phase P-10).
+3. Put back `docker-compose.yaml.previous` as `docker-compose.yaml`, and `.env.previous` as `.env`.
+4. Start the stack: `docker compose up -d`.
+
+Everything written after the upgrade is lost, because the database returns to the moment of the backup.
+
+**Starting the previous release without restoring**, which keeps the data written since the upgrade, is safe only when
+the release notes you are leaving list no migration, or explicitly say the previous release runs on the new schema. For
+that, put back the two `.previous` files and run `docker compose up -d`. The newer migrations then stay applied:
+- The older release does not know them. It reports "Nothing to migrate", and its `migrate:status` does not list them.
+- It ignores the new columns and tables, and the rows in them.
+- Upgrading again later does not repeat those migrations.
+
+P-9 tested this path from the current release back to `8c4a2eb`, whose code happens to run on the newer schema. That
+is not a promise for other releases. Run `search:reindex` afterwards if the search documents differ between the two
+releases.
 
 ## Running one-off Artisan commands
 
@@ -201,7 +286,7 @@ docker compose run --rm --no-deps --entrypoint php php-fpm artisan key:generate 
 
 - **`docker compose up` says a variable is missing** (`Set NUSSZOPF_VERSION…`, `Set DB_PASSWORD…`): Compose is reading your `.env`; fill in the named line.
 - **`php-fpm` exits at once with "APP_KEY is not set"**: generate one (Running one-off Artisan commands) and put it into `.env`.
-- **`php-fpm` stays "starting" for minutes after an upgrade**: a migration is running (`docker compose logs -f php-fpm`); it has up to three minutes before it counts as unhealthy. If a migration failed the container keeps restarting and the log names it — restore the pre-upgrade backup and report it.
+- **`php-fpm` stays "starting" for minutes after an upgrade**: a migration is running (`docker compose logs -f php-fpm`); it has up to three minutes before it counts as unhealthy. If a migration failed, `php-fpm` keeps restarting, the site answers 502, and the log names the migration with `FAIL` and the database error. PostgreSQL undoes a failed migration completely (verified in P-9), so the database stays as the previous release left it. Go back as described in [Rollback](#rollback), then report the error. Do not run migrations by hand.
 - **`queue-worker`/`scheduler` "unhealthy" right after start**: they need their first heartbeat (up to a minute after `php-fpm` is up). Persistently unhealthy: `docker compose logs scheduler queue-worker`; `nusszopf:health` names the failing check and how old the last heartbeat is.
 - **Search shows nothing / is stale**: `nusszopf:health` (is `search` ok?), `queue:failed`, then `search:reindex`.
 - **Links or redirects use `http://` behind a proxy, or the login loops**: `TRUSTED_PROXIES`, `APP_URL=https://…` and `SESSION_SECURE_COOKIE` in `.env`, then `docker compose up -d` again (`config:cache` is rebuilt on start).

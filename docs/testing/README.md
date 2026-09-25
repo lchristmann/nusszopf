@@ -145,6 +145,43 @@ Test-only settings are appended to the installed `.env`:
 The aria-snapshot dump (`zz-aria.spec.ts`) is left out: it reads the visual reference dataset, which production refuses to
 seed. `PROD_E2E_KEEP=1` leaves the stack running.
 
+The smoke test also checks `install.sh --upgrade` on its own (P-9, finding P9-01). It works on a directory that holds an
+earlier release's compose file and a `.env` with outdated values. It checks that the release's own compose file replaces
+the old one and that the old files are kept as `*.previous`. It also checks that `APP_KEY` is untouched and that
+`NUSSZOPF_VERSION` is set. Finally, the output must name the settings `.env` lacks, and flag `TRUSTED_PROXIES=*` and the
+historical sender address.
+
+### Upgrade test (P-9, `docs/release/parity/P-09-upgrade.md`)
+
+`sh scripts/upgrade-test.sh <from-ref> [--suite]` tests the upgrade from an earlier release to the working copy. CI does
+not run it, because it builds two sets of images. It is a release step (`docs/release/release-process.md`), run with the
+previous release's tag as `<from-ref>`. It does the following:
+1. Builds `<from-ref>`'s images and installs them with that release's own `install.sh` and `docker-compose.yaml`.
+2. Fills the installation through that release's own models (`tests/Upgrade/seed.php`, which adapts to the release's
+   schema): users with and without verification, a Google-linked account, uploaded avatars, public and private
+   projects with requests, visitor counts, newsletter subscribers, and a pending password-reset token.
+3. Signs a browser in (`tests/Upgrade/session.mjs`).
+4. Stops the queue worker and queues a search-index update, a password-reset mail, a newsletter mail and a contact mail
+   (`tests/Upgrade/inflight.php`).
+5. Records the state (`tests/Upgrade/snapshot.sh`): every table, the stored files, the search documents and settings,
+   and the migration status.
+6. Upgrades with the documented procedure: `install.sh --upgrade`, `docker compose pull`, then `docker compose up -d`.
+
+It then checks:
+- the rows and columns that existed before are byte-identical;
+- the stored files are unchanged;
+- no migration is pending;
+- the search documents are unchanged, except the one the queued job updated;
+- the index settings are current;
+- no job failed, and every queued mail was sent;
+- the session is still signed in;
+- the verification, newsletter and password-reset links mailed before the upgrade still work;
+- the journeys on the old data pass (`tests/Upgrade/journeys.mjs`);
+- the legal pages come from `./legal`, and `web` serves newly uploaded files.
+
+`--suite` then runs the whole Playwright suite, on the desktop browsers, against the upgraded installation.
+`UPGRADE_KEEP=1` leaves the stack running.
+
 ## Visual parity
 
 Because visual fidelity is a hard requirement (`CLAUDE.md`, `.claude/rules/02-visual-fidelity.md`), every screen is compared with the running historical app. The suite is `docs/testing/visual-regression.md`: Playwright `toHaveScreenshot` (register B9), 23 screens × phone/tablet/desktop, exact baselines in `tests/Visual/baselines/` compared in CI (the `visual` job), and reference captures of the historical webapp from `tests/Visual/historical-harness/`. Zero differing pixels are tolerated (per-pixel colour threshold 0.05), because the screenshots always come from the same pinned Playwright image.

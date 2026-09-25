@@ -59,6 +59,7 @@ The compose service names above (`web`, `php-fpm`, `workspace`, `queue-worker`, 
 | Sync search index settings | `php artisan scout:sync-index-settings` |
 | Full search reindex (also applies the index settings) | `php artisan search:reindex` |
 | Production stack smoke test (builds both images, installs and starts the operator stack, checks it; needs Docker on the host, not the workspace) | `sh scripts/smoke-test.sh` |
+| Upgrade test (installs an earlier release, fills it, upgrades it to the working copy, checks nothing was lost; host Docker) | `sh scripts/upgrade-test.sh <previous tag> [--suite]` |
 | Logs | `docker compose -f compose.dev.yaml logs -f [service]` |
 
 This table must stay in sync with `composer.json`/`package.json` scripts as they are implemented — a command listed here that no longer exists, or an implemented script missing from here, is a documentation bug.

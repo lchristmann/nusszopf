@@ -3,7 +3,7 @@
 > **Status: implemented and verified (operational track O-1/O-2, 2026-09-22).** The install path, the images, the
 > release workflow and the health checks below exist and are exercised by `scripts/smoke-test.sh` (run by CI on every
 > change). The whole Playwright suite runs against these images (P-7), and a fresh install on a clean host was
-> done from this page alone (P-8). Not yet done, by roadmap: a real tag has never been published (the release workflow is
+> done from this page alone (P-8), and the upgrade from earlier builds was tested on installations filled with data (P-9). Not yet done, by roadmap: a real tag has never been published (the release workflow is
 > untested until the first one, P-16), and the backup scripts and restore drill (P-10).
 
 ## Table of contents
@@ -32,13 +32,15 @@ Docker Compose is the reference deployment. No Kubernetes, no orchestration plat
 |---|---|---|
 | `docker-compose.yaml` (repository root, attached to every release) | Operators | The whole stack, `image:`-only: no build context, nothing to compile. Which release runs is `NUSSZOPF_VERSION` in `.env` |
 | `.env.production.example` (attached to every release with its version filled in) | Operators | Every setting of a production installation, the ones that must be set marked `REQUIRED` |
-| `scripts/install.sh` (attached to every release) | Operators | Downloads the two files above, generates `APP_KEY` and the database, search and health secrets, writes `.env` |
+| `scripts/install.sh` (attached to every release) | Operators | Downloads the two files above, generates `APP_KEY` and the database, search and health secrets, writes `.env`. `install.sh --upgrade <version>` moves an existing installation to that release: it replaces the two files and sets `NUSSZOPF_VERSION`, keeping the rest of `.env` (`docs/deployment/operations.md`, "Upgrades") |
 | `compose.prod.yaml` | Contributors / CI | An *override* that only adds `build:` to `web` and `php-fpm`: `docker compose -f docker-compose.yaml -f compose.prod.yaml up -d --build` runs the working copy's own images in the operator's stack |
 | `compose.dev.yaml` | Contributors | Bind-mounted source, Xdebug, a `workspace` sidecar for Composer/Node/Artisan, the Vite dev server, Playwright |
 | `scripts/smoke-test.sh` | Contributors / CI | Builds both images, installs into a clean directory with `install.sh`, starts the stack and checks it end to end |
+| `scripts/upgrade-test.sh` | Contributors / release | Installs an earlier release, fills it with data, upgrades it to the working copy with the documented procedure and checks that nothing was lost (P-9, `docs/testing/README.md`) |
 
 Following Waffle Dashboard, the operator file is a separate, curl-able, image-only artifact; unlike Waffle, a single `.env`
-value pins the release, so an upgrade is one line (see `docs/deployment/operations.md`).
+value pins the release. An upgrade still replaces `docker-compose.yaml` with the new release's, because a release can change
+it; `install.sh --upgrade` does both (see `docs/deployment/operations.md`, "Upgrades").
 
 ## Services
 
@@ -49,7 +51,7 @@ value pins the release, so an upgrade is one line (see `docs/deployment/operatio
 | `queue-worker` | same application image | `queue:work --tries=5 --backoff=10,30,60,120`: background jobs (search indexing, contact-form mail). Healthy while it processes the scheduler's heartbeat job |
 | `scheduler` | same application image | `schedule:work`. Its only tasks are the two heartbeats (`routes/console.php`) — the historical product had no periodic work. Healthy while its heartbeat is fresh |
 | `postgres` | `postgres:16-alpine` | Primary datastore |
-| `redis` | `redis:alpine` | Sessions, cache, queue |
+| `redis` | `redis:8-alpine` | Sessions, cache, queue |
 | `meilisearch` | `getmeili/meilisearch:v1.11`, `MEILI_ENV=production`, master key from `MEILISEARCH_KEY` | Search index — derived data, rebuilt with `search:reindex` |
 | `workspace` (dev only) | Node + Composer + CLI tools | Contributor shell |
 

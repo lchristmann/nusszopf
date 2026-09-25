@@ -63,6 +63,7 @@ first `up`, so files the containers create are owned by you, not root.
 | Browser/E2E tests | `docker compose -f compose.dev.yaml exec playwright npx playwright test` (or `npm run test:e2e:chromium`/`:firefox`/`:webkit` for one engine, `npm run test:e2e:devices` for the emulated phones and tablet) |
 | Production images: operator checks | `sh scripts/smoke-test.sh` (builds the images, installs, starts, checks) |
 | Production images: whole browser suite | `sh scripts/prod-e2e.sh` (the same stack plus Mailpit and the LocationIQ stub; `PROD_E2E_KEEP=1` keeps it running) |
+| Upgrade from an earlier release, on populated data | `sh scripts/upgrade-test.sh <previous tag> [--suite]` (a release step, not CI; `docs/testing/README.md`) |
 | Migrations | `php artisan migrate` |
 | Fresh DB + seed | `php artisan migrate:fresh --seed` |
 | Sync search index settings | `php artisan scout:sync-index-settings` |
