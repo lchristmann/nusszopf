@@ -65,6 +65,7 @@ first `up`, so files the containers create are owned by you, not root.
 | Production images: whole browser suite | `sh scripts/prod-e2e.sh` (the same stack plus Mailpit and the LocationIQ stub; `PROD_E2E_KEEP=1` keeps it running) |
 | Upgrade from an earlier release, on populated data | `sh scripts/upgrade-test.sh <previous tag> [--suite]` (a release step, not CI; `docs/testing/README.md`) |
 | Backup/restore drill onto an empty host, and the rollback of an upgrade | `sh scripts/restore-test.sh [--suite] [--rollback-from <previous tag>]` (a release step, not CI; `docs/testing/README.md`) |
+| Search index recovery drill | `sh scripts/search-recovery-test.sh` (a release step, not CI; `docs/testing/README.md`) |
 | Migrations | `php artisan migrate` |
 | Fresh DB + seed | `php artisan migrate:fresh --seed` |
 | Sync search index settings | `php artisan scout:sync-index-settings` |

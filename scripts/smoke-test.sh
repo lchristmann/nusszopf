@@ -89,7 +89,7 @@ step "The search index has its configured settings from the first start, before 
 settings="$(compose exec -T php-fpm sh -c 'curl -s -H "Authorization: Bearer $MEILISEARCH_KEY" "$MEILISEARCH_HOST/indexes/items/settings"')"
 echo "$settings" | grep -q '"filterableAttributes":\[[^]]*"req_type"' || fail "the index cannot filter by request category: $settings"
 echo "$settings" | grep -q '"maxTotalHits":100000' || fail "the index caps its hits at Meilisearch's default: $settings"
-echo "$settings" | grep -q '"updated_at:desc"' || fail "the index lacks the updated_at ranking rule: $settings"
+echo "$settings" | grep -q '"updated_at:desc","id:asc"\]' || fail "the index lacks the updated_at and id ranking rules (BUG-047): $settings"
 
 step "The release is baked into the images"
 for image in nusszopf-php-fpm nusszopf-web; do

@@ -151,6 +151,11 @@ return [
          * Ranking rules append `updated_at:desc` as a final tie-break on
          * top of Meilisearch's own defaults, matching the one confirmed
          * historical ranking-rule fact in docs/search/README.md.
+         *
+         * `id:asc` comes last: hits the rules above rank equal (always the
+         * requests of one project, which share its `updated_at`) otherwise come
+         * in Meilisearch's internal order, which a rebuild changes. Ids are
+         * time-ordered UUIDs, so they come oldest first (BUG-047).
          */
         'index-settings' => [
             Project::class => [
@@ -169,6 +174,7 @@ return [
                     'sort',
                     'exactness',
                     'updated_at:desc',
+                    'id:asc',
                 ],
             ],
         ],

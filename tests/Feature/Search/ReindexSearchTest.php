@@ -58,6 +58,32 @@ it('rebuilds an empty index to exactly what live syncing produced', function () 
         ->and(indexSnapshot())->toBe($live);
 })->group('meilisearch');
 
+/**
+ * BUG-047: hits the ranking rules rank equal — always the requests of one project, which share its `updated_at` —
+ * came in Meilisearch's internal order, the order the documents were written in, so a rebuild reordered them.
+ */
+it('answers in the same order after a rebuild: equally ranked hits by id, whatever order they were written in', function () {
+    Project::removeAllFromSearch();
+    expect(awaitDocumentCount(0))->toBeTrue();
+    $word = w('Reihenwort');
+    $project = Project::factory()->public()->create(['title' => "Reihenfolge {$word}"]);
+    $requests = collect(range(1, 4))->map(fn (int $i) => ProjectRequest::factory()->for($project)->category('rooms')->create(['title' => "Gesuch {$i}"]));
+    $byId = $requests->pluck('id')->sort()->values()->all();
+
+    // Written newest first, one task each: Meilisearch's internal order is now the reverse of the ids.
+    $requests->each->unsearchable();
+    expect(awaitDocumentCount(0))->toBeTrue();
+    $requests->sortByDesc('id')->each->searchable();
+    expect(awaitDocumentCount(4))->toBeTrue();
+
+    $order = fn () => indexHits($word)->pluck('id')->all();
+    expect($order())->toBe($byId);
+
+    expect(Artisan::call('search:reindex'))->toBe(0);
+    expect(awaitDocumentCount(4))->toBeTrue()
+        ->and($order())->toBe($byId);
+})->group('meilisearch');
+
 it('is idempotent: running it again changes nothing', function () {
     Project::removeAllFromSearch();
     seedProjects(w('Idempotenzwort'));
@@ -111,6 +137,13 @@ it('applies the index settings even to an index that does not exist yet', functi
             return false;
         }
     }))->toBeTrue();
+})->group('meilisearch');
+
+it('fails, and says so, when Meilisearch does not take the index settings', function () {
+    // scout:sync-index-settings reports the rejection and still exits successfully; the import after it works.
+    config(['scout.meilisearch.index-settings.'.Project::class.'.rankingRules' => ['nicht-gueltig'], 'search.settings_wait_attempts' => 2]);
+
+    $this->artisan('search:reindex')->expectsOutputToContain('The index settings were not applied')->assertFailed();
 })->group('meilisearch');
 
 it('fails visibly, and says so, when the engine cannot be reached', function () {

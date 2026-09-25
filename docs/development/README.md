@@ -61,6 +61,7 @@ The compose service names above (`web`, `php-fpm`, `workspace`, `queue-worker`, 
 | Production stack smoke test (builds both images, installs and starts the operator stack, checks it; needs Docker on the host, not the workspace) | `sh scripts/smoke-test.sh` |
 | Upgrade test (installs an earlier release, fills it, upgrades it to the working copy, checks nothing was lost; host Docker) | `sh scripts/upgrade-test.sh <previous tag> [--suite]` |
 | Backup/restore drill (backs up from cron with the documented script, restores onto an empty Docker host, and rolls back an upgrade; privileged `docker:dind`) | `sh scripts/restore-test.sh [--suite] [--rollback-from <previous tag>]` |
+| Search index recovery drill (loses the index four ways, recovers it with the documented blocks, compares every search answer; privileged `docker:dind`) | `sh scripts/search-recovery-test.sh` |
 | Logs | `docker compose -f compose.dev.yaml logs -f [service]` |
 
 This table must stay in sync with `composer.json`/`package.json` scripts as they are implemented — a command listed here that no longer exists, or an implemented script missing from here, is a documentation bug.

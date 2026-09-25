@@ -59,6 +59,7 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 | BUG-044 | Accessibility / contrast: "Ausloggen" in the menu | Low | Fix (maintainer-approved 2026-09-23) | Implemented — P-3 (`warning-900`, 4.6:1) |
 | BUG-045 | Accessibility / contrast: dimmed older toasts | Trivial  | Preserve (waived by the maintainer 2026-09-23) | Decided — historical dimming kept |
 | BUG-046 | Security / browser security headers         | Low      | Fix                                 | Implemented — P-4 (2026-09-24), `docs/release/parity/P-04-security.md` SEC-06 |
+| BUG-047 | Search / order of equally ranked hits       | Low      | Fix                                 | Implemented — P-11 (2026-09-25), `docs/release/parity/P-11-search-recovery.md` P11-01; for the maintainer's review |
 
 ---
 
@@ -850,3 +851,26 @@ directly from `web-nusszopf/projects/webapp/src/containers/user/ProjectForm/*` a
   static files and names no versions.
 - Regression tests: `tests/Feature/Security/SecurityHeadersTest.php`, `tests/E2E/specs/security/csp.spec.ts`, and the
   smoke test's P-4 step.
+
+### BUG-047 — Equally ranked hits come in Meilisearch's internal order, which a rebuild changes
+
+- Affected area: Search, the order of cards and of the request hits inside a card.
+- Historical behavior (Confirmed): the ranking rules are Meilisearch's defaults plus `desc(updated_at)`
+  (`be-nusszopf/docs/meilisearch/prod_setup.md`), and the client shows the hits in the order Meilisearch returns them
+  (`search.service.js`: `groupBy(hits?.hits, item => item.groupId)`, no sort of its own). Documents that every rule ranks
+  equal therefore come in Meilisearch's internal document order, which is the order they were first written to the
+  index. That always applies to the requests of one project: each request document carries the project's
+  `updated_at` (`_parseRequestToDocument`), so for the empty search their order inside a card is decided by nothing
+  but that internal order.
+- Why it is defective in Nusszopf 2: the historical product never rebuilt its index, so this order never changed.
+  Nusszopf 2 rebuilds it by design (`search:reindex`, BUG-008), and a rebuild writes the documents in another order
+  than live indexing did. In the P-11 drill, the rebuilt index held exactly the same documents and settings, yet 66
+  of 153 recorded answers listed the same hits in another order, and 346 card renderings showed their requests
+  permuted. A derived index that answers differently after a rebuild is not a reliable derivation.
+- Found: the P-11 search-recovery drill (2026-09-25), finding P11-01 of `docs/release/parity/P-11-search-recovery.md`.
+- Classification: **Fix**. Only the order among hits the historical rules rank equal changes; every order those
+  rules decide stays as it was.
+- Corrected behavior: a last ranking rule `id:asc`. Ids are time-ordered UUIDs, so equally ranked hits come oldest
+  first. That is the order live indexing normally wrote them in, and now the same after every rebuild.
+- Regression tests: `tests/Feature/Search/ReindexSearchTest.php` ("answers in the same order after a rebuild …"),
+  `scripts/search-recovery-test.sh`.

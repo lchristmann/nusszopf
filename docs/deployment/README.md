@@ -52,7 +52,7 @@ it; `install.sh --upgrade` does both (see `docs/deployment/operations.md`, "Upgr
 | `scheduler` | same application image | `schedule:work`. Its only tasks are the two heartbeats (`routes/console.php`) — the historical product had no periodic work. Healthy while its heartbeat is fresh |
 | `postgres` | `postgres:16-alpine` | Primary datastore |
 | `redis` | `redis:8-alpine` | Sessions, cache, queue |
-| `meilisearch` | `getmeili/meilisearch:v1.11`, `MEILI_ENV=production`, master key from `MEILISEARCH_KEY` | Search index — derived data, rebuilt with `search:reindex` |
+| `meilisearch` | `getmeili/meilisearch:v1.11`, `MEILI_ENV=production`, master key from `MEILISEARCH_KEY` | Search index — derived data, rebuilt with `search:reindex` (`docs/deployment/operations.md`, "Search index recovery", also for a Meilisearch whose data no longer opens) |
 | `workspace` (dev only) | Node + Composer + CLI tools | Contributor shell |
 
 `queue-worker` and `scheduler` wait for `php-fpm` to be healthy, i.e. for the migrations to have finished; nothing else migrates.
@@ -211,7 +211,7 @@ Three layers, all verified by the smoke test:
   the worker must process) is at most three minutes old. `depends_on: condition: service_healthy` orders the start (databases → `php-fpm` → `web`, `queue-worker`, `scheduler`).
 - **`/up`**: Laravel's liveness probe — 200 while the application boots. Touches no dependency.
 - **`/health`**: 200 `{"status":"ok"}` or 503 `{"status":"degraded"}`; it starts no session, so it still answers while Redis is down. With `HEALTH_TOKEN` set, a request with
-  `Authorization: Bearer <token>` also gets the version and each check (`database`, `redis`, `search`, `scheduler`, `queue`) with its reason. Point an uptime monitor at it.
+  `Authorization: Bearer <token>` also gets the version and each check (`database`, `redis`, `search`, `scheduler`, `queue`) with its reason. `search` passes only while Meilisearch answers *and* the `items` index exists with the settings of `config/scout.php`; a lost index, or one recreated without its settings, fails it with "run php artisan search:reindex" (P-11). Point an uptime monitor at it.
 - **`php artisan nusszopf:health`** — the same from the shell, with the running version; exit code 1 when a check fails. `php artisan about` shows the version too, and `docker image inspect` the `org.opencontainers.image.version` label.
 
 The version is the Git tag: the release workflow passes it as the `NUSSZOPF_VERSION` build argument (there is no hand-maintained version file); an image built from a working copy reports `dev`.

@@ -2,6 +2,7 @@
 
 namespace App\Health;
 
+use App\Services\Search\IndexSettings;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -47,7 +48,15 @@ class HealthChecker
             $checks['search'] = $this->attempt(function () {
                 $health = (new Meilisearch(config('scout.meilisearch.host'), config('scout.meilisearch.key')))->health();
 
-                return $health['status'] === 'available' ? 'available' : throw new \RuntimeException("status {$health['status']}");
+                if ($health['status'] !== 'available') {
+                    throw new \RuntimeException("status {$health['status']}");
+                }
+
+                // An engine that answers is not yet a working search: after its data was lost, the index is missing
+                // or was recreated by live indexing without its settings (P-11, P11-02).
+                $problems = IndexSettings::make()->problems();
+
+                return $problems === [] ? 'available, index configured' : throw new \RuntimeException(implode('; ', $problems).' — run php artisan search:reindex');
             });
         }
 

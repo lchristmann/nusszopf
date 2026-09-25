@@ -26,7 +26,8 @@ if [ "$1" = "php-fpm" ]; then
     # The search index's settings (config/scout.php: the category filter's attribute, the ranking, the hit cap) live
     # in source control (BUG-008); apply them on every start, so a fresh install and an upgrade both get them without
     # a manual step (P-7, finding P7-01). Unchanged settings are a no-op. Search being down must not keep the site
-    # from starting: then warn, and `php artisan search:reindex` applies them later.
+    # from starting. Scout's command then prints the error but still exits 0 (P-11), so the operator learns it from
+    # the health check: `search` fails with "run php artisan search:reindex" until the settings are in place.
     php artisan scout:sync-index-settings --no-interaction \
         || echo "Warning: could not apply the search index settings; run 'php artisan search:reindex' once Meilisearch is reachable." >&2
 fi

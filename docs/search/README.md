@@ -124,6 +124,26 @@ Specification and evidence: `docs/rewrite/fourth-slice.md`. What matters for the
   `<em>` (BUG-029; the historical cards injected the raw highlighted string).
 - **Visibility, again**: every project and request of a result is re-read from PostgreSQL through `Project::visible(null)` /
   `ProjectRequest::visible(null)`; documents whose row is gone, private, or moved to another project are dropped, for owners too.
-- **Recovery**: `php artisan search:reindex` (settings → flush → import), idempotent, documented in `docs/deployment/operations.md`.
+- **Recovery**: `php artisan search:reindex` (settings → flush → import), idempotent, documented in `docs/deployment/operations.md`; drilled in P-11 (below).
 - **Resolved Unknowns**: the pagination behavior exposed to the UI (load-more button, offset paging, merge by id) — see the table in
   `fourth-slice.md`; the filterable attribute set (`req_type`, from `_mapFilterQuery`).
+
+## P-11 — recovery drill: order of equal hits, and knowing the index is broken
+
+Evidence: `docs/release/parity/P-11-search-recovery.md` (2026-09-25), `scripts/search-recovery-test.sh`.
+
+- **Order of equally ranked hits (BUG-047, Fix)**: the ranking rules now end in `updated_at:desc, id:asc`. The historical
+  client shows hits in Meilisearch's order (**Confirmed**, `search.service.js`: `groupBy` over `hits`, no sort of its
+  own). Hits the rules rank equal therefore came in Meilisearch's internal order, which is the order the documents were
+  written in. That always applies to the requests inside one card, because they share the project's `updated_at`. A
+  rebuild writes them in another order, so before this fix the recovered index answered with the same hits in another
+  order. With `id:asc` (time-ordered UUIDs) the order is a function of the data alone, identical before a loss and
+  after a rebuild.
+- **Settings, rebuild and live indexing are three different things**:
+  - `search:reindex` applies the settings, waits until Meilisearch has taken them (it fails otherwise), drops every
+    document and imports from PostgreSQL;
+  - the `php-fpm` entrypoint applies only the settings;
+  - live indexing (the model-save path) writes only what changes. After a loss it recreates `items` with
+    Meilisearch's default settings, so no category filter works until the reindex.
+- **Health**: the `search` check fails when `items` is missing or its settings differ from `config/scout.php`. Before
+  P-11 it only asked whether Meilisearch answered, and said "ok" with the index gone.

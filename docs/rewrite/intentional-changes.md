@@ -828,6 +828,26 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 
 ---
 
+### Equally ranked search hits are ordered oldest first (BUG-047)
+
+- Status: Approved under the P-11 mandate ("if the documented procedure is incomplete or fails, fix the underlying
+  implementation"); recorded for the maintainer's review with P-11 (finding P11-01).
+- Date: 2026-09-25
+- Historical behavior: hits the ranking rules rank equal, among them always the requests of one project, came in
+  Meilisearch's internal document order (BUG-047).
+- Why it changes: that order depends on the order the documents were written in, so the documented recovery
+  (`search:reindex`) answered with the same hits in another order than before the loss.
+- New behavior: the ranking rules end in `updated_at:desc, id:asc` (`config/scout.php`). Equally ranked hits come
+  oldest first, by their time-ordered UUID. For data indexed live that is normally the order they already had.
+- Visible change: only where the historical rules rank hits equal: requests inside a card, and projects saved within
+  the same second. Existing installations get the rule when `php-fpm` starts (the entrypoint applies the settings); no
+  reindex is needed.
+- Affected screens: Search. Domain and migrations: none.
+- Tests: `tests/Feature/Search/ReindexSearchTest.php`, `scripts/search-recovery-test.sh`.
+- Approval: Approved (P-11), for the maintainer's review.
+
+---
+
 ## Explicitly deferred (not proposed here, need a product decision first — see `docs/rewrite/open-questions.md` / `docs/rewrite/architecture-decisions.md`)
 
 The following were identified during archaeology as *possible* candidates for change but are deliberately **not** proposed above, because reasonable product intent could explain the historical behavior as-is:

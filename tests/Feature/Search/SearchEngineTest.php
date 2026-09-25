@@ -24,12 +24,12 @@ function searched(string $word, array $categories = [], int $pages = 1): array
     return collect($results->hits)->mapWithKeys(fn ($hit) => [$hit->project->title => collect($hit->requests)->pluck('titleHtml')->all()])->all();
 }
 
-it('applies the checked-in index settings: req_type filterable, recency last, no 1000-hit cap', function () {
+it('applies the checked-in index settings: req_type filterable, recency then id last, no 1000-hit cap', function () {
     $client = new Client(config('scout.meilisearch.host'), config('scout.meilisearch.key'));
     $settings = $client->index(Project::searchIndexName())->getSettings();
 
     expect($settings['filterableAttributes'])->toContain('req_type')
-        ->and(last($settings['rankingRules']))->toBe('updated_at:desc')
+        ->and(array_slice($settings['rankingRules'], -2))->toBe(['updated_at:desc', 'id:asc'])
         ->and($settings['pagination']['maxTotalHits'])->toBe(config('scout.meilisearch.index-settings')[Project::class]['pagination']['maxTotalHits']);
 });
 

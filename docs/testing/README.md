@@ -219,6 +219,36 @@ drills "Rollback":
 
 `RESTORE_KEEP=1` keeps the hosts.
 
+### Search index recovery drill (P-11, `docs/release/parity/P-11-search-recovery.md`)
+
+`sh scripts/search-recovery-test.sh` loses the search index in four ways and repairs it each time with the blocks of
+`docs/deployment/operations.md`, "Search index recovery". Like the restore drill, it takes the blocks out of the page by
+their markers and runs them as printed. It uses one host, a separate Docker daemon (`docker:dind`, privileged). CI does
+not run it; it is a release step. It does the following:
+1. Installs the working copy with `install.sh` and fills it with `tests/Upgrade/seed.php`: public and private projects,
+   requests in every category.
+2. Records the reference:
+   - every answer of the search page's query side, for 13 queries × 9 filters × every "Mehr laden" page
+     (`tests/SearchRecovery/probe.php`): the raw hit order, the estimated total, the cards with their request hits,
+     and whether "Mehr laden" is offered;
+   - the page itself in Chromium for 8 deep links (`tests/SearchRecovery/browser.mjs`), clicking "Mehr laden" to the
+     end;
+   - the index's documents and settings (`tests/Upgrade/snapshot.sh`).
+3. Loses the index, checks that it is really broken (and that `nusszopf:health` says so), recovers it, and requires
+   every recorded answer, the page, the documents and the settings to be **identical** to the reference:
+   - a. the `meilisearch-data` volume is deleted, so Meilisearch starts empty, with no index;
+   - b. the same, but a project is saved before the recovery, so live indexing recreates the index without its settings;
+   - c. the settings are reset, 20 documents are deleted, one is altered, and a private project's and a deleted
+     project's documents are added;
+   - d. Meilisearch's data files are overwritten, so it cannot start. `search:reindex` alone must fail visibly;
+     the second block (remove the volume, then reindex) must work.
+4. Checks normal indexing after the recovery: a new project, its first request, an edit, unpublishing, publishing
+   again and deleting all reach the index by themselves. Then everything must be identical to the reference again, with
+   no failed job.
+
+After every recovery, it waits until the index holds as many documents as PostgreSQL says it should. In every
+answer, no private project or request may appear, and none may be in the index. `SEARCH_RECOVERY_KEEP=1` keeps the host.
+
 ## Visual parity
 
 Because visual fidelity is a hard requirement (`CLAUDE.md`, `.claude/rules/02-visual-fidelity.md`), every screen is compared with the running historical app. The suite is `docs/testing/visual-regression.md`: Playwright `toHaveScreenshot` (register B9), 23 screens × phone/tablet/desktop, exact baselines in `tests/Visual/baselines/` compared in CI (the `visual` job), and reference captures of the historical webapp from `tests/Visual/historical-harness/`. Zero differing pixels are tolerated (per-pixel colour threshold 0.05), because the screenshots always come from the same pinned Playwright image.

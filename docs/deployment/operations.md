@@ -1,7 +1,7 @@
 # Operations
 
 > **Status: health, logs, queue and scheduler, upgrades, rollback, search recovery and troubleshooting are implemented and verified
-> (operational track O-1/O-2, 2026-09-22); upgrades were tested again on populated installations in P-9 (2026-09-25); backups, the restore onto an empty host and the rollback of an upgrade were drilled in P-10 (2026-09-25, `scripts/restore-test.sh`).**
+> (operational track O-1/O-2, 2026-09-22); upgrades were tested again on populated installations in P-9 (2026-09-25); backups, the restore onto an empty host and the rollback of an upgrade were drilled in P-10 (2026-09-25, `scripts/restore-test.sh`); the search index recovery in P-11 (2026-09-25, `scripts/search-recovery-test.sh`).**
 > Commands assume the operator's directory (`docker-compose.yaml` and `.env` next to each other); contributors add
 > `-f compose.dev.yaml` and use the `workspace` service.
 
@@ -71,22 +71,63 @@ A saved change is never lost when search is down: the database is written first 
 ## Search index recovery
 
 The search index (Meilisearch, one shared `items` index) is **derived data**: everything in it comes from PostgreSQL, so it is
-never backed up, only rebuilt. One command does it, and it is safe to run at any time, as often as needed:
+never backed up, only rebuilt. No database restore is involved. One command does it, and it is safe to run at any time, as
+often as needed:
 
+<!-- P-11: scripts/search-recovery-test.sh runs this block exactly as printed. -->
 ```bash
 docker compose exec php-fpm php artisan search:reindex
 ```
 
-It applies the versioned index settings (`config/scout.php`), drops every document and imports all public projects and their
-requests again. With `SCOUT_QUEUE=true` (the default) the documents are indexed by the queue worker, so search fills up over the
-next seconds to minutes depending on the number of projects; watch it with `docker compose logs -f queue-worker`. Private projects
-and their requests are never imported.
+It does three things, in this order:
 
-Use it after: restoring a backup, wiping or replacing the `meilisearch-data` volume, upgrading to a release that changes the
-index (see "Upgrades"), or when search results are missing or stale (for example after Meilisearch was down for longer than the
-queue's retries). If the command names a step that failed, Meilisearch is unreachable or misconfigured — fix that and run it again.
-Failed sync jobs stay visible in the `failed_jobs` table (`php artisan queue:failed`) and can be retried with `queue:retry all`;
+1. **Applies the index settings** from `config/scout.php`: which fields are searched, the category filter (`req_type`), the
+   ranking with its tie-breaks (`updated_at:desc`, then `id:asc`), and the hit cap. It waits until Meilisearch has
+   applied them, and fails if it did not. Without the settings, search still answers, but the category filter shows
+   nothing, and the order and the "Mehr laden" limit are wrong.
+2. **Drops every document.** A leftover document, for example from a project that has since become private or been
+   deleted, cannot survive.
+3. **Imports all public projects and their requests** from PostgreSQL. Private projects and their requests are never
+   imported.
+
+`Index settings applied.` and `Search index rebuilt` mean all three steps were accepted. With `SCOUT_QUEUE=true` (the
+default), the queue worker writes the documents, so search fills up over the next seconds to minutes, depending on the number
+of projects. It is complete when `docker compose logs -f queue-worker` stops showing `MakeSearchable` jobs. In P-11, 151
+documents took 1 to 2 seconds.
+
+After that, **normal indexing** takes over again by itself. Every saved, published, unpublished or deleted project or request
+updates the index through the queue. That is not a recovery tool: it only writes what changes. On a lost index it even
+recreates `items` **without its settings**, so the category filter fails until `search:reindex` runs.
+
+**When to run it:**
+- after restoring a backup;
+- after losing, deleting or replacing the `meilisearch-data` volume;
+- after upgrading to a release whose changelog says the search documents changed (see "Upgrades");
+- when `nusszopf:health` reports `search` failing with "run php artisan search:reindex";
+- when search results are missing or stale, for example after Meilisearch was down for longer than the queue's retries.
+
+The health check notices a missing index and missing settings. It does not notice a single missing or stale document, so
+run the command whenever results look wrong.
+
+If the command names a step that failed, Meilisearch is unreachable or misconfigured: fix that and run it again. Failed sync
+jobs stay visible in the `failed_jobs` table (`php artisan queue:failed`) and can be retried with `queue:retry all`;
 reindexing makes them unnecessary.
+
+**If Meilisearch itself does not start.** `docker compose ps` then shows `meilisearch` restarting, and
+`docker compose logs meilisearch` shows an error such as `MDB_INVALID: File is not an LMDB file`: its data on disk is damaged.
+The same happens if a future Meilisearch release cannot read the old data. Throw the data away and rebuild it. Nothing
+else is touched: PostgreSQL, the uploaded files and the sessions stay as they are.
+
+<!-- P-11: scripts/search-recovery-test.sh runs this block exactly as printed. -->
+```bash
+docker compose rm --stop --force meilisearch
+docker volume rm nusszopf_meilisearch-data
+docker compose up -d --wait
+docker compose exec php-fpm php artisan search:reindex
+```
+
+While Meilisearch is down or empty, the site keeps working and search shows "Verzopft…" (no hits). Projects saved meanwhile
+are not lost: they are in PostgreSQL, and the reindex brings them in.
 
 ## Newsletter subscribers
 
@@ -374,7 +415,7 @@ docker compose run --rm --no-deps --entrypoint php php-fpm artisan key:generate 
 - **`php-fpm` exits at once with "APP_KEY is not set"**: generate one (Running one-off Artisan commands) and put it into `.env`.
 - **`php-fpm` stays "starting" for minutes after an upgrade**: a migration is running (`docker compose logs -f php-fpm`); it has up to three minutes before it counts as unhealthy. If a migration failed, `php-fpm` keeps restarting, the site answers 502, and the log names the migration with `FAIL` and the database error. PostgreSQL undoes a failed migration completely (verified in P-9), so the database stays as the previous release left it. Go back as described in [Rollback](#rollback), then report the error. Do not run migrations by hand.
 - **`queue-worker`/`scheduler` "unhealthy" right after start**: they need their first heartbeat (up to a minute after `php-fpm` is up). Persistently unhealthy: `docker compose logs scheduler queue-worker`; `nusszopf:health` names the failing check and how old the last heartbeat is.
-- **Search shows nothing / is stale**: `nusszopf:health` (is `search` ok?), `queue:failed`, then `search:reindex`.
+- **Search shows nothing / is stale**: `nusszopf:health` (is `search` ok?), `queue:failed`, then `search:reindex`. If `meilisearch` keeps restarting, see "Search index recovery", "If Meilisearch itself does not start".
 - **Links or redirects use `http://` behind a proxy, or the login loops**: `TRUSTED_PROXIES`, `APP_URL=https://…` and `SESSION_SECURE_COOKIE` in `.env`, then `docker compose up -d` again (`config:cache` is rebuilt on start).
 - **A link from an e-mail (verification, "Das bin ich!") answers 403**, or **styles and scripts do not load**: every link the application writes starts with `APP_URL`, which must be the exact public address; and a proxy outside the private networks must be listed in `TRUSTED_PROXIES`, or the application sees `http` where the signed link says `https` (`docs/deployment/README.md`, "Reverse proxy and TLS").
 - **"Zu viele Versuche. Bitte warte kurz." for every visitor**: the application sees all visitors under the proxy's address — the proxy is not trusted (`TRUSTED_PROXIES`), so the per-address limits count everyone together.
