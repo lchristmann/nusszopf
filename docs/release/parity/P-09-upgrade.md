@@ -253,9 +253,13 @@ was non-empty; it did not restore it.
 
 ## Status
 
-**Done (awaiting the maintainer's closure).** The upgrade procedure was run on populated installations from two earlier
-builds. The migrations work on populated data, and the pre-existing data is byte-identical afterwards. P9-01 (a genuine
-upgrade defect) is fixed with regression coverage, and the documentation now matches what was verified.
+**Done.** Closed by the maintainer on 2026-09-25 on the evidence above. P9-01 is fixed with regression coverage.
 
-A true N-1 → N test from a published release is not possible before the first tag exists. It is deferred to P-16
-(above), not waived.
+These are deferred to P-16, not waived. P-16 must complete them before release:
+- the true N-1 → N upgrade from a published release: `sh scripts/upgrade-test.sh <previous tag> --suite`. No prior
+  release exists, so none was manufactured;
+- the real release download (`install.sh --upgrade` from `releases/download/<version>/`, and `latest`), the pull from
+  GHCR, and arm64.
+
+The restore drill, which is also the rollback path, belongs to P-10 and is not part of P-9. The other limitations above
+belong to the phases that own them. They do not reopen P-9.
