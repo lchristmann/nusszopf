@@ -215,9 +215,15 @@ all third-party images onto the empty host. `php-fpm` applied no migration.
 
 ## Status
 
-**Done (awaiting the maintainer's closure).** The exit evidence exists:
-- the restore into an empty host reproduced the users, projects, requests and avatars byte for byte;
-- the restored installation passed the whole Chromium suite;
-- the rollback path works and can be upgraded again.
+**Done.** Closed by the maintainer on 2026-09-25 on the evidence above. P10-01…P10-05 are fixed, with regression
+coverage where practical (`scripts/restore-test.sh`, the P10-04 step of `scripts/smoke-test.sh`).
 
-P10-01…P10-05 are fixed, with regression coverage where practical. The deferred items above belong to the phases named.
+These are deferred to P-16, not waived. P-16 must complete them before release:
+- pulling the Nusszopf images from GHCR onto the new host;
+- arm64;
+- one restore on a physically separate machine;
+- `sh scripts/restore-test.sh --rollback-from <previous tag>` from the first real tag.
+
+Backup encryption and stale-backup alerting stay out of v1 scope, as decided (B2: tier 1 first, tier 2 is the
+documented upgrade path). The other limitations in section 7 belong to the phases that own them (P-11, P-12, P-13).
+They do not reopen P-10.
