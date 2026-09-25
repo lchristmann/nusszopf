@@ -174,7 +174,7 @@ through the bug protocol (BUG-047). P11-02 and P11-03 concern the rewrite's own 
 
 | # | What happened | Kind | Resolution |
 |---|---|---|---|
-| P11-01 | **The recovered index answered with the same hits in another order.** Documents and settings were identical, yet 66 of 153 answers differed, and 346 card renderings showed their requests permuted. Hits the ranking rules rank equal come in Meilisearch's internal order, which is the order they were written in. The requests of one project always tie, because they carry the project's `updated_at`. The historical client shows Meilisearch's order unchanged (**Confirmed**, `search.service.js`), and it never rebuilt its index, so the order never changed there | Defect (recovery fidelity); **BUG-047, Fix** | **Fixed.** A last ranking rule, `id:asc`: ids are time-ordered UUIDs, so equal hits come oldest first, whatever order they were written in. Existing installations get it when `php-fpm` starts, with no reindex. Recorded in `bugs.md` (BUG-047) and `intentional-changes.md`, "Equally ranked search hits are ordered oldest first", **for the maintainer's review**: it is the one visible change of this phase, and it only affects hits the historical rules rank equal |
+| P11-01 | **The recovered index answered with the same hits in another order.** Documents and settings were identical, yet 66 of 153 answers differed, and 346 card renderings showed their requests permuted. Hits the ranking rules rank equal come in Meilisearch's internal order, which is the order they were written in. The requests of one project always tie, because they carry the project's `updated_at`. The historical client shows Meilisearch's order unchanged (**Confirmed**, `search.service.js`), and it never rebuilt its index, so the order never changed there | Defect (recovery fidelity); **BUG-047, Fix** | **Fixed.** A last ranking rule, `id:asc`: ids are time-ordered UUIDs, so equal hits come oldest first, whatever order they were written in. Existing installations get it when `php-fpm` starts, with no reindex. Recorded in `bugs.md` (BUG-047) and `intentional-changes.md`, "Equally ranked search hits are ordered oldest first". It is the one visible change of this phase, and it only affects hits the historical rules rank equal. **Approved by the maintainer on 2026-09-25** |
 | P11-02 | **Neither health nor the recovery noticed a missing or unconfigured index.** `nusszopf:health` and `/health` reported `search ok` with the index gone (a) or recreated without its settings (b), because they only asked whether Meilisearch answered. The troubleshooting section sends the operator to exactly that check. In the same way, `search:reindex` would report "rebuilt" when Meilisearch rejected the settings: Scout's `scout:sync-index-settings` prints the error and exits 0, and Meilisearch applies settings asynchronously anyway | Defect (operator tooling) | **Fixed.** `App\Services\Search\IndexSettings` compares the live index with `config/scout.php`. The `search` health check fails with the reason and "run php artisan search:reindex" when the index is missing or a setting differs. `search:reindex` waits until Meilisearch has applied the settings (up to 30 s), and otherwise fails with "The index settings were not applied". The entrypoint's comment no longer claims a warning its command can never trigger |
 | P11-03 | **No documented way out when Meilisearch itself does not start** (d). `search:reindex` then fails, correctly, but `operations.md` only said "wiping or replacing the meilisearch-data volume" without saying how, or when that is needed | Documentation | **Fixed.** "If Meilisearch itself does not start": how to recognize it (restarting, `MDB_INVALID`, or a Meilisearch version that cannot read old data), and the four-line block, drilled as printed. "Search index recovery" now also explains the three mechanisms, what the command prints, how to tell when indexing has finished, and what health does and does not notice |
 
@@ -220,10 +220,18 @@ through the bug protocol (BUG-047). P11-02 and P11-03 concern the rewrite's own 
 
 ## Status
 
-**Evidence complete; awaiting the maintainer's review.** Every exit condition is met:
+**Done.** Closed by the maintainer on 2026-09-25 on the evidence above (commit `4374ff5`). Every exit condition is met:
 - after each of the four losses, one documented block restored identical results;
 - a started from a genuinely empty Meilisearch;
 - privacy held throughout;
 - live indexing works after recovery.
 
-BUG-047 changes the order of equally ranked hits and is flagged for approval.
+The maintainer approved BUG-047 (the `id:asc` tie-break) as an intentional fix on 2026-09-25. P11-01…P11-03 are
+fixed, with regression coverage.
+
+The limitations in section 8 stay deferred, not waived:
+- P-16: the GHCR pull and arm64;
+- P-12: queue failure while reindexing;
+- P-14/P-16: the cross-engine race in `search.spec.ts`'s recovery test.
+
+They do not reopen P-11.

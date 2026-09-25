@@ -59,7 +59,7 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 | BUG-044 | Accessibility / contrast: "Ausloggen" in the menu | Low | Fix (maintainer-approved 2026-09-23) | Implemented — P-3 (`warning-900`, 4.6:1) |
 | BUG-045 | Accessibility / contrast: dimmed older toasts | Trivial  | Preserve (waived by the maintainer 2026-09-23) | Decided — historical dimming kept |
 | BUG-046 | Security / browser security headers         | Low      | Fix                                 | Implemented — P-4 (2026-09-24), `docs/release/parity/P-04-security.md` SEC-06 |
-| BUG-047 | Search / order of equally ranked hits       | Low      | Fix                                 | Implemented — P-11 (2026-09-25), `docs/release/parity/P-11-search-recovery.md` P11-01; for the maintainer's review |
+| BUG-047 | Search / order of equally ranked hits       | Low      | Fix                                 | Implemented — P-11 (2026-09-25), `docs/release/parity/P-11-search-recovery.md` P11-01; approved by the maintainer 2026-09-25 |
 
 ---
 
@@ -868,7 +868,7 @@ directly from `web-nusszopf/projects/webapp/src/containers/user/ProjectForm/*` a
   of 153 recorded answers listed the same hits in another order, and 346 card renderings showed their requests
   permuted. A derived index that answers differently after a rebuild is not a reliable derivation.
 - Found: the P-11 search-recovery drill (2026-09-25), finding P11-01 of `docs/release/parity/P-11-search-recovery.md`.
-- Classification: **Fix**. Only the order among hits the historical rules rank equal changes; every order those
+- Classification: **Fix**, approved by the maintainer on 2026-09-25. Only the order among hits the historical rules rank equal changes; every order those
   rules decide stays as it was.
 - Corrected behavior: a last ranking rule `id:asc`. Ids are time-ordered UUIDs, so equally ranked hits come oldest
   first. That is the order live indexing normally wrote them in, and now the same after every rebuild.

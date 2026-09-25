@@ -21,7 +21,7 @@ person is listed as pending), **In progress**, **Not started**.
 | P-8 Fresh install | [`P-08-fresh-install.md`](P-08-fresh-install.md) | Done (closed by the maintainer 2026-09-25; bare host to healthy in under 3 min of machine time; P8-03 fixed; the GitHub/GHCR download and the second-person install deferred to P-16, not waived) |
 | P-9 Upgrade/migration | [`P-09-upgrade.md`](P-09-upgrade.md) | Done (closed by the maintainer 2026-09-25; tested from `4de0194` and `8c4a2eb`, the closest builds to an N-1, because no release exists; P9-01 fixed; the true N-1 test and the real release download, GHCR pull and arm64 checks deferred to P-16, not waived; the restore drill stays in P-10) |
 | P-10 Backup/restore drill | [`P-10-backup-restore.md`](P-10-backup-restore.md) | Done (closed by the maintainer 2026-09-25; restored onto an empty Docker host: data, files and search identical, the Chromium suite green; the rollback from `8c4a2eb` works and can be upgraded again; P10-01…P10-05 fixed; the GHCR pull, arm64 and a physically separate host deferred to P-16, not waived; encryption and stale-backup alerting out of v1 scope by decision B2) |
-| P-11 Search index recovery | [`P-11-search-recovery.md`](P-11-search-recovery.md) | Evidence complete, awaiting the maintainer (2026-09-25; four losses, including an empty and a corrupt Meilisearch, each recovered by the documented block to identical answers; P11-01 (BUG-047, `id:asc` tie-break, for approval), P11-02 and P11-03 fixed) |
+| P-11 Search index recovery | [`P-11-search-recovery.md`](P-11-search-recovery.md) | Done (closed by the maintainer 2026-09-25; four losses, including an empty and a corrupt Meilisearch, each recovered by the documented block to identical answers, privacy intact; P11-01 (BUG-047, `id:asc` tie-break, approved), P11-02 and P11-03 fixed; GHCR/arm64 deferred to P-16, queue failure while reindexing to P-12, not waived) |
 | P-12 Queue/scheduler | [`P-12-queue-scheduler.md`](P-12-queue-scheduler.md) | Not started |
 | P-13 E-mail delivery | [`P-13-email-delivery.md`](P-13-email-delivery.md) | Not started |
 | P-14 Documentation completion | [`P-14-documentation.md`](P-14-documentation.md) | Not started |
@@ -64,6 +64,17 @@ person is listed as pending), **In progress**, **Not started**.
   - `install.sh --upgrade` fetched from `releases/download/<version>/`;
   - `--upgrade` without a version, which moves to `latest`;
   - `docker compose pull` fetching the Nusszopf images from GHCR (`P-09-upgrade.md`, "Limitations").
+
+- **P-12 (queue):** from P-11, the queue failing while `search:reindex` runs (the worker down, or Meilisearch
+  lost mid-import). P-11 only showed that a reindex against an unreachable Meilisearch fails visibly
+  (`P-11-search-recovery.md`, section 8).
+
+- **P-16 (release):** as for P-8…P-10, the search-recovery drill ran on locally built images. Run
+  `sh scripts/search-recovery-test.sh` on the release candidate, with the images pulled from GHCR, and on arm64.
+
+- **P-14/P-16 (tests):** `search.spec.ts`'s recovery test wipes the one shared index, so it can race another engine's
+  search test when engines run in parallel on one stack (seen once with 4 workers in P-11). CI is not affected, since it
+  runs one engine per job. Give the test its own index prefix, or run it last.
 
 - **P-12 (queue):** a welcome or verification mail queued for an account that is deleted before the worker sends it
   fails with `ModelNotFoundException` and stays in `failed_jobs`. Observed during P-3 after quick

@@ -830,8 +830,7 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 
 ### Equally ranked search hits are ordered oldest first (BUG-047)
 
-- Status: Approved under the P-11 mandate ("if the documented procedure is incomplete or fails, fix the underlying
-  implementation"); recorded for the maintainer's review with P-11 (finding P11-01).
+- Status: **Approved by the maintainer on 2026-09-25** as an intentional fix; implemented in P-11 (finding P11-01).
 - Date: 2026-09-25
 - Historical behavior: hits the ranking rules rank equal, among them always the requests of one project, came in
   Meilisearch's internal document order (BUG-047).
@@ -844,7 +843,8 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
   reindex is needed.
 - Affected screens: Search. Domain and migrations: none.
 - Tests: `tests/Feature/Search/ReindexSearchTest.php`, `scripts/search-recovery-test.sh`.
-- Approval: Approved (P-11), for the maintainer's review.
+- Approval: Approved (maintainer, 2026-09-25): the deterministic tie-break removes rebuild-dependent ordering of
+  otherwise tied results and makes search recovery reproducible, without changing the intended ranking.
 
 ---
 
