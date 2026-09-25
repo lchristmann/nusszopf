@@ -70,21 +70,32 @@ if [ "$VERSION_LINE" = "NUSSZOPF_VERSION=" ]; then
     fi
 fi
 
+if [ "$VERSION" = "latest" ]; then DOCS_REF=main; else DOCS_REF="$VERSION"; fi
+DOCS="https://github.com/lchristmann/nusszopf/blob/$DOCS_REF/docs/deployment"
+
 cat <<DONE
 
 Nusszopf is configured in $(pwd):
   .env                 secrets were generated — back this file up (it holds APP_KEY)
   docker-compose.yaml  the stack
 
-Optionally edit .env now: MAIL_*, NUSSZOPF_CONTACT_EMAIL, LOCATIONIQ_KEY, APP_BIND=127.0.0.1 when a reverse
-proxy runs on this host.
+Before starting, edit .env:
+  MAIL_FROM_ADDRESS    REQUIRED — your own sender address; docker compose refuses to start without it
+  MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD
+                       your SMTP relay; without one Nusszopf runs, but no e-mail is delivered
+  APP_BIND=127.0.0.1   when a reverse proxy runs on this host
+Optional: NUSSZOPF_CONTACT_EMAIL, LOCATIONIQ_KEY, GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.
 
 Put your own legal texts into legal/ as legal-notice.md (Impressum), legal-policy.md (Rechtliches) and
-privacy.md (Datenschutz). Until then those pages say they are not configured (docs/deployment/README.md).
+privacy.md (Datenschutz). Until then those pages say they are not configured.
 
 Then start it and check it:
   docker compose up -d
+  docker compose ps                                          # wait until every service is "healthy"
   docker compose exec php-fpm php artisan nusszopf:health
 
 Open $APP_URL and register your account — there is no separate administrator to create.
+
+Documentation: $DOCS/README.md (installation, configuration)
+               $DOCS/operations.md (health, upgrades, backups, troubleshooting)
 DONE

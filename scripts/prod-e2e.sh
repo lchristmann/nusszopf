@@ -48,6 +48,8 @@ NUSSZOPF_BASE_URL="file://$WORK/assets" sh "$ROOT/scripts/install.sh" "$BASE" >/
 
 set_value() { sed -i "s|^$1=.*|$1=$2|" .env; }
 set_value APP_PORT "$PORT"
+# The one REQUIRED value install.sh cannot know (the operator's sender address).
+set_value MAIL_FROM_ADDRESS e2e@example.test
 # --- Test-only settings: the test doubles, and the limits the suite needs (as compose.dev.yaml) ---------------
 set_value MAIL_HOST mailpit
 set_value MAIL_PORT 1025

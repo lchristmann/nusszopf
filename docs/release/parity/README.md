@@ -18,7 +18,7 @@ person is listed as pending), **In progress**, **Not started**.
 | P-5 Browser/device verification | [`P-05-browsers-devices.md`](P-05-browsers-devices.md) | Done (closed by the maintainer 2026-09-24 on emulated evidence; DEV-01 and DEV-02 fixed; the real-device pass is deferred to P-16, not waived) |
 | P-6 Performance sanity | [`P-06-performance.md`](P-06-performance.md) | Done (closed by the maintainer 2026-09-24; PERF-01–04 fixed; four recommendations kept open and non-blocking, production re-measurement in P-7) |
 | P-7 Production Compose verification | [`P-07-production-e2e.md`](P-07-production-e2e.md) | Done (closed by the maintainer 2026-09-24; whole suite green on the production images; P7-01 fixed; limitations deferred to P-8/P-12/P-13/P-16) |
-| P-8 Fresh install | [`P-08-fresh-install.md`](P-08-fresh-install.md) | Not started |
+| P-8 Fresh install | [`P-08-fresh-install.md`](P-08-fresh-install.md) | Done, awaiting the maintainer's review (bare host to healthy in under 3 min of machine time; P8-03 fixed; GHCR/release download and the second-person install deferred to P-16) |
 | P-9 Upgrade/migration | [`P-09-upgrade.md`](P-09-upgrade.md) | Not started |
 | P-10 Backup/restore drill | [`P-10-backup-restore.md`](P-10-backup-restore.md) | Not started |
 | P-11 Search index recovery | [`P-11-search-recovery.md`](P-11-search-recovery.md) | Not started |
@@ -39,6 +39,14 @@ person is listed as pending), **In progress**, **Not started**.
   not perform. The maintainer deferred it on 2026-09-24; it is not waived. P-16 must run the eight-step checklist in
   [`P-05-browsers-devices.md`](P-05-browsers-devices.md) ("Real-device pass") on real devices before release, confirm
   DEV-01 on a real iPhone (item 3), and record the device, OS and browser versions there.
+
+- **P-16 (release):** P-8 ran against files prepared the way a release is and images loaded locally, because no release
+  exists yet (P8-01). P-16 must check the real path: the `releases/latest/download/install.sh` URL, `install.sh` without
+  `NUSSZOPF_BASE_URL`, the pull from GHCR (and its time), arm64, and an install by a second person on a real host with
+  an ACME certificate (`P-08-fresh-install.md`).
+
+- **P-9 (upgrades):** `redis:alpine` and `postgres:16-alpine` in `docker-compose.yaml` are floating tags; judge whether
+  `redis:alpine` needs pinning to a major version (P-8 observation).
 
 - **P-12 (queue):** a welcome or verification mail queued for an account that is deleted before the worker sends it
   fails with `ModelNotFoundException` and stays in `failed_jobs`. Observed during P-3 after quick

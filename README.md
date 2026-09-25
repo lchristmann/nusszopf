@@ -32,7 +32,9 @@ Self-hosting (Docker and a domain name; nothing else to install):
 ```sh
 mkdir /opt/nusszopf && cd /opt/nusszopf
 curl -fsSLO https://github.com/lchristmann/nusszopf/releases/latest/download/install.sh
-sh install.sh https://nusszopf.example.org && docker compose up -d
+sh install.sh https://nusszopf.example.org
+# edit .env: MAIL_FROM_ADDRESS (required) and your SMTP relay (MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD)
+docker compose up -d
 ```
 
 See `docs/deployment/README.md` for the details (reverse proxy, configuration) and `docs/deployment/operations.md` for running it (health, upgrades, recovery).

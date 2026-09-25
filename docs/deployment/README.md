@@ -2,8 +2,9 @@
 
 > **Status: implemented and verified (operational track O-1/O-2, 2026-09-22).** The install path, the images, the
 > release workflow and the health checks below exist and are exercised by `scripts/smoke-test.sh` (run by CI on every
-> change). Not yet done, by roadmap: a real tag has never been published (the release workflow is untested until the
-> first one), the backup scripts and restore drill (P-10), and the Playwright suite against these images (P-7).
+> change). The whole Playwright suite runs against these images (P-7), and a fresh install on a clean host was
+> done from this page alone (P-8). Not yet done, by roadmap: a real tag has never been published (the release workflow is
+> untested until the first one, P-16), and the backup scripts and restore drill (P-10).
 
 ## Table of contents
 
@@ -69,8 +70,8 @@ Avatars (`docs/design/screen-specs.md`, "Profile / account settings") live on th
 
 ## Required configuration
 
-`.env.production.example` is the source of truth — every variable with its default or a `REQUIRED` marker (release, `APP_KEY`, `APP_URL`, `DB_PASSWORD`, `MEILISEARCH_KEY`).
-`install.sh` generates the secrets. Notable choices: `APP_ENV=production`, `APP_DEBUG=false`; sessions, cache and queue on Redis; `SCOUT_QUEUE=true` so search sync is a retried
+`.env.production.example` is the source of truth — every variable with its default or a `REQUIRED` marker (release, `APP_KEY`, `APP_URL`, `DB_PASSWORD`, `MEILISEARCH_KEY`, `MAIL_FROM_ADDRESS`).
+`install.sh` generates the secrets and writes the release and `APP_URL`; `MAIL_FROM_ADDRESS`, your own sender address, is the one required value only you can fill in (there is deliberately no default: it used to be the historical project's mailbox, P-8 finding P8-03). Notable choices: `APP_ENV=production`, `APP_DEBUG=false`; sessions, cache and queue on Redis; `SCOUT_QUEUE=true` so search sync is a retried
 job, never fire-and-forget (BUG-009); `LOG_CHANNEL=stderr` so `docker compose logs` shows the application's log; `SESSION_LIFETIME=480`, the historical 8-hour rolling session;
 `TRUSTED_PROXIES`, `APP_BIND`, `APP_PORT` for the proxy setup below; `HEALTH_TOKEN` for `/health` details; `MAIL_*`, an operator-supplied SMTP relay for every mail — contact form, account mails, newsletter confirmations (`docs/email/README.md`; the dev/CI stack uses a bundled Mailpit catcher instead, never production).
 
@@ -136,7 +137,9 @@ The list will grow (not shrink) as object storage lands in a later version; ever
 
 ## Installation (operator path)
 
-What you need: a Linux host with Docker (with the Compose plugin), `curl` and `openssl`; a domain name pointing at it if the site is public. Nothing else is installed on the host.
+What you need: a Linux host with Docker Engine and its Compose plugin (`docker compose`, not the old `docker-compose`; install both from [Docker's instructions for your distribution](https://docs.docker.com/engine/install/)), `curl` and `openssl`; a domain name pointing at it if the site is public; an SMTP relay that may send for your sender address. Nothing else is installed on the host. The commands below are run as root (or with `sudo`, or as a user in the `docker` group, in a directory that user owns).
+
+Verified on a freshly installed Ubuntu 24.04 host with Docker Engine 29.8 and Compose 5.5, following only this section (`docs/release/parity/P-08-fresh-install.md`).
 
 ```sh
 mkdir /opt/nusszopf && cd /opt/nusszopf
@@ -147,11 +150,12 @@ sh install.sh https://nusszopf.example.org          # or: sh install.sh https://
 `install.sh` downloads the release's `docker-compose.yaml` and `.env.production.example`, writes `.env` with freshly generated secrets
 (`APP_KEY`, `DB_PASSWORD`, `MEILISEARCH_KEY`, `HEALTH_TOKEN`; mode 600), and refuses to overwrite an existing `.env`. Then:
 
-1. Optionally edit `.env` — `MAIL_*`, `LOCATIONIQ_KEY`, `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`, `APP_BIND=127.0.0.1` when a reverse proxy runs on this host. Everything a first-time operator *must* set is marked `REQUIRED` in the file, and Compose refuses to start with a clear message if one is missing.
+1. Edit `.env`: set `MAIL_FROM_ADDRESS` (**required**: your sender address, also shown as the contact address unless `NUSSZOPF_CONTACT_EMAIL` is set) and your relay in `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`; `APP_BIND=127.0.0.1` when a reverse proxy runs on this host. Optional: `NUSSZOPF_CONTACT_EMAIL`, `LOCATIONIQ_KEY`, `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`. Everything a first-time operator *must* set is marked `REQUIRED` in the file, and Compose refuses to start with a clear message if one is missing.
 2. `docker compose up -d` — the first start pulls the images, waits for PostgreSQL, Redis and Meilisearch, migrates the database, applies the search index settings and starts everything.
-3. `docker compose ps` — every service `healthy` (the queue worker and scheduler need up to a few minutes, they prove themselves with a heartbeat per minute).
+3. `docker compose ps` — every service `healthy` (the queue worker and scheduler need up to a few minutes, they prove themselves with a heartbeat per minute; about 40 seconds after `php-fpm` in P-8). Until then step 4 reports them `FAILED` with "no heartbeat yet" — wait, it is not a fault.
 4. `docker compose exec php-fpm php artisan nusszopf:health` — the version and every dependency `ok`.
-5. Open the app and register a normal account through the ordinary registration screen — **there is
+5. Put your legal texts into `legal/` ([Legal pages](#legal-pages-legal-nusszopf_legal_path)); until then those three pages say they are not configured.
+6. Open the app and register a normal account through the ordinary registration screen — **there is
    no separate "first administrator" bootstrap step and no Artisan command for this.** Nusszopf's domain
    archaeology **confirms no admin/staff role exists anywhere in the historical product**
    (`docs/domain/entities.md`, "Entities confirmed absent"; `docs/rewrite/decisions-register.md`,

@@ -40,6 +40,12 @@ sed "s|^NUSSZOPF_VERSION=.*|NUSSZOPF_VERSION=$VERSION|" "$ROOT/.env.production.e
 cd "$WORK"
 NUSSZOPF_BASE_URL="file://$WORK/assets" sh "$ROOT/scripts/install.sh" "$BASE" >/dev/null
 sed -i "s|^APP_PORT=.*|APP_PORT=$PORT|" .env
+grep -q "@nusszopf.org" .env && fail "a fresh .env names the historical project's mailbox (P-8, P8-03)"
+# The one REQUIRED value install.sh cannot know (the operator's sender address): Compose must refuse without it.
+compose config >/dev/null 2>config.err && fail "Compose starts without MAIL_FROM_ADDRESS (P-8, P8-03)"
+grep -q "Set MAIL_FROM_ADDRESS" config.err || fail "Compose does not name the missing MAIL_FROM_ADDRESS: $(cat config.err)"
+rm config.err
+sed -i "s|^MAIL_FROM_ADDRESS=.*|MAIL_FROM_ADDRESS=smoke@example.test|" .env
 grep -q "^APP_KEY=base64:" .env || fail "install.sh did not generate APP_KEY"
 
 step "Build the images and start the stack (waits for every healthcheck)"

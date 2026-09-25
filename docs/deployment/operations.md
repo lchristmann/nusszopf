@@ -38,7 +38,7 @@ so a freshly started stack reports `degraded` for up to a minute — that is the
 
 ## Queue worker and scheduler
 
-The historical product had no scheduled work (its cron triggers were empty), so the scheduler runs the two heartbeats plus one task added with the newsletter (slice 9): `newsletter:purge-unconfirmed`, daily at 03:30, deletes newsletter subscriptions nobody confirmed within 14 days (decision A-1). New scheduled work is added only with the slice that needs it.
+The historical product had no scheduled work (its cron triggers were empty), so the scheduler runs the two heartbeats plus one task added with the newsletter (slice 9): `newsletter:purge-unconfirmed`, daily at 03:30 UTC (the application runs in UTC; there is no timezone setting), deletes newsletter subscriptions nobody confirmed within 14 days (decision A-1). New scheduled work is added only with the slice that needs it.
 The queue carries search indexing and mail (`App\Mail\ContactMail` since the sixth slice, the newsletter mails since the ninth). The worker runs `queue:work --tries=5 --backoff=10,30,60,120 --max-time=3600`: a failing job is tried again after 10 s, 30 s, 1 min and 2 min,
 then kept in the `failed_jobs` table — the historical webhooks gave up silently after three tries (BUG-009).
 
@@ -207,6 +207,6 @@ docker compose run --rm --no-deps --entrypoint php php-fpm artisan key:generate 
 - **Links or redirects use `http://` behind a proxy, or the login loops**: `TRUSTED_PROXIES`, `APP_URL=https://…` and `SESSION_SECURE_COOKIE` in `.env`, then `docker compose up -d` again (`config:cache` is rebuilt on start).
 - **A link from an e-mail (verification, "Das bin ich!") answers 403**, or **styles and scripts do not load**: every link the application writes starts with `APP_URL`, which must be the exact public address; and a proxy outside the private networks must be listed in `TRUSTED_PROXIES`, or the application sees `http` where the signed link says `https` (`docs/deployment/README.md`, "Reverse proxy and TLS").
 - **"Zu viele Versuche. Bitte warte kurz." for every visitor**: the application sees all visitors under the proxy's address — the proxy is not trusted (`TRUSTED_PROXIES`), so the per-address limits count everyone together.
-- **A changed `.env` has no effect**: the configuration is cached at start — `docker compose up -d` recreates the containers with the new environment; `restart` alone does too.
+- **A changed `.env` has no effect**: a container keeps the environment it was created with, and the configuration is cached at start — run `docker compose up -d`, which recreates the containers whose settings changed. `docker compose restart` is not enough: it restarts the containers with their old environment (verified in P-8).
 - **Assets 404 or a stale UI after a deploy**: the images of one release always carry matching assets; check that `web` and `php-fpm` run the same `NUSSZOPF_VERSION` (`docker compose images`) and `docker compose pull` was run.
 - **Backup restore doesn't match production dump-tool version**: PostgreSQL's `pg_dump`/`pg_restore` are version-tolerant, but always restore using a client version compatible with the target server's major version.

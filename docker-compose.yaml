@@ -8,6 +8,8 @@
 # secrets). Which release runs is decided by NUSSZOPF_VERSION in that `.env`; to upgrade, change it,
 # then `docker compose pull && docker compose up -d` (docs/deployment/operations.md).
 #
+# Documentation (paths such as docs/deployment/README.md below): https://github.com/lchristmann/nusszopf
+#
 # Contributors build the same two images from a working copy with
 #
 #     docker compose -f docker-compose.yaml -f compose.prod.yaml up -d --build
@@ -20,6 +22,9 @@ x-app: &app
   restart: unless-stopped
   env_file:
     - .env
+  environment:
+    # Also in .env; named here so that Compose refuses to start without it, like the other REQUIRED values.
+    MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:?Set MAIL_FROM_ADDRESS in .env to your own sender address}
   volumes:
     - laravel-storage:/var/www/storage/app
     # Your Impressum, Rechtliches and Datenschutz texts (legal-notice.md, legal-policy.md,
