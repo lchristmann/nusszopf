@@ -11,11 +11,13 @@ This documentation describes Nusszopf 2 as a product, system, development projec
 - `email/` — historical email behavior
 - `journeys/` — end-to-end acceptance journeys
 - `references/` — reference-project findings
-- `release/` — FOSS releases and upgrades
-- `rewrite/` — rewrite methodology and decisions, including `bugs.md` (the historical-defect register), `decisions-register.md` (the concise already-decided vs. needs-a-human-decision index), `first-slice.md` (the first implementation slice), `second-slice.md` (the project wizard and edit screen) `third-slice.md` (the project requests) and `fourth-slice.md` (the completed search screen)
+- `release/` — FOSS releases and upgrades, and `release/parity/` (the finish-line parity report: one evidence page per phase)
+- `rewrite/` — rewrite methodology and decisions, including `master-roadmap.md` (the plan and the finish-line phases), `bugs.md` (the historical-defect register), `intentional-changes.md` (every deliberate difference from the historical product), `decisions-register.md` (the concise already-decided vs. needs-a-human-decision index), `architecture-decisions.md`, and one page per implemented slice (`first-slice.md` … `tenth-slice.md`)
 - `search/` — search behavior
 - `security/` — security requirements, including `authorization-matrix.md` (the action-by-action authorization ruleset)
-- `testing/` — testing strategy
+- `testing/` — testing strategy, accessibility and visual regression
+
+For an operator: start with `deployment/README.md` (install and configure) and `deployment/operations.md` (run, back up, upgrade, recover, troubleshoot). For a contributor: `../README-DEV.md`, then `development/`, `testing/` and `architecture/`.
 
 The historical Nusszopf repositories are the product reference. LCxHolz, Waffle Dashboard, and the Laravel Docker examples are implementation/process references.
 
@@ -25,5 +27,5 @@ The historical Nusszopf repositories are the product reference. LCxHolz, Waffle 
 2. `docs/rewrite/source-map.md` — which historical repository revision every other document is a snapshot of.
 3. `docs/rewrite/decisions-register.md` — what's already decided vs. what still needs a human call.
 4. `docs/rewrite/bugs.md` — every classified historical defect, with severity and required regression test.
-5. `docs/rewrite/first-slice.md`, `docs/rewrite/second-slice.md`, `docs/rewrite/third-slice.md` and `docs/rewrite/fourth-slice.md` — what the implemented slices contain, and why.
+5. `docs/rewrite/README.md` — the slice pages (`first-slice.md` … `tenth-slice.md`) say what each implemented slice contains and why; `docs/rewrite/master-roadmap.md` is the plan they followed.
 6. Topic directories above, as needed for the area you're touching.

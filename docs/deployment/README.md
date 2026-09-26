@@ -1,10 +1,13 @@
 # Deployment and Self-Hosting
 
-> **Status: implemented and verified (operational track O-1/O-2, 2026-09-22).** The install path, the images, the
+> **Status: implemented and verified** (operational track O-1/O-2, 2026-09-22, then the finish-line phases). The install path, the images, the
 > release workflow and the health checks below exist and are exercised by `scripts/smoke-test.sh` (run by CI on every
-> change). The whole Playwright suite runs against these images (P-7), and a fresh install on a clean host was
-> done from this page alone (P-8), and the upgrade from earlier builds was tested on installations filled with data (P-9). The backup script and the restore were drilled onto an empty host, and as the rollback of an upgrade (P-10). Not yet done, by roadmap: a real tag has never been published (the release workflow is
-> untested until the first one, P-16).
+> change). Evidence: the whole Playwright suite on these images (P-7), a fresh install on a clean host from this page
+> alone (P-8), upgrades on populated installations (P-9), the backup script and the restore onto an empty host, also as the
+> rollback of an upgrade (P-10), the search index recovery (P-11), the queue, Redis and scheduler under failure (P-12) and
+> real mail delivery through Resend (P-13). Not yet done, by roadmap: a real tag has never been published, so the release
+> workflow, the GitHub download, the GHCR pull and arm64 are untested until the first one (P-16, with the repository
+> going public in P-15).
 
 ## Table of contents
 
@@ -18,7 +21,7 @@
 - [Persistent storage](#persistent-storage)
 - [Health checks](#health-checks)
 - [Backups, upgrades, recovery](#backups-upgrades-recovery)
-- [Open questions](#open-questions)
+- [Decisions and what is still open](#decisions-and-what-is-still-open)
 
 ## Design goal
 
@@ -36,7 +39,9 @@ Docker Compose is the reference deployment. No Kubernetes, no orchestration plat
 | `compose.prod.yaml` | Contributors / CI | An *override* that only adds `build:` to `web` and `php-fpm`: `docker compose -f docker-compose.yaml -f compose.prod.yaml up -d --build` runs the working copy's own images in the operator's stack |
 | `compose.dev.yaml` | Contributors | Bind-mounted source, Xdebug, a `workspace` sidecar for Composer/Node/Artisan, the Vite dev server, Playwright |
 | `scripts/smoke-test.sh` | Contributors / CI | Builds both images, installs into a clean directory with `install.sh`, starts the stack and checks it end to end |
-| `scripts/upgrade-test.sh` | Contributors / release | Installs an earlier release, fills it with data, upgrades it to the working copy with the documented procedure and checks that nothing was lost (P-9, `docs/testing/README.md`) |
+| `scripts/prod-e2e.sh` | Contributors / CI | Runs the whole Playwright suite against the production images (P-7) |
+| `scripts/upgrade-test.sh`, `restore-test.sh`, `search-recovery-test.sh`, `queue-scheduler-test.sh` | Contributors / release | Drills of the procedures in `operations.md`, run on populated data in separate Docker daemons: the upgrade (P-9), backup, restore and rollback (P-10), search index recovery (P-11), the queue, Redis and scheduler under failure (P-12). Release steps, not CI (`docs/testing/README.md`) |
+| `scripts/mail-delivery-test.sh` | Contributors / release | Sends one mail of every type through the production stack to a mailbox you name (P-13). Sends real mail |
 
 Following Waffle Dashboard, the operator file is a separate, curl-able, image-only artifact; unlike Waffle, a single `.env`
 value pins the release. An upgrade still replaces `docker-compose.yaml` with the new release's, because a release can change
@@ -49,14 +54,14 @@ it; `install.sh --upgrade` does both (see `docs/deployment/operations.md`, "Upgr
 | `web` | `ghcr.io/lchristmann/nusszopf-web` — nginx built `FROM` the application image's own assets | HTTP; serves static assets, passes PHP to `php-fpm`. The only published port (`APP_BIND`:`APP_PORT`) |
 | `php-fpm` | `ghcr.io/lchristmann/nusszopf-php-fpm` (PHP 8.5-FPM, Laravel 13, Livewire 4, non-root) | Request handling. Its entrypoint refuses to start without `APP_KEY`, runs `migrate --force --isolated`, warms the config, route, view and event caches, and applies the search index settings (`scout:sync-index-settings`; only a warning if Meilisearch is unreachable) |
 | `queue-worker` | same application image | `queue:work --tries=5 --backoff=10,30,60,120 --max-time=3600`: background jobs (search indexing, every mail). Healthy while it processes the scheduler's heartbeat job |
-| `scheduler` | same application image | `schedule:work`. Its only tasks are the two heartbeats (`routes/console.php`) — the historical product had no periodic work. Healthy while its heartbeat is fresh |
+| `scheduler` | same application image | `schedule:work`. Its tasks (`routes/console.php`): the two heartbeats, and `newsletter:purge-unconfirmed` daily at 03:30 UTC (decision A-1) — the historical product had no periodic work, so nothing else runs. Healthy while its heartbeat is fresh |
 | `postgres` | `postgres:16-alpine` | Primary datastore |
 | `redis` | `redis:8-alpine`, started with `--appendonly yes` | Sessions, cache, queue. The append-only file keeps waiting mails and index updates through a crash (P-12) |
 | `meilisearch` | `getmeili/meilisearch:v1.11`, `MEILI_ENV=production`, master key from `MEILISEARCH_KEY` | Search index — derived data, rebuilt with `search:reindex` (`docs/deployment/operations.md`, "Search index recovery", also for a Meilisearch whose data no longer opens) |
 | `workspace` (dev only) | Node + Composer + CLI tools | Contributor shell |
 
 `queue-worker` and `scheduler` wait for `php-fpm` to be healthy, i.e. for the migrations to have finished; nothing else migrates.
-There is deliberately no bundled reverse proxy or mail server — see [Reverse proxy and TLS](#reverse-proxy-and-tls) and `docs/email/README.md`.
+There is deliberately no bundled reverse proxy or mail server — see [Reverse proxy and TLS](#reverse-proxy-and-tls) and [Sending mail](#sending-mail-mail_-resend_api_key).
 
 ## Why a dedicated nginx image, not a shared assets volume
 
@@ -75,7 +80,41 @@ Avatars (`docs/design/screen-specs.md`, "Profile / account settings") live on th
 `.env.production.example` is the source of truth — every variable with its default or a `REQUIRED` marker (release, `APP_KEY`, `APP_URL`, `DB_PASSWORD`, `MEILISEARCH_KEY`, `MAIL_FROM_ADDRESS`).
 `install.sh` generates the secrets and writes the release and `APP_URL`; `MAIL_FROM_ADDRESS`, your own sender address, is the one required value only you can fill in (there is deliberately no default: it used to be the historical project's mailbox, P-8 finding P8-03). Notable choices: `APP_ENV=production`, `APP_DEBUG=false`; sessions, cache and queue on Redis; `SCOUT_QUEUE=true` so search sync is a retried
 job, never fire-and-forget (BUG-009); `LOG_CHANNEL=stderr` so `docker compose logs` shows the application's log; `SESSION_LIFETIME=480`, the historical 8-hour rolling session;
-`TRUSTED_PROXIES`, `APP_BIND`, `APP_PORT` for the proxy setup below; `HEALTH_TOKEN` for `/health` details; `MAIL_*`, an operator-supplied SMTP relay for every mail — contact form, account mails, newsletter confirmations (`docs/email/README.md`; the dev/CI stack uses a bundled Mailpit catcher instead, never production).
+`TRUSTED_PROXIES`, `APP_BIND`, `APP_PORT` for the proxy setup below; `HEALTH_TOKEN` for `/health` details; the mail settings, an operator-supplied provider for every mail — contact form, account mails, newsletter confirmations ([Sending mail](#sending-mail-mail_-resend_api_key); the dev/CI stack uses a bundled Mailpit catcher instead, never production).
+
+### Configuration reference
+
+Every setting in `.env.production.example`, in the order of the file. **Bold** ones you must set; `install.sh` fills in the ones marked
+"generated". A change takes effect with `docker compose up -d` (not `restart`).
+
+| Setting | Default | What it does |
+|---|---|---|
+| **`NUSSZOPF_VERSION`** | written by `install.sh` | The release that runs; `install.sh --upgrade` changes it |
+| `APP_NAME` | `Nusszopf` | The application name; `MAIL_FROM_NAME`, the sender name of every mail, defaults to it |
+| `APP_ENV`, `APP_DEBUG` | `production`, `false` | Leave as they are; `APP_DEBUG=true` would show internals in error pages |
+| **`APP_KEY`** | generated | Signs sessions, cookies and every mailed link. Keep it with your backups (it is in `installation.tar.gz`); a new one invalidates links already sent |
+| **`APP_URL`** | `https://nusszopf.example.org` (`install.sh` writes yours) | The exact public address: every link in pages and mails starts with it |
+| `APP_LOCALE`, `APP_FALLBACK_LOCALE`, `BCRYPT_ROUNDS` | `de`, `en`, `12` | Language and password hashing cost; the product is German |
+| `APP_BIND`, `APP_PORT` | `0.0.0.0`, `8080` | Where `web` listens on the host; `127.0.0.1` with a proxy on the same machine |
+| `TRUSTED_PROXIES` | loopback and private networks | Which proxies are believed about the client address and `https`; never `*` on a reachable port |
+| `SESSION_SECURE_COOKIE` | `true` | Cookies only over https; keep `true` behind TLS |
+| `LOG_CHANNEL`, `LOG_LEVEL` | `stderr`, `warning` | `docker compose logs` shows the application's log |
+| `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME` | `pgsql`, `postgres`, `5432`, `nusszopf`, `nusszopf` | The bundled PostgreSQL; leave as they are |
+| **`DB_PASSWORD`** | generated | The database password; the database is created with it, so changing it later needs a change in PostgreSQL too |
+| `SESSION_DRIVER`, `SESSION_LIFETIME`, `CACHE_STORE`, `QUEUE_CONNECTION`, `REDIS_HOST` | `redis`, `480`, `redis`, `redis`, `redis` | Sessions (8 hours, rolling, as historically), cache and queue on the bundled Redis |
+| `SCOUT_DRIVER`, `SCOUT_QUEUE`, `MEILISEARCH_HOST` | `meilisearch`, `true`, `http://meilisearch:7700` | Search on the bundled Meilisearch; index updates are queued and retried (BUG-009) |
+| **`MEILISEARCH_KEY`** | generated | Master key of the bundled Meilisearch, at least 16 characters |
+| `LOCATIONIQ_KEY` | empty | Place search for projects with a fixed location ([below](#location-search-locationiq_key)) |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` | empty | Google login, hidden without them ([below](#google-login-google_client_idgoogle_client_secret)) |
+| `MAIL_MAILER`, `RESEND_API_KEY`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_NAME` | `smtp`, empty, empty, `587`, empty, empty, `${APP_NAME}` | How mail is sent ([below](#sending-mail-mail_-resend_api_key)); `MAIL_SCHEME` (`smtps` for port 465) is also read but not in the template |
+| **`MAIL_FROM_ADDRESS`** | empty, you set it | The sender of every mail, on a domain your provider verified |
+| `NUSSZOPF_CONTACT_EMAIL` | empty (uses `MAIL_FROM_ADDRESS`) | The address shown wherever the app says "write to us" |
+| `NUSSZOPF_LEGAL_PATH` | empty (uses `./legal`) | The folder of the three legal texts |
+| `NUSSZOPF_REGISTER_LIMIT` | empty (10) | New accounts one IP address may create per 15 minutes |
+| `NEWSLETTER_CONSENT_VERSION` | `1` | Version of your Datenschutz text, stored with each consent |
+| `HEALTH_TOKEN` | generated | Bearer token that makes `/health` show version and check details |
+
+`LOCATIONIQ_URL` (default the LocationIQ endpoint) is read too and is not in the template; it is only for a compatible service.
 
 ### Location search (`LOCATIONIQ_KEY`)
 
@@ -102,23 +141,30 @@ screen is hidden and its routes 404 — password/username login is completely un
 Stored with every newsletter subscription's consent record (decision A-1): name the version of your
 Datenschutz text and change it whenever that text changes. Default `1`. Exporting subscribers for an
 external sender, retention and the unsubscribe link every issue must carry: `docs/deployment/operations.md`,
-"Newsletter subscribers". Newsletter mails need the same `MAIL_*` relay as every other mail.
+"Newsletter subscribers". Newsletter mails go out through the same mail provider as every other mail.
 
 ### Sending mail (`MAIL_*`, `RESEND_API_KEY`)
 
-Every mail (account, contact, newsletter) is queued and sent by the `queue-worker`. Two ways of sending are supported;
-set one in `.env` and run `docker compose up -d` (the containers read `.env` when they are created, so
-`docker compose restart` is not enough).
+Every mail (account, contact, newsletter) is queued and sent by the `queue-worker`. Nusszopf uses Laravel's own mail
+abstraction and adds none of its own: you choose a mailer with `MAIL_MAILER` and give it that mailer's settings.
+**Resend is the recommended provider.** It is the one that was tested with real delivery, on the production stack
+(P-13), and it needs one setting. A plain SMTP relay is supported through the same abstraction. Set one of the two in
+`.env` and run `docker compose up -d` (the containers read `.env` when they are created, so `docker compose restart` is
+not enough).
 
-| | SMTP relay | Resend API |
+| | Resend API (recommended) | SMTP relay |
 |---|---|---|
-| `MAIL_MAILER` | `smtp` (the default) | `resend` |
-| Set | `MAIL_HOST`, `MAIL_PORT` (587 with STARTTLS, 465 with implicit TLS), `MAIL_USERNAME`, `MAIL_PASSWORD`, optionally `MAIL_SCHEME` (`smtps` for 465) | `RESEND_API_KEY` |
-| Verified | Only against a Mailpit that does not check certificates (P-7, P-12). **Not yet** against a real relay | Delivered for real to a mailbox at a third party, on the production images (P-13) |
+| `MAIL_MAILER` | `resend` | `smtp` (the default) |
+| Set | `RESEND_API_KEY` (a key that may only send is enough); leave `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD` empty | `MAIL_HOST`, `MAIL_PORT` (587 with STARTTLS, 465 with implicit TLS), `MAIL_USERNAME`, `MAIL_PASSWORD`, optionally `MAIL_SCHEME` (`smtps` for 465) |
+| Verified | Delivered for real to a mailbox at a third party, on the production images (P-13) | Only against a Mailpit that does not check certificates (P-7, P-12). **Not yet** against a real relay with TLS |
 
 Both need `MAIL_FROM_ADDRESS`, an address on a domain **your provider has verified you may send for**. With Resend,
 sending from any other domain is refused (`The <domain> domain is not verified`), and the mail ends in `failed_jobs`
 after five tries. TLS certificates are always verified; there is no setting to switch that off.
+
+Every mail Nusszopf sends is HTML only, with no plain-text part: that is the intended format, not a misconfiguration
+(decision P13-03, `docs/rewrite/decisions-register.md`). How each client displays them is verified for Proton Mail
+only; Gmail, Outlook and Apple Mail are still to be checked before the first release (`docs/release/parity/P-13-email-delivery.md`, section 9).
 
 The DNS records found (with `dig`) on the domain P-13 sent from through Resend. They are what that one setup had, not
 a checklist derived from the provider's documentation, and another provider needs its own records
@@ -162,16 +208,16 @@ two spaces for a line break. Raw HTML is shown as text. Changes appear on the ne
 A missing or empty file makes its page say "Dieser Text wurde von den Betreiber:innen dieser
 Nusszopf-Instanz noch nicht hinterlegt." `docs/deployment/legal-examples/` holds the original operators'
 2021 texts, labelled as examples — do not publish them as they are. Your Datenschutz text should describe
-what your instance actually does: the services you configure (SMTP relay, LocationIQ, Google login) and
+what your instance actually does: the services you configure (your mail provider, LocationIQ, Google login) and
 the newsletter's double opt-in; it must not name Auth0, SendGrid or Visitor Analytics, which Nusszopf 2 does
 not use. When it changes, raise `NEWSLETTER_CONSENT_VERSION`. `NUSSZOPF_LEGAL_PATH` points elsewhere only
 if you mount the files at another path. Back the folder up with `.env`.
 
-The list will grow (not shrink) as object storage lands in a later version; every variable keeps a default or an explicit `REQUIRED` note.
+Every variable keeps a default or an explicit `REQUIRED` note. Object storage (S3) is not part of v1: avatars live on the `laravel-storage` volume.
 
 ## Installation (operator path)
 
-What you need: a Linux host with Docker Engine and its Compose plugin (`docker compose`, not the old `docker-compose`; install both from [Docker's instructions for your distribution](https://docs.docker.com/engine/install/)), `curl` and `openssl`; a domain name pointing at it if the site is public; an SMTP relay that may send for your sender address. Nothing else is installed on the host. The commands below are run as root (or with `sudo`, or as a user in the `docker` group, in a directory that user owns).
+What you need: a Linux host with Docker Engine and its Compose plugin (`docker compose`, not the old `docker-compose`; install both from [Docker's instructions for your distribution](https://docs.docker.com/engine/install/)), `curl` and `openssl`; a domain name pointing at it if the site is public; a mail provider that may send for your sender address (Resend recommended, or an SMTP relay). Nothing else is installed on the host. The commands below are run as root (or with `sudo`, or as a user in the `docker` group, in a directory that user owns).
 
 Verified on a freshly installed Ubuntu 24.04 host with Docker Engine 29.8 and Compose 5.5, following only this section (`docs/release/parity/P-08-fresh-install.md`).
 
@@ -184,7 +230,7 @@ sh install.sh https://nusszopf.example.org          # or: sh install.sh https://
 `install.sh` downloads the release's `docker-compose.yaml` and `.env.production.example`, writes `.env` with freshly generated secrets
 (`APP_KEY`, `DB_PASSWORD`, `MEILISEARCH_KEY`, `HEALTH_TOKEN`; mode 600), and refuses to overwrite an existing `.env`. Then:
 
-1. Edit `.env`: set `MAIL_FROM_ADDRESS` (**required**: your sender address, also shown as the contact address unless `NUSSZOPF_CONTACT_EMAIL` is set) and your relay in `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`; `APP_BIND=127.0.0.1` when a reverse proxy runs on this host. Optional: `NUSSZOPF_CONTACT_EMAIL`, `LOCATIONIQ_KEY`, `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`. Everything a first-time operator *must* set is marked `REQUIRED` in the file, and Compose refuses to start with a clear message if one is missing.
+1. Edit `.env`: set `MAIL_FROM_ADDRESS` (**required**: your sender address, also shown as the contact address unless `NUSSZOPF_CONTACT_EMAIL` is set) and how mail is sent: `MAIL_MAILER=resend` with `RESEND_API_KEY` (recommended), or your relay in `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD` ([Sending mail](#sending-mail-mail_-resend_api_key)); `APP_BIND=127.0.0.1` when a reverse proxy runs on this host. Optional: `NUSSZOPF_CONTACT_EMAIL`, `LOCATIONIQ_KEY`, `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`. Everything a first-time operator *must* set is marked `REQUIRED` in the file, and Compose refuses to start with a clear message if one is missing.
 2. `docker compose up -d` — the first start pulls the images, waits for PostgreSQL, Redis and Meilisearch, migrates the database, applies the search index settings and starts everything.
 3. `docker compose ps` — every service `healthy` (the queue worker and scheduler need up to a few minutes, they prove themselves with a heartbeat per minute; about 40 seconds after `php-fpm` in P-8). Until then step 4 reports them `FAILED` with "no heartbeat yet" — wait, it is not a fault.
 4. `docker compose exec php-fpm php artisan nusszopf:health` — the version and every dependency `ok`.
@@ -258,9 +304,9 @@ See `docs/deployment/operations.md` for the full procedures. Summary of what eac
 
 Nusszopf v1 uses tier 1 (decision B2): the script in `operations.md`, "Backups", run by cron. It backs up the database, the storage volume and the installation directory (`.env`, `docker-compose.yaml`, `legal/`, overrides). Restoring it onto an empty host, and rolling an upgrade back with it, were drilled in P-10 (`scripts/restore-test.sh`).
 
-## Open questions
+## Decisions and what is still open
 
-Resolved by the operational track (`docs/rewrite/architecture-decisions.md`): container registry (GHCR, `ghcr.io/lchristmann/nusszopf-*`), reverse proxy (operator-owned), health depth
-(own checks, no extra dependency), environment variables (`.env.production.example`), first administrator (none exists).
+Decided (`docs/rewrite/architecture-decisions.md`, `docs/rewrite/decisions-register.md`): container registry (GHCR, `ghcr.io/lchristmann/nusszopf-*`), reverse proxy (operator-owned), health depth
+(own checks, no extra dependency), environment variables (`.env.production.example`), first administrator (none exists), mail (Laravel's abstraction; Resend recommended, SMTP supported), the search index is rebuilt and never backed up (`search:reindex`), and the backup script is the tier-1 script in `operations.md`, "Backups".
 
-Resolved by P-10: the search index is rebuilt, never backed up (`search:reindex`), and the backup script is the tier-1 script in `operations.md`, "Backups".
+Still open, and owned by later phases: everything that needs a published release (the GitHub download, the GHCR pull, arm64, an install by a second person on a real host with an ACME certificate — P-16), and the rendering of the mails in Gmail, Outlook and Apple Mail (P-16). The parity report tracks them (`docs/release/parity/README.md`, "Carried forward to later phases").

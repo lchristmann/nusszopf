@@ -87,4 +87,4 @@ being served by `web` after `php artisan storage:link` (already documented as de
   category that doesn't apply to a server-rendered page; noted for completeness.
 - Playwright coverage runs only against `compose.dev.yaml`; the production-image smoke test
   (`scripts/smoke-test.sh`) checks the storage-serving wiring specifically but not the full upload UI
-  (P-7, the whole Playwright suite against production images, remains a later phase item).
+  (closed in P-7: the whole Playwright suite now runs against the production images, `docs/release/parity/P-07-production-e2e.md`).

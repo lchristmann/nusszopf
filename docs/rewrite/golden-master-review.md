@@ -124,7 +124,7 @@ No `app/`, `routes/`, or `tests/Feature/**` files were touched by this visual-co
 Beyond the visual-comparison pass's own edits and the fixes recorded in the "Behavioral comparison"
 table above:
 
-- `app/Livewire/Projects/ProjectForm.php`, `tests/Feature/Projects/ProjectFormTest.php` — BUG-021 fix
+- `app/Livewire/Projects/ProjectForm.php`, `tests/Feature/Projects/ProjectFormTest.php` (since split into `ProjectWizard`/`ProjectEdit` and their tests, second slice) — BUG-021 fix
   (404 instead of 403 for a non-owner's edit access; see `docs/rewrite/bugs.md`).
 - `app/Models/Project.php`, `app/Policies/ProjectPolicy.php`, `tests/Feature/Projects/ProjectPolicyTest.php`
   — `ProjectPolicy::view()` now delegates to `Project::scopeVisible()` (with an explicit viewer id)

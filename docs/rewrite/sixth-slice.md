@@ -86,10 +86,10 @@ Manually verified against a real Mailpit send (not only Blade/Feature-test asser
   The vCard footer link (decision 5) and `Project::NUSSZOPF_CONTACT`/`MAIL_FROM_ADDRESS` staying
   hardcoded literals — both fold into slice 10's "operator mailbox/identity are configuration" line,
   not new gaps this slice opened.
-- BUG-006 (newsletter copy typo) stays Proposed, not Implemented — its templates are slice 9's.
-- SMTP-outage recovery is verified at the Feature-test level (`ContactMailTest`'s `failed_jobs`
-  test), not yet with a live production-stack drill the way Meilisearch/Redis/PostgreSQL were for
-  slice 5's operational pass (`docs/deployment/operations.md`) — worth doing once a real relay is
-  available to test against.
+- ~~BUG-006 (newsletter copy typo) stays Proposed, not Implemented — its templates are slice 9's.~~ Implemented in slice 9 (`docs/rewrite/bugs.md`).
+- ~~SMTP-outage recovery is verified at the Feature-test level (`ContactMailTest`'s `failed_jobs`
+  test), not yet with a live production-stack drill.~~ Done on the production stack in P-7 (a relay stopped and
+  restored) and P-13 (a real provider refusing the sender): `docs/deployment/operations.md`, "What happens when a
+  dependency is down".
 - The MJML-build-step question (decision 1) is left open for slices 7/9 to revisit once more than
   one template exists.

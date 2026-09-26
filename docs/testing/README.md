@@ -17,9 +17,9 @@ Every row in `docs/security/authorization-matrix.md` needs both an allow-case an
 A small number of important user journeys through the real UI, per role/actor, translated from the historical E2E suite (`../historical/web-nusszopf/projects/e2e`) and validated against `docs/journeys/README.md`. Adopt LCxHolz's Playwright conventions:
 
 - **Page Object Model** under `tests/E2E/pages/`, specs under `tests/E2E/specs/<actor>/`.
-- **One fixture/env-constants file** (`tests/E2E/support/env.ts` equivalent) declaring every seeded ID/slug/credential specs import, so seed-data drift is caught in one place instead of scattered magic strings.
+- **One fixture/env-constants file** (`tests/E2E/support/env.ts`) declaring the constants specs import (password, unique-name helpers), so drift is caught in one place instead of scattered magic strings.
 - **`data-testid` attributes** on interactive elements Playwright needs to target reliably, matched onto the historical UI structure (`docs/design/components.md`) rather than invented ad hoc.
-- A `global-setup` step that resets and seeds the database once per run, plus one-time sign-in per role with persisted `storageState`, so individual specs don't each repeat login.
+- **No shared seeded accounts and no `global-setup`.** Every spec registers its own account through the real registration screen (`tests/E2E/support/session.ts`, `registerFreshUser`) with names made unique per run, so specs never collide and registration itself is exercised. This deliberately differs from LCxHolz's seeded-role `storageState` pattern: Nusszopf has no roles to seed, and the development index and database outlive every test.
 - Run against every browser engine Playwright supports in CI as separate parallel jobs (mirroring LCxHolz's per-engine matrix), not one job looping serially over engines.
 - **Emulated devices (P-5, `docs/release/parity/P-05-browsers-devices.md`).** Three more projects run as their own CI jobs:
   `mobile-safari` (iPhone SE 3rd gen, WebKit, 375 px) and `mobile-chrome` (Galaxy S24, Chromium, 360 px) run every
@@ -51,7 +51,10 @@ A small number of important user journeys through the real UI, per role/actor, t
   `E2E_MEILISEARCH_URL` and `E2E_MEILISEARCH_KEY` (to wipe the index) and `E2E_REINDEX_COMMAND` (a shell command that runs
   `php artisan search:reindex` in the stack, e.g. `docker compose -f compose.dev.yaml exec -T php-fpm php artisan search:reindex`);
   it is skipped without them. CI sets all of these. The specs use words made unique per run because the development index
-  outlives every test.
+  outlives every test. **Known limitation (found in P-11, owned by P-16):** the index-recovery spec wipes the one shared
+  index, so when several engines run in parallel against one stack it can race another engine's search spec (seen once
+  with four workers). CI runs one engine per job, and the spec is `serial` within an engine, so CI is unaffected.
+  Locally, run the engines one at a time. The fix is test isolation (an index prefix of its own for that spec).
 - `tests/Feature/Search/ProjectSearchSyncTest.php` mixes fast document-shape tests with a few
   `@group meilisearch` tests against the real engine (edit re-indexing, publish/hide, delete).
 
@@ -257,7 +260,8 @@ mail of every type through `scripts/mail-delivery-send.php` and waits for the pr
 (`failed_jobs` must stay empty). It sends **real mail** (seven messages) and needs a mailbox you can read; the recipient
 is never a default. `docker compose exec -T php-fpm php < scripts/mail-delivery-inspect.php` prints what each mail
 looks like on the wire (headers, parts, links, escaping) without sending anything. Reading the received mail in
-Gmail, Outlook, Apple Mail or any other client is manual.
+Gmail, Outlook, Apple Mail or any other client is manual. What it verified and what it did not (Gmail, Outlook, Apple
+Mail, a generic SMTP relay with real TLS): `docs/release/parity/P-13-email-delivery.md`, sections 9 and 10.
 
 ### Queue and scheduler drill (P-12, `docs/release/parity/P-12-queue-scheduler.md`)
 
@@ -290,7 +294,7 @@ Every historical bug knowingly fixed during the rewrite ships with a regression 
 ## Search and mail testing
 
 - Search: fake Scout/Meilisearch in most Feature tests for speed; a smaller number of tests (`@group meilisearch`, `tests/Helpers/search.php` for the shared helpers) exercise real Meilisearch indexing/query behavior to catch configuration and ranking drift — including `applyIndexSettings()`, which applies the checked-in settings to the test index first (the filter needs `req_type` filterable). See `docs/search/README.md` for the search semantics being verified.
-- Mail: use Laravel's mail fake for asserting triggers/recipients/content in Feature tests; verify actual rendering (subject, links, branding) against the historical templates (`../historical/emails-nusszopf`) separately — see `docs/email/README.md`. The dev/CI stack runs a Mailpit catcher (`compose.dev.yaml`, `MAIL_HOST=mailpit`/`MAIL_PORT=1025`) so Playwright specs can assert a mail actually arrived through its JSON API (`http://mailpit:8025/api/v1/...` inside the stack, `E2E_MAILPIT_URL` — the host-published port — for Playwright itself, which runs outside the stack); never used in production (`docs/rewrite/sixth-slice.md`).
+- Mail: use Laravel's mail fake for asserting triggers/recipients/content in Feature tests (`tests/Feature/Mail/`; `ResendMailerTest` guards that the Resend transport's package is a production dependency); verify actual rendering (subject, links, branding) against the historical templates (`../historical/emails-nusszopf`) separately — see `docs/email/README.md`. The dev/CI stack runs a Mailpit catcher (`compose.dev.yaml`, `MAIL_HOST=mailpit`/`MAIL_PORT=1025`) so Playwright specs can assert a mail actually arrived through its JSON API (`http://mailpit:8025/api/v1/...` inside the stack, `E2E_MAILPIT_URL` — the host-published port — for Playwright itself, which runs outside the stack); never used in production (`docs/rewrite/sixth-slice.md`).
 
 ### Isolation from the development stack
 
@@ -310,20 +314,24 @@ queue, cache, session or index again.
 
 Tests should use deterministic factories/seeders covering the domain entities established in `docs/domain/entities.md`. Fixture identifiers used by Playwright specs must be declared in one place (see "Browser tests" above), never inlined per spec.
 
-## Test organization (target shape)
+## Test organization
 
 ```text
 tests/
-├── Feature/       — HTTP/Livewire/business-logic tests, organized by domain area
-├── Unit/          — isolated logic tests
-└── E2E/
-    ├── specs/<actor>/   — Playwright specs, grouped by actor (mirrors docs/journeys/)
-    ├── pages/           — Page Object Models
-    └── support/         — fixture/env constants, shared helpers
+├── Feature/          — HTTP/Livewire/business-logic tests, organized by domain area (Auth, Projects, Search, Newsletter, Mail, Security, …)
+├── Unit/             — isolated logic tests (empty so far: the business rules are tested as Feature tests)
+├── Helpers/          — shared test helpers (search)
+├── E2E/
+│   ├── specs/        — Playwright specs by actor: visitor/, user/, plus a11y/, devices/, security/
+│   ├── pages/        — Page Object Models
+│   ├── fixtures/, support/ — seeded IDs, credentials and shared helpers (one place, never inlined per spec)
+│   └── production/   — the test doubles layered on the production stack (`compose.e2e.yaml`)
+├── Visual/           — the screenshot suite, its baselines and the historical harness
+└── Upgrade/, SearchRecovery/, QueueScheduler/ — the fixtures and probes of the release drills (`scripts/*-test.sh`)
 ```
 
-This mirrors the LCxHolz test-organization convention (`docs/references/lcxholz.md` §6) and should be adjusted only if Nusszopf's actual actor set (established during authentication/permissions archaeology) differs from a simple guest/customer/admin split.
+This mirrors the LCxHolz convention (`docs/references/lcxholz.md` §6); the actor set is visitor and user, because Nusszopf has no staff role.
 
 ## CI
 
-Every gate in this document must be runnable locally with the exact command CI uses (see `docs/development/quality.md`, "What CI must mirror exactly"). The CI pipeline shape itself — parallel lint/static-analysis/test jobs, a browser-engine matrix, and an image-publish job gated on all of the above passing *and* on the event being a push rather than a pull request — is documented in `docs/references/lcxholz.md` §5 and should be adopted with Nusszopf's actual database (PostgreSQL, not LCxHolz's SQLite shortcut — see `docs/development/quality.md`, "Database-specific testing").
+Every gate in this document runs locally with the command CI uses (`docs/development/quality.md`, "What CI must mirror exactly"). `.github/workflows/ci.yml` runs, in parallel: Pint, Larastan, the Pest suite (against PostgreSQL, Redis and Meilisearch service containers), the frontend build, the production-stack smoke test, the Playwright suite on the production images, the Playwright suite per engine and device project on the development stack, and the visual comparison. The release workflow (`release.yml`) calls the same workflow as its gate, so an image is never published from a tag whose checks fail.

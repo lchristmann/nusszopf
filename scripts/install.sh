@@ -178,8 +178,10 @@ Nusszopf is configured in $(pwd):
 
 Before starting, edit .env:
   MAIL_FROM_ADDRESS    REQUIRED — your own sender address; docker compose refuses to start without it
-  MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD
-                       your SMTP relay; without one Nusszopf runs, but no e-mail is delivered
+  MAIL_MAILER, RESEND_API_KEY
+                       Resend (recommended): MAIL_MAILER=resend and your key. Or keep MAIL_MAILER=smtp and set
+                       MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD for your relay. Without either,
+                       Nusszopf runs, but no e-mail is delivered
   APP_BIND=127.0.0.1   when a reverse proxy runs on this host
 Optional: NUSSZOPF_CONTACT_EMAIL, LOCATIONIQ_KEY, GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.
 

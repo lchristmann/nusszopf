@@ -10,7 +10,7 @@ The documented operator upgrade procedure (`docs/WAFFLE-INSTALLATION-GUIDE.md` �
 
 No explicit backup-before-upgrade step is called out in the upgrade guide itself, even though a full backup/restore procedure exists elsewhere in the same document (see `docs/references/waffle-dashboard.md`). No explicit migration step is documented — it is implied that migrations run automatically when the new `php-fpm` container starts, but the guide does not state where in the container lifecycle this happens (**Unknown** — would require inspecting the Dockerfile/entrypoint, which belongs to infrastructure archaeology, not this FOSS-lifecycle archaeology).
 
-## Recommendation for Nusszopf (Inferred, needs approval)
+## Recommendation for Nusszopf (the reasoning; implemented and tested below)
 
 Nusszopf's operator-facing upgrade guide (to live in `docs/deployment/README.md` and be cross-referenced here) should be more explicit than the reference, because Nusszopf is meant to be operable by "a person who has never seen the source code" (`CLAUDE.md` → Self-hosting):
 

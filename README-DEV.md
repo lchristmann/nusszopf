@@ -29,20 +29,40 @@ these runs inside a container; PHP/Composer/Artisan/Node/npm commands always run
 
 ```shell
 git clone <repo> && cd nusszopf
-cp .env.example .env               # edit UID/GID below if not 1000:1000
+cp .env.example .env               # set UID/GID to `id -u`/`id -g` if they are not 1000:1000
+sed -i "s|^MEILISEARCH_KEY=.*|MEILISEARCH_KEY=nusszopf-dev-master-key-change-me|" .env
+sed -i "s|^APP_KEY=.*|APP_KEY=base64:$(head -c 32 /dev/urandom | base64)|" .env
 docker compose -f compose.dev.yaml up -d --build
+docker compose -f compose.dev.yaml exec -u root workspace chown "$(id -u):$(id -g)" /var/www/vendor /var/www/node_modules
 docker compose -f compose.dev.yaml exec workspace composer install
 docker compose -f compose.dev.yaml exec workspace npm install
-docker compose -f compose.dev.yaml exec workspace php artisan key:generate
+docker compose -f compose.dev.yaml exec workspace php artisan storage:link
 docker compose -f compose.dev.yaml exec workspace php artisan migrate --seed
-docker compose -f compose.dev.yaml exec workspace php artisan scout:sync-index-settings
+docker compose -f compose.dev.yaml exec workspace php artisan search:reindex
 docker compose -f compose.dev.yaml exec workspace npm run build
 ```
+
+Three of these lines are there because of how the development stack is set up, not because of Nusszopf:
+
+- **`APP_KEY`, before the first `up`.** Compose hands `.env` to every container as its environment, and an empty `APP_KEY`
+  there wins over a key that `php artisan key:generate` writes into the file afterwards: the containers would keep
+  running without a key until they are recreated. So the key is generated first.
+- **`MEILISEARCH_KEY`.** `.env.example` leaves it empty. The `meilisearch` service then falls back to the master key
+  `nusszopf-dev-master-key-change-me`, but the application reads the empty value from `.env` and sends no key, so
+  every search command is refused for a missing `Authorization` header. Setting the key in `.env` gives both the same one.
+  The `meilisearch`-group tests and the Playwright search specs need it too.
+- **`chown`.** `vendor` and `node_modules` are named volumes, and a new Docker volume belongs to root. `composer install`
+  then stops with `Permission denied`. The `chown` (as root, once) hands both to your user. If you skip it, run
+  `composer install` and `npm install` with `exec -u root`, as CI does, and expect to need root again later.
+
+`search:reindex` applies the index settings and fills the index in one step (`scout:sync-index-settings` alone applies
+only the settings).
 
 Open <http://localhost:8080> (or your `APP_PORT`) and register a normal account through the
 registration screen — there is no separate admin/first-user bootstrap step. Nusszopf has no
 admin/staff role anywhere in the historical product; every account is an ordinary equal-privilege
-user, in development exactly as in production.
+user, in development exactly as in production. Mail sent by the application (welcome, verification, password
+reset, contact, newsletter) does not leave the stack: the Mailpit catcher shows it at <http://localhost:8025>.
 
 If your host UID/GID aren't `1000:1000`, set `UID`/`GID` in `.env` to match `id -u`/`id -g` before the
 first `up`, so files the containers create are owned by you, not root.
@@ -67,6 +87,7 @@ first `up`, so files the containers create are owned by you, not root.
 | Backup/restore drill onto an empty host, and the rollback of an upgrade | `sh scripts/restore-test.sh [--suite] [--rollback-from <previous tag>]` (a release step, not CI; `docs/testing/README.md`) |
 | Search index recovery drill | `sh scripts/search-recovery-test.sh` (a release step, not CI; `docs/testing/README.md`) |
 | Queue and scheduler drill (worker, Redis, scheduler and `search:reindex` under failure; about an hour) | `sh scripts/queue-scheduler-test.sh` (a release step, not CI; `docs/testing/README.md`) |
+| Real mail through the production stack (sends seven real messages to a mailbox you name; a release step, not CI) | `P13_RECIPIENT=you@example.org sh scripts/mail-delivery-test.sh` (`docs/testing/README.md`) |
 | Migrations | `php artisan migrate` |
 | Fresh DB + seed | `php artisan migrate:fresh --seed` |
 | Sync search index settings | `php artisan scout:sync-index-settings` |
@@ -80,9 +101,14 @@ Composer/Artisan commands in the table run inside `workspace` — prefix with
 
 ## Services (`compose.dev.yaml`)
 
-`web` (nginx) · `php-fpm` · `workspace` (contributor shell) · `queue-worker` · `scheduler` ·
-`postgres` · `redis` · `meilisearch` · `locationiq-stub` (dev/CI stand-in for the project-location autocomplete API; set `LOCATIONIQ_KEY`/`LOCATIONIQ_URL` in `.env` to use the real one) · `playwright` (Debian-based, dev/CI-only — the app's own
-Alpine-based images can't run Playwright's bundled browsers reliably).
+`web` (nginx) · `php-fpm` · `workspace` (contributor shell) · `queue-worker` (`queue:listen`, so code changes apply
+without a restart) · `scheduler` · `postgres` · `redis` · `meilisearch` · `mailpit` (catches every mail; web UI on
+port 8025, `MAIL_HOST=mailpit`; development and CI only, never production) · `locationiq-stub` (dev/CI stand-in for the
+project-location autocomplete API; set `LOCATIONIQ_KEY`/`LOCATIONIQ_URL` in `.env` to use the real one) · `playwright`
+(Debian-based, dev/CI-only — the app's own Alpine-based images can't run Playwright's bundled browsers reliably).
+
+The operator's stack (`docker-compose.yaml`, images only) is a different file with the same services minus `workspace`,
+`mailpit`, `locationiq-stub` and `playwright`; `docs/deployment/README.md` describes it, and the scripts in the table above run it.
 
 ## Testing
 
@@ -96,7 +122,25 @@ docker compose -f compose.dev.yaml exec playwright npx playwright test
 ```
 
 See `docs/testing/README.md` for the full testing strategy and `docs/development/quality.md` for
-what each gate checks.
+what each gate checks. The Pest suite runs against its own database, queue and search index
+(`nusszopf_testing`, `testing_items`), never the development ones. The full Playwright run needs some settings
+(`SEARCH_PAGE_SIZE=5` in `.env`, and `E2E_*` variables) and shares a per-address newsletter budget across engines; both
+are in `docs/testing/README.md`.
+
+## Troubleshooting
+
+Only problems that were actually hit.
+
+| Symptom | Cause and fix |
+|---|---|
+| `composer install` or `npm install` fails with `Permission denied` in `vendor` or `node_modules` | The named volumes are root-owned: `docker compose -f compose.dev.yaml exec -u root workspace chown "$(id -u):$(id -g)" /var/www/vendor /var/www/node_modules` |
+| Search commands or the `meilisearch`-group tests are refused for a missing `Authorization` header | `MEILISEARCH_KEY` in `.env` is empty; set it as in "Getting started", then `docker compose -f compose.dev.yaml up -d` (a container keeps the environment it was created with) |
+| `No application encryption key has been specified` after a first run that generated the key late | The containers were created with an empty `APP_KEY`; `docker compose -f compose.dev.yaml up -d --force-recreate` (with the key already in `.env`) |
+| A changed `.env` has no effect | Recreate the containers: `docker compose -f compose.dev.yaml up -d`. `restart` keeps the old environment |
+| Avatars answer 404 | `php artisan storage:link` (once; `public/storage` is git-ignored) |
+| The newsletter or password-reset specs fail on a second full run within 15 minutes | The per-address rate-limit budget is spent; `php artisan cache:clear`, then run again (`docs/testing/README.md`) |
+| A search spec fails only in a parallel run of several engines | The index-recovery spec wipes the one shared index; run engines one at a time locally (CI runs one engine per job) |
+| The visual suite, or `PerformanceDatasetSeeder`, replaced your development data | Both reset the development database on purpose; `php artisan migrate:fresh --seed` returns to the ordinary seed |
 
 ## Claude Code
 

@@ -42,7 +42,7 @@ A first complete pass across all three historical repositories is done. See `doc
 | User journeys / E2E mapping | `docs/journeys/README.md` | Populated: Journeys 1–4 transcribed from the actual Cypress suite; Journeys 6–8 (newsletter, contact, avatar) added as Inferred specifications since no historical E2E coverage exists for them |
 | Historical bugs / defect register | `docs/rewrite/bugs.md` | Populated — every suspected defect classified (Fix/Preserve/Unknown/Replace) with an ID, severity, and required regression test |
 | Decision register | `docs/rewrite/decisions-register.md` | Populated — already-decided vs. requires-human-decision, concise index |
-| First vertical slice | `docs/rewrite/first-slice.md` | Three candidates proposed, one selected (not yet approved for implementation) |
+| First vertical slice | `docs/rewrite/first-slice.md` | Approved and implemented (2026-09-18); the nine slices after it are listed in `docs/rewrite/README.md` |
 
 ## Second pass (specification hardening, 2026-09-18)
 

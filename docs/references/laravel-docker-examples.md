@@ -57,18 +57,18 @@ The problem: Docker only seeds a brand-new named volume from an image's director
 
 ## 5. Comparison table
 
-| Aspect | laravel-docker-examples | LCxHolz | Waffle Dashboard | Nusszopf (proposed) |
+| Aspect | laravel-docker-examples | LCxHolz | Waffle Dashboard | Nusszopf (as built) |
 |---|---|---|---|---|
-| Dev compose | `compose.dev.yaml`, bind-mounted code | same pattern | same pattern | same pattern (Proposal) |
-| Prod compose | `compose.prod.yaml`, builds locally | `compose.prod.yaml`, `image:` + `build:` both present, pulls from GHCR | **`docker-compose.yaml`** at repo root, `image:`-only, pulls from Docker Hub, meant to be curl'd by an operator who never clones the repo | Needs both: a dev/build-oriented `compose.dev.yaml`/`compose.prod.yaml` pair for contributors, **and** a standalone `docker-compose.yaml` for operators (Proposal) |
-| Asset/manifest consistency | Shared volume, unpopulated on redeploy (defect, §4) | Shared volume + custom re-sync entrypoint (works, but bespoke) | Nginx image built `FROM` the matching php-fpm image tag, no volume needed (simplest, correct by construction) | Follow Waffle's pattern (Proposal) |
-| Queue/scheduler | Not present | Dedicated `queue-worker` and `scheduler` services, same image, different `command:` | Not present (Waffle has no queued jobs) | Nusszopf needs both (search indexing, mail) — dedicated services, same image as php-fpm (Proposal) |
-| Health checks | `php-fpm-healthcheck`, `pg_isready`, `redis-cli ping` | identical mechanism | identical mechanism | Same three, plus a Meilisearch health check (Proposal — no reference covers Meilisearch) |
-| TLS/reverse proxy | Out of scope, host port 80 exposed directly | Nginx Proxy Manager, pre-existing on host, shared external `proxy-net` network | Nginx Proxy Manager, documented as an optional add-on step for the operator | Document as optional, operator-owned, external network (Proposal) — Unknown whether Nusszopf should bundle a reverse proxy by default |
-| Backups | None | `spatie/laravel-backup`, encrypted, retention-tiered, health-monitored, restore procedure tested | Plain shell script (`pg_dump` + `tar`) run via host crontab, documented restore steps | Needs both DB and object storage covered, plus Meilisearch (no reference covers this) — see `docs/deployment/operations.md` (Proposal) |
-| Registry | N/A (not published) | GHCR, private packages, `sha-<sha>` / `latest` / `vX.Y.Z` tags, "Build Once, Deploy Many" | Docker Hub, public, semver tags only (`2.5.0`) | Open question — see `docs/release/` (out of scope for this document) |
+| Dev compose | `compose.dev.yaml`, bind-mounted code | same pattern | same pattern | same pattern |
+| Prod compose | `compose.prod.yaml`, builds locally | `compose.prod.yaml`, `image:` + `build:` both present, pulls from GHCR | **`docker-compose.yaml`** at repo root, `image:`-only, pulls from Docker Hub, meant to be curl'd by an operator who never clones the repo | Needs both: a dev/build-oriented `compose.dev.yaml`/`compose.prod.yaml` pair for contributors, **and** a standalone `docker-compose.yaml` for operators |
+| Asset/manifest consistency | Shared volume, unpopulated on redeploy (defect, §4) | Shared volume + custom re-sync entrypoint (works, but bespoke) | Nginx image built `FROM` the matching php-fpm image tag, no volume needed (simplest, correct by construction) | Waffle's pattern, verified by the smoke test |
+| Queue/scheduler | Not present | Dedicated `queue-worker` and `scheduler` services, same image, different `command:` | Not present (Waffle has no queued jobs) | Nusszopf needs both (search indexing, mail) — dedicated services, same image as php-fpm |
+| Health checks | `php-fpm-healthcheck`, `pg_isready`, `redis-cli ping` | identical mechanism | identical mechanism | Same three, plus a Meilisearch health check (no reference covers Meilisearch), and heartbeat checks for the queue worker and the scheduler |
+| TLS/reverse proxy | Out of scope, host port 80 exposed directly | Nginx Proxy Manager, pre-existing on host, shared external `proxy-net` network | Nginx Proxy Manager, documented as an optional add-on step for the operator | Operator-owned, not bundled (decided); one published port, documented for Nginx Proxy Manager, Caddy and Traefik |
+| Backups | None | `spatie/laravel-backup`, encrypted, retention-tiered, health-monitored, restore procedure tested | Plain shell script (`pg_dump` + `tar`) run via host crontab, documented restore steps | Waffle's tier: a cron-run shell script for the database, the storage volume and the installation directory, with a drilled restore; the search index is rebuilt, never backed up — `docs/deployment/operations.md` |
+| Registry | N/A (not published) | GHCR, private packages, `sha-<sha>` / `latest` / `vX.Y.Z` tags, "Build Once, Deploy Many" | Docker Hub, public, semver tags only (`2.5.0`) | GHCR, `ghcr.io/lchristmann/nusszopf-*`, version tag plus `latest` (decided; `docs/release/docker-images.md`) |
 
-## 6. Recommendation for Nusszopf (Proposal — requires approval)
+## 6. Recommendation for Nusszopf (adopted; this is what was built)
 
 The simplest architecture that satisfies Nusszopf's actual requirements (PHP 8.5, Laravel 13, PostgreSQL, Redis, Meilisearch, Blade/Livewire — no separate SPA build pipeline beyond Vite):
 
@@ -78,4 +78,4 @@ The simplest architecture that satisfies Nusszopf's actual requirements (PHP 8.5
 4. **Health checks** for every service that can be checked (`php-fpm-healthcheck`, `pg_isready`, `redis-cli ping`, plus Meilisearch's `/health` endpoint), gating `depends_on: condition: service_healthy` throughout — none of the three references show a Meilisearch health check, since none of them use Meilisearch.
 5. **Two audiences, two Compose files**, following Waffle Dashboard's split rather than LCxHolz's single `compose.prod.yaml`: a `compose.dev.yaml`/`compose.prod.yaml` pair for people building/testing the images themselves, and a standalone, curl-able `docker-compose.yaml` at the repository root for operators who only ever pull published images — see `docs/deployment/README.md`.
 
-Open questions requiring a human decision (not resolved by any reference project): container registry choice (GHCR vs. Docker Hub — see `docs/release/`), whether Meilisearch backup/restore is in scope for v1, and whether Nusszopf should document a specific reverse proxy (Nginx Proxy Manager, appearing in two of three references) or stay proxy-agnostic.
+The three questions left open when this was written are decided: GHCR as the registry, no Meilisearch backup (the index is rebuilt from PostgreSQL), and an operator-owned reverse proxy with Nginx Proxy Manager, Caddy and Traefik named, and Caddy given a one-line example (`docs/rewrite/decisions-register.md`).

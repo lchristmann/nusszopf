@@ -1,7 +1,6 @@
 # Operations
 
-> **Status: health, logs, queue and scheduler, upgrades, rollback, search recovery and troubleshooting are implemented and verified
-> (operational track O-1/O-2, 2026-09-22); upgrades were tested again on populated installations in P-9 (2026-09-25); backups, the restore onto an empty host and the rollback of an upgrade were drilled in P-10 (2026-09-25, `scripts/restore-test.sh`); the search index recovery in P-11 (2026-09-25, `scripts/search-recovery-test.sh`); the queue worker, the scheduler, Redis and the queue's part in `search:reindex` in P-12 (`scripts/queue-scheduler-test.sh`).**
+> **Status: implemented and verified, and this page is the operator's handbook.** Health, logs, queue and scheduler, upgrades, rollback, search recovery and troubleshooting were verified in operational track O-1/O-2 (2026-09-22). Since then, each procedure was drilled on the production stack: upgrades on populated installations (P-9, 2026-09-25); backups, the restore onto an empty host and the rollback of an upgrade (P-10, `scripts/restore-test.sh`); the search index recovery (P-11, `scripts/search-recovery-test.sh`); the queue worker, the scheduler, Redis and the queue's part in `search:reindex` (P-12, `scripts/queue-scheduler-test.sh`); and mail delivery through Resend (P-13, `scripts/mail-delivery-test.sh`). What no drill could cover yet, because no release exists, is listed in `docs/release/parity/README.md`, "Carried forward to later phases" (the real download and GHCR pull, arm64, an N-1 upgrade from a real tag).
 > Commands assume the operator's directory (`docker-compose.yaml` and `.env` next to each other); contributors add
 > `-f compose.dev.yaml` and use the `workspace` service.
 
@@ -12,6 +11,7 @@
 - [Queue worker and scheduler](#queue-worker-and-scheduler)
 - [What happens when a dependency is down](#what-happens-when-a-dependency-is-down)
 - [Search index recovery](#search-index-recovery)
+- [Mail](#mail)
 - [Newsletter subscribers](#newsletter-subscribers)
 - [Backups](#backups)
 - [Restore](#restore)
@@ -34,7 +34,7 @@ so a freshly started stack reports `degraded` for up to a minute — that is the
 
 ## Logs
 
-`docker compose logs -f <service>` for any service (the application logs to stderr in production). No log aggregation is proposed for v1 — matches all three references, none of which run a log shipper.
+`docker compose logs -f <service>` for any service (the application logs to stderr in production). There is no log aggregation in v1 (none of the three references runs a log shipper); `docker compose logs` is the baseline, and a log driver or shipper of your own can be added in a `compose.override.yaml`.
 
 ## Queue worker and scheduler
 
@@ -73,7 +73,7 @@ to stop):
 | **PostgreSQL** | Pages that read data fail; the search page shell still renders | `/health` → 503 with `database` failing; `php-fpm` stays "healthy" (its check is PHP-FPM's own ping) | Start PostgreSQL; resumes by itself |
 | **Queue worker** (stopped, or crashed and not restarted) | Everything works. Mails are not sent and search updates do not appear until it runs again | Jobs wait in Redis, one heartbeat job more each minute. `nusszopf:health` and `/health` fail `queue` once the last heartbeat is three minutes old; `docker compose ps` shows the worker `unhealthy` a little later | `docker compose up -d queue-worker`. The waiting jobs run at once, in order, and the check is green within a minute |
 | **Scheduler** (stopped) | Everything works. The daily newsletter purge and the heartbeats do not run | After three minutes `scheduler` **and** `queue` fail: the scheduler also queues the queue's heartbeat, so a stopped scheduler makes a healthy worker look stopped. `docker compose ps` shows the `queue-worker` `unhealthy` too | `docker compose up -d scheduler`. Runs missed meanwhile are not made up; the purge deletes by age, so its next run catches up |
-| **SMTP** | Contact form, registration, "forgot password", a newsletter sign-up/unsubscribe request, a login lockout: the triggering action still succeeds (every mail is queued, never sent inline) | Every mailable (`App\Mail\ContactMail`/`WelcomeMail`/`ChangePasswordMail`/`VerifyEmailMail`/`BlockedAccountMail`, all `ShouldQueue`) rides the same queue and retry/backoff policy as search indexing; an unreachable mail server fails and retries the same way, landing in `failed_jobs` after five attempts. Verified at the Feature-test level (e.g. `tests/Feature/Mail/ContactMailTest.php`, "leaves a failed contact send in failed_jobs instead of losing it"), and live on the production stack in P-7 (2026-09-24, `docs/release/parity/P-07-production-e2e.md`): with the relay stopped, a welcome mail failed and was delivered by the next retry once the relay was back; with the relay down for good, it reached `failed_jobs` after five attempts (about 4 minutes) and `queue:retry all` delivered it | `queue:retry all` once SMTP is reachable again |
+| **Mail provider** (Resend's API or an SMTP relay: down, unreachable, or refusing the sender) | Contact form, registration, "forgot password", a newsletter sign-up/unsubscribe request, a login lockout: the triggering action still succeeds (every mail is queued, never sent inline) | Every mailable (`App\Mail\ContactMail`/`WelcomeMail`/`ChangePasswordMail`/`VerifyEmailMail`/`BlockedAccountMail` and the two newsletter mails, all `ShouldQueue`) rides the same queue and retry/backoff policy as search indexing; a failure retries the same way and lands in `failed_jobs` after five attempts (about 4 minutes), and `/health` reports `failed_jobs`. Verified live: with the SMTP relay stopped, a welcome mail was delivered by the next retry once the relay was back, and with the relay down for good it reached `failed_jobs` (P-7, `docs/release/parity/P-07-production-e2e.md`); with Resend refusing a sender on an unverified domain (`The example.org domain is not verified`), the same five attempts ended in `failed_jobs` with Resend's message (P-13, `docs/release/parity/P-13-email-delivery.md`, section 7). Rate limiting (HTTP 429), an outage of the provider and greylisting were not measured; they reach the worker as the same kind of failure and take the same path | Fix the cause (the API key, the verified sender domain, the relay), then `queue:retry all`. See [Mail](#mail) |
 | **Google (OAuth)** — no GOOGLE_CLIENT_ID/SECRET configured | The login screen simply has no Google button; password/username login and registration are entirely unaffected | Both `/auth/google/*` routes 404 | Set `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` and restart; not a dependency the app requires to function |
 | **Google (OAuth)** — configured but unreachable/erroring mid-login | A generic "Sorry, da lief etwas schief." toast on the login screen; no account is created or modified | `GoogleController::callback()` catches the failure and redirects to `/login`, synchronously (this is a request-time auth exchange, not a background job — there is nothing to retry) | The visitor retries, or uses password/username login instead |
 
@@ -153,6 +153,32 @@ docker compose exec php-fpm php artisan search:reindex
 
 While Meilisearch is down or empty, the site keeps working and search shows "Verzopft…" (no hits). Projects saved meanwhile
 are not lost: they are in PostgreSQL, and the reindex brings them in.
+
+## Mail
+
+Every mail is queued and sent by the `queue-worker`, through Laravel's mailer chosen by `MAIL_MAILER` in `.env`. **Resend is the
+recommended provider** (`MAIL_MAILER=resend`, `RESEND_API_KEY`); an SMTP relay works through the same setting. The
+settings, the sender-domain rule and the DNS records seen on the tested setup are in `docs/deployment/README.md`,
+"Sending mail". This section is for running it.
+
+**Is mail working?** `nusszopf:health` shows `failed_jobs` failing when a mail ran out of its five tries; that is the
+signal, since sending is never done inside a request. `queue:failed` names the mail and the provider's reason.
+
+```bash
+docker compose exec php-fpm php artisan queue:failed     # the job and the provider's error
+docker compose exec php-fpm php artisan queue:retry all  # after the cause is fixed: the mails are only stored there
+```
+
+- **`The <domain> domain is not verified`** (Resend): `MAIL_FROM_ADDRESS` is on a domain the Resend account has not
+  verified. Verify the domain there (its DNS records), or change the address, then `docker compose up -d` and `queue:retry all`.
+- **An invalid or revoked API key, a relay that refuses the login:** the same path. The reason is in `queue:failed`.
+  (Not exercised in P-13; it reaches the worker as the same kind of exception.)
+- **Mail arrives in spam, or a receiver rejects it:** the sending domain's SPF, DKIM and DMARC are the operator's to set
+  up with the provider. Which records were on the tested Resend setup: `docs/deployment/README.md`, "Sending mail".
+- **A mail can arrive twice** after a crash of the worker while it held the job (`retry_after` 90 s). A queue delivers
+  at least once (P-12); with a real provider that is a second, identical mail.
+- **A changed mail setting has no effect:** `docker compose up -d`, not `restart` (see "Troubleshooting").
+- **Every mail is HTML only**, with no plain-text part. That is intended (decision P13-03).
 
 ## Newsletter subscribers
 
@@ -448,4 +474,5 @@ docker compose run --rm --no-deps --entrypoint php php-fpm artisan key:generate 
 - **"Zu viele Versuche. Bitte warte kurz." for every visitor**: the application sees all visitors under the proxy's address — the proxy is not trusted (`TRUSTED_PROXIES`), so the per-address limits count everyone together.
 - **A changed `.env` has no effect**: a container keeps the environment it was created with, and the configuration is cached at start — run `docker compose up -d`, which recreates the containers whose settings changed. `docker compose restart` is not enough: it restarts the containers with their old environment (verified in P-8).
 - **Assets 404 or a stale UI after a deploy**: the images of one release always carry matching assets; check that `web` and `php-fpm` run the same `NUSSZOPF_VERSION` (`docker compose images`) and `docker compose pull` was run.
+- **Mail is not arriving, or `failed_jobs` names a mail:** see [Mail](#mail): `queue:failed` gives the provider's reason (an unverified sender domain, a bad key or login).
 - **Backup restore doesn't match production dump-tool version**: PostgreSQL's `pg_dump`/`pg_restore` are version-tolerant, but always restore using a client version compatible with the target server's major version.

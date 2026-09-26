@@ -86,7 +86,7 @@ A consistent, checklist-format specification for every screen, intended as an im
 | Responsive behavior    | Create-project CTA renders twice — a distinct, larger full-width mobile button (`<lg`, separate DOM node) and a smaller header-row button (`lg:block`) — not a single resized element |
 | Authorization behavior | Only the caller's own projects, any visibility                                                                                                                                        |
 | URL/query params       | None                                                                                                                                                                                  |
-| Side effects           | Visibility toggle re-triggers search indexing (once Scout sync exists)                                                                                                                |
+| Side effects           | Visibility toggle re-triggers search indexing (Scout sync through the queue, `docs/architecture/README.md`, "Background work")                                                                                                                |
 
 ## Project creation (`/user/project/create`)
 

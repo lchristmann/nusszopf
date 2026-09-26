@@ -455,8 +455,9 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
   existence?") and the historical redirect target itself (`router.push('/404')`), rather than a
   `403` that would distinguish "exists but isn't yours" from "doesn't exist" through a different
   status code than every other unauthorized-access path in the app uses.
-- Regression test: `tests/Feature/Projects/ProjectFormTest.php`, "denies a non-owner from editing
-  another users project," updated to assert `404`, not `403`.
+- Regression test: `tests/Feature/Projects/ProjectEditTest.php`, "404s a non-owner, public or private, never a 403"
+  (originally `ProjectFormTest.php`, "denies a non-owner from editing another users project"; that file was split
+  into the wizard and edit tests in the second slice).
 - Full spec: `docs/rewrite/intentional-changes.md` → "Project edit screen denies non-owners with a
   404, not a 403".
 

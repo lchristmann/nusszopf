@@ -6,7 +6,7 @@ No documented breaking-change procedure exists in the reference project. Across 
 
 This is a gap, not a pattern to imitate: Waffle Dashboard is a single-maintainer project where the maintainer is also typically the only operator, so undocumented breaking changes carry low real-world risk. Nusszopf explicitly targets third-party self-hosting operators (`CLAUDE.md` → Self-hosting), so this gap must be closed rather than inherited.
 
-## Recommendation for Nusszopf (Inferred, needs approval)
+## Policy for Nusszopf (decided with the changelog format; first exercised by P-9)
 
 - A MAJOR version bump is the only place a breaking change may occur (see [`versioning.md`](versioning.md)).
 - Every breaking change must have a `CHANGELOG.md` entry tagged `**Breaking:**` (see [`changelog.md`](changelog.md)) stating, at minimum:
@@ -34,4 +34,4 @@ A **Migration required:** entry is needed when:
 
 ## Status
 
-Confirmed: no breaking-change documentation practice exists in Waffle Dashboard to adopt. Everything above is a recommendation (Inferred) and must be confirmed as an architecture/process decision — see `docs/rewrite/architecture-decisions.md`.
+Confirmed: no breaking-change documentation practice exists in Waffle Dashboard to adopt. The policy above is Nusszopf's own: the `**Breaking:**`/`**Migration required:**` tags are part of the decided changelog format (`docs/release/changelog.md`), and P-9 tested the triggers listed under "Operator action in practice". No release has used the tags yet (`CHANGELOG.md` is empty until P-16). One trigger remains inferred: the steps for a changed Meilisearch pin were not exercised.

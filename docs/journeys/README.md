@@ -189,6 +189,6 @@ is created with them; the detail page shows the cards (category colors, newest f
 text; the edit screen's "Gesuche" view creates, edits and deletes requests with the historical toasts and
 the native delete confirmation; a private project's request is never visible to a visitor (404); deleting
 the project deletes its requests. A phone-width test asserts the full-screen dialog and no horizontal
-overflow. Deliberate differences from the Cypress spec: it asserts the visible result on the detail page
-rather than `text_title_preview-request-card` on the My Projects card (slice 5 adds that preview), and it
+overflow. Differences from the Cypress spec: it also asserts the visible result on the detail page, and
+`text_title_preview-request-card` on the My Projects card (added by slice 5, asserted in the same spec), and it
 covers what Cypress never did (validation, cancel confirmations, private visibility, search).

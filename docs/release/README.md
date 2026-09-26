@@ -14,8 +14,8 @@ This directory documents the full lifecycle:
 
 ## Process reference
 
-[Waffle Dashboard](../references/waffle-dashboard.md) is the FOSS lifecycle reference: semantic versioning, unprefixed tags, Docker image publishing, and operator-facing backup/upgrade documentation. Its release *mechanics* (build/push/tag by hand) are a single-maintainer minimum, not the target — Nusszopf targets LCxHolz-level engineering discipline (`CLAUDE.md`), so the release build/publish/tag steps should be automated in CI rather than run by hand. See `docs/references/lcxholz.md` for the CI/automation reference and `docs/rewrite/architecture-decisions.md` for the decisions this implies (registry choice, image layout) that need explicit approval before being finalized.
+[Waffle Dashboard](../references/waffle-dashboard.md) is the FOSS lifecycle reference: semantic versioning, unprefixed tags, Docker image publishing, and operator-facing backup/upgrade documentation. Its release *mechanics* (build/push/tag by hand) are a single-maintainer minimum, not the target — Nusszopf targets LCxHolz-level engineering discipline (`CLAUDE.md`), so the release build/publish/tag steps are automated in CI rather than run by hand. See `docs/references/lcxholz.md` for the CI/automation reference and `docs/rewrite/architecture-decisions.md` for the decisions this implied (registry choice, image layout), all now decided.
 
 ## Status
 
-Confirmed against Waffle Dashboard evidence; CI automation and registry choice are recommendations pending approval, not yet decided architecture.
+The scheme, tag format, changelog format, registry (GHCR), release automation and version exposure are decided (`docs/rewrite/decisions-register.md`, `docs/rewrite/architecture-decisions.md`) and implemented (`.github/workflows/release.yml`, `docs/deployment/`). Verified without a real tag, on release-equivalent builds (P-8…P-10). What only a real release can prove — the workflow itself, the GitHub download, the GHCR pull, arm64, an N-1 upgrade from a tag — is the work of P-16. Still open by decision: who writes changelog entries (register C1).

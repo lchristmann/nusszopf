@@ -99,15 +99,19 @@ forgot-password screen end to end.
 
 ## Remaining gaps
 
-- No profile-page resend-verification affordance yet (slice 8) — the only path is the project
-  wizard/edit error's own button.
+- ~~No profile-page resend-verification affordance yet (slice 8) — the only path is the project
+  wizard/edit error's own button.~~ Final, no Profile affordance: the historical Profile has none
+  (`docs/release/parity/00-doc-debts.md`).
 - `BlockedAccountMail`'s dropped city/country clauses (decision 4) are a permanent self-hosting
   simplification, not a temporary gap — no geo-IP service is planned.
-- Mail delivery through a real SMTP relay (P-13) is still only verified via `Mail::fake()`/Mailpit, not
-  a production relay — same outstanding item the sixth slice already recorded.
-- Playwright coverage for these journeys (reset via Mailpit, login lockout, Google via a provider
-  stub) is not yet part of the `tests/E2E` suite — tracked for the parity/E2E pass (P-1), not blocking
-  this slice's Feature-test-level verification.
+- ~~Mail delivery through a real SMTP relay (P-13) is still only verified via `Mail::fake()`/Mailpit, not
+  a production relay — same outstanding item the sixth slice already recorded.~~ Closed in P-13 for Resend: all
+  seven mail types were delivered for real on the production stack (`docs/release/parity/P-13-email-delivery.md`).
+  A generic SMTP relay with real TLS is still untested (deferred, P-16).
+- ~~Playwright coverage for these journeys (reset via Mailpit, login lockout, Google via a provider
+  stub) is not yet part of the `tests/E2E` suite.~~ Closed in P-1: `password-reset.spec.ts` and
+  `login-lockout.spec.ts`. The Google exchange itself stays at the Feature-test level (`docs/journeys/README.md`:
+  a provider's own consent screen is not tested in the browser).
 
 ## Corrections from the finish-line visual parity audit (P-2, 2026-09-23)
 

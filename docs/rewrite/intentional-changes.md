@@ -291,8 +291,9 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
   HTTP status code for a denial changes).
 - Affected workflows: none.
 - Migration implications: none.
-- Tests: `tests/Feature/Projects/ProjectFormTest.php`, "denies a non-owner from editing another users
-  project" — updated to assert `404` instead of `403`.
+- Tests: `tests/Feature/Projects/ProjectEditTest.php`, "404s a non-owner, public or private, never a 403"
+  (originally `ProjectFormTest.php`, "denies a non-owner from editing another users project", split into the
+  wizard and edit tests in the second slice) — asserts `404` instead of `403`.
 - Approval: Approved (2026-09-19). Implemented in this verification pass; see `docs/rewrite/bugs.md`
   BUG-021.
 

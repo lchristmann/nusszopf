@@ -8,7 +8,7 @@
 - Build/push is entirely manual (`docker login`, `docker build`, `docker push`, run by the maintainer locally). There is no CI/CD.
 - The production `docker-compose.yaml` pins both services to an explicit version tag (never `latest`), so operators control their own upgrade timing — `latest` exists only as a convenience default for people setting up for the first time without picking a version.
 
-## Recommendation for Nusszopf (Inferred, needs approval)
+## Recommendation for Nusszopf (reasoning; decided and implemented below)
 
 - **Automate build and publish in CI** (GitHub Actions), triggered on pushing a version tag, rather than the maintainer running `docker build`/`docker push` by hand. This is the concrete instance of "engineering discipline" (`CLAUDE.md`) that should improve on Waffle Dashboard's manual process. Confirm the exact workflow shape against `docs/references/lcxholz.md`'s CI findings.
 - **Registry**: **decided 2026-09-21 — GHCR, `ghcr.io/lchristmann/nusszopf-*`** (see `docs/rewrite/decisions-register.md`). Original open question: Docker Hub (matching the reference) vs. GitHub Container Registry (`ghcr.io`, ties images to the repo/CI provenance with no extra credential to manage). Needs an explicit architecture decision — see `docs/rewrite/architecture-decisions.md`.
@@ -25,4 +25,4 @@ No floating major tag yet (nothing is `1.x`), no SBOM/provenance attestation (ni
 
 ## Status
 
-Confirmed: two-image split, registry+tag pattern, and manual process as practiced by Waffle Dashboard. All CI/registry/multi-arch recommendations are Inferred and require approval before being treated as Nusszopf's actual architecture.
+Confirmed: two-image split, registry+tag pattern, and manual process as practiced by Waffle Dashboard. Nusszopf's own choices are decided (GHCR, two images, immutable tag plus `latest`, CI-built multi-arch; `docs/rewrite/decisions-register.md`, `docs/rewrite/architecture-decisions.md`) and implemented in `.github/workflows/release.yml`. The workflow has not run on a real tag, so the published images, their visibility and arm64 are unverified until P-16; the images themselves were built and exercised locally throughout P-7…P-13.

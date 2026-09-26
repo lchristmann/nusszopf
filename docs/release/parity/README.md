@@ -24,9 +24,9 @@ person is listed as pending), **In progress**, **Not started**.
 | P-11 Search index recovery | [`P-11-search-recovery.md`](P-11-search-recovery.md) | Done (closed by the maintainer 2026-09-25; four losses, including an empty and a corrupt Meilisearch, each recovered by the documented block to identical answers, privacy intact; P11-01 (BUG-047, `id:asc` tie-break, approved), P11-02 and P11-03 fixed; GHCR/arm64 deferred to P-16, queue failure while reindexing to P-12, not waived) |
 | P-12 Queue/scheduler | [`P-12-queue-scheduler.md`](P-12-queue-scheduler.md) | Done (closed by the maintainer 2026-09-26; the production stack's worker, Redis and scheduler restarted, killed and stopped with work waiting, a job through all five attempts, `search:reindex` with the worker down, Redis down and Meilisearch lost; O-2 and P-7 evidence reused; P12-01…P12-06 fixed: a Redis crash lost every queued job, `failed_jobs` was invisible to `/health`, mails for deleted accounts, two `search:reindex` gaps, a misleading queue message; the `failed_jobs` health state approved, at-least-once delivery accepted as documented, the Redis AOF upgrade caveat deferred to P-16's N-1 upgrade, not waived) |
 | P-13 E-mail delivery | [`P-13-email-delivery.md`](P-13-email-delivery.md) | Done (closed by the maintainer 2026-09-26; all seven mail types delivered through Resend on the production stack and inspected in Proton Mail; P13-01 fixed, P13-03 (HTML-only) accepted as the intended format; Gmail, Outlook and Apple Mail unverified and deferred to P-16, not waived; a generic SMTP relay with real TLS not tested) |
-| P-14 Documentation completion | [`P-14-documentation.md`](P-14-documentation.md) | Not started |
-| P-15 FOSS repository hygiene | [`P-15-foss-hygiene.md`](P-15-foss-hygiene.md) | Not started |
-| P-16 Release preparation and RC | [`P-16-release.md`](P-16-release.md) | Not started |
+| P-14 Documentation completion | [`P-14-documentation.md`](P-14-documentation.md) | Done (automated part); awaiting the maintainer's review. The docs were audited against the code and P-1…P-13, twelve findings fixed (among them a dev first-run sequence that left the containers without an `APP_KEY`), no Proposal banner left, the P-13 mail decision recorded everywhere; the changelog, the first tag's number and the release-only checks are deferred to P-16, repository hygiene to P-15 |
+| P-15 FOSS repository hygiene | `P-15-foss-hygiene.md` (created by the phase) | Not started |
+| P-16 Release preparation and RC | `P-16-release.md` (created by the phase) | Not started |
 | P-17 Final sign-off | this page, below | Maintainer only |
 
 ## Carried forward to later phases
@@ -72,9 +72,10 @@ person is listed as pending), **In progress**, **Not started**.
 - **P-16 (release):** as for P-8…P-10, the search-recovery drill ran on locally built images. Run
   `sh scripts/search-recovery-test.sh` on the release candidate, with the images pulled from GHCR, and on arm64.
 
-- **P-14/P-16 (tests):** `search.spec.ts`'s recovery test wipes the one shared index, so it can race another engine's
+- **P-16 (tests):** `search.spec.ts`'s recovery test wipes the one shared index, so it can race another engine's
   search test when engines run in parallel on one stack (seen once with 4 workers in P-11). CI is not affected, since it
-  runs one engine per job. Give the test its own index prefix, or run it last.
+  runs one engine per job. Give the test its own index prefix, or run it last. Documented as a known limitation in
+  `docs/testing/README.md` and `README-DEV.md` (P-14).
 
 - **P-12 (queue):** a welcome or verification mail queued for an account that is deleted before the worker sends it
   failed with `ModelNotFoundException` and stayed in `failed_jobs`. Done in P-12: such a job is now dropped (P12-03).
@@ -88,13 +89,25 @@ person is listed as pending), **In progress**, **Not started**.
   (desktop and web) and Apple Mail, and the result recorded in `P-13-email-delivery.md` (section 9), including whether the
   inline SVG logo shows. The maintainer deferred it on 2026-09-26; it is not waived.
 
-- **P-14 (documentation):** a fresh dev stack needs `chown 1000:1000 /var/www/vendor /var/www/node_modules` in the
-  `workspace` container before `composer install`, and `MEILISEARCH_KEY=nusszopf-dev-master-key-change-me` in `.env`
-  for the `meilisearch`-group tests. Neither is in `README-DEV.md`.
+- **P-14 (documentation):** done in P-14. A fresh dev stack needed the `vendor`/`node_modules` volumes handed to the
+  developer's user, and `MEILISEARCH_KEY` in `.env`; P-14 found a third defect of the same first run, the `APP_KEY`
+  generated after the containers had started (P14-01). `README-DEV.md` and `docs/development/README.md` now have the
+  working sequence and a troubleshooting table.
 
 - **P-16 (release):** run `sh scripts/queue-scheduler-test.sh` on the release candidate with the images pulled from
   GHCR, and on arm64. P-9's `upgrade-test.sh` from the stand-ins `4de0194` and `8c4a2eb` now loses sessions and
   in-flight jobs once, because they run Redis without the append-only file; a real N-1 tag does not.
+
+- **P-16 (release):** what P-14 could not close, because it needs a release or a decision:
+  - `CHANGELOG.md` is an empty file, and `release.yml` refuses to publish a release whose tag has no section in it. Its
+    first content is the changelog consolidation of P-16 (`docs/release/changelog.md`).
+  - The number of the first tag: the register says `0.x` until parity, `release-process.md` suggests `0.1.0-rc.1`, and
+    roadmap P-16 names `1.0.0-rc.N`. The maintainer decides when P-16 starts (`docs/release/versioning.md`).
+  - Who writes changelog entries stays deferred (register C1).
+
+- **P-15 (repository hygiene):** CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, issue and pull-request templates, the README's
+  badges (its HTML comment still waits for them), third-party notices and the `.env.example` audit are P-15's. P-14 only
+  corrected the comments in `.env.example` and `.env.production.example` that named SMTP as the only way to send mail.
 
 ## Section 7 checklist
 

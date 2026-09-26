@@ -122,7 +122,7 @@ Decisions about how Nusszopf 2 itself should work — as distinct from `docs/rew
 - Decision: **`spatie/laravel-health`-equivalent** — a small dependency that directly serves the self-hosting operator-experience goal (a dependency-by-dependency status view — DB, Redis, Meilisearch, queue — is materially more useful for a self-hosting operator diagnosing "why is search broken" than a bare 200 OK). No product impact either way.
 - Alternatives: (a) bare `/up`, sufficient for container orchestration health checks; (b) `spatie/laravel-health`, giving operators a real dependency-by-dependency status view (DB, Redis, Meilisearch, queue) — more useful for a self-hosting operator diagnosing "why is search broken" than a bare 200 OK.
 - Consequences: (b) is a small dependency addition but directly serves the self-hosting operator-experience goal better than (a).
-- Revisit conditions: none — should be decided before `docs/deployment/README.md`'s health-check section is finalized as non-proposal.
+- Revisit conditions: none. Implemented (`App\Health\HealthChecker`, `/health`, `nusszopf:health`) and documented in `docs/deployment/README.md`, "Health checks".
 
 ---
 
@@ -199,6 +199,7 @@ Decisions about how Nusszopf 2 itself should work — as distinct from `docs/rew
 - Alternatives: keep SendGrid as the documented default (rejected as the *only* documented path — self-hosters should not be forced into one paid vendor); support only SMTP (simplest, but loses provider-specific features like unsubscribe-list management that the historical product relied on for the newsletter — see the Newsletter-sync intentional change).
 - Consequences: the newsletter list-sync mechanic (`docs/domain/workflows.md`'s `sync_leads_sendgrid`) needs its own explicit decision about what (if anything) replaces "sync to an external marketing list" when SendGrid isn't assumed — not yet made, follow-up needed.
 - Revisit conditions: revisit once the newsletter-sync replacement mechanism is decided. **Resolved by decision A-6 (implemented in slice 9):** no list sync at all — the `leads` table is the list, `php artisan newsletter:export` hands it to an operator's own sender, which must link back to `/newsletter/unsubscribe/lead` (`docs/deployment/operations.md`, "Newsletter subscribers").
+- **Refined at P-13 (maintainer, 2026-09-26): Resend is the recommended provider.** It was verified with real delivery of all seven mail types on the production stack (`docs/release/parity/P-13-email-delivery.md`), and it needs only `resend/resend-php` (a `require` dependency, finding P13-01) plus `RESEND_API_KEY`. Nusszopf uses Laravel's mail abstraction directly and does **not** build or require a provider abstraction of its own: choosing a provider is `MAIL_MAILER` plus that provider's own settings. SMTP remains supported through the same abstraction and is documented as the alternative; it was not tested against a real relay with TLS (Mailpit only). The operator documentation is `docs/deployment/README.md`, "Sending mail".
 
 ---
 

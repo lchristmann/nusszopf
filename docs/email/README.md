@@ -11,6 +11,36 @@ voice ("Nusszopfer:in", "das ist so sicher wie die Nuss im Zopf"). Copy below is
 verbatim where marked **Verbatim** — do not rewrite or "improve" this wording; it is a
 product-fidelity requirement, not placeholder text.
 
+## Nusszopf 2: what is sent and how
+
+Everything below this section is the **historical** specification (the evidence and the verbatim copy). Nusszopf 2 sends
+seven mail types, all queued Mailables built from Blade templates that reproduce the historical copy (deviations are
+recorded as BUG-005, BUG-006 and BUG-010 below and in `docs/rewrite/intentional-changes.md`). Delivery of all seven
+through a real provider on the production stack: `docs/release/parity/P-13-email-delivery.md`.
+
+| Mail | Class | Subject |
+|---|---|---|
+| Welcome (registration) | `WelcomeMail` | Willkommen beim Nusszopf! |
+| E-mail verification | `VerifyEmailMail` | Nusszopf – Bestätige deine E-Mail-Adresse |
+| Password reset link | `ChangePasswordMail` | Nusszopf – Neues Passwort erstellen |
+| Login lockout / blocked IP | `BlockedAccountMail` | Nusszopf – IP-Adresse blockiert |
+| Contact to a project owner | `ContactMail` | Nusszopf – Kontaktanfrage |
+| Newsletter double opt-in | `NewsletterSubscribeMail` | Nussiger Newsletter – Anmeldebestätigung |
+| Newsletter unsubscribe confirmation | `NewsletterUnsubscribeMail` | Nussiger Newsletter – Abmeldebestätigung |
+
+- **Transport:** Laravel's mail abstraction, `MAIL_MAILER`. **Resend is the recommended provider**; an SMTP relay is
+  supported. There is no Nusszopf-specific provider layer (`docs/rewrite/decisions-register.md`, "Mail provider").
+  Setup for operators: `docs/deployment/README.md`, "Sending mail"; running it: `docs/deployment/operations.md`, "Mail".
+- **Sender:** `MAIL_FROM_ADDRESS`/`MAIL_FROM_NAME` for every mail (an address on a domain the provider has verified).
+  The human contact address shown in bodies and footers is `NUSSZOPF_CONTACT_EMAIL`, falling back to the sender.
+- **Format:** HTML only, with no plain-text part (decision P13-03). Only the contact mail has a `Reply-To` (the visitor).
+- **Not sent by Nusszopf 2:** the breached-password alert (item 4 of the historical set: deferred, register C2), the
+  newsletter issues "Nussig No. 1–3" (item 8) and the support letterhead (item 9): they were never triggered by
+  application code, and the newsletter is collected and confirmed here but sent from the operator's own tool
+  (decision A-6).
+- **Verified in a mail client:** Proton Mail (the maintainer, all seven). Gmail, Outlook and Apple Mail are still to be
+  checked before the first release (P-16), including whether the inline SVG logo shows.
+
 ## Shared template anatomy (Confirmed, all templates)
 
 Every template is built with MJML 4.7.1 (`emails-nusszopf/package.json`, engines: Node 12.x,
@@ -330,13 +360,13 @@ These four are triggered directly by `web-nusszopf`'s Next.js API routes calling
    dynamic-template engine HTML-escapes these by default is Unknown from this repo alone;
    flag for security review in the rewrite regardless.
    **BUG-010, Fixed in the sixth slice** (`docs/rewrite/sixth-slice.md`).
-4. **`username` variable passed but apparently unused** in both newsletter subscribe and
+4. *(Closed as accepted residual risk, `docs/rewrite/open-questions.md`: the committed MJML is the copy source.)* **`username` variable passed but apparently unused** in both newsletter subscribe and
    unsubscribe static templates — Unknown whether the actual SendGrid-hosted dynamic
    templates (edited via SendGrid's UI, not necessarily kept in sync with this repo) use it
    for personalization ("Hallo {{username}}...") that this static `.mjml` source has simply
    drifted from. Flag as a source-of-truth conflict: SendGrid dashboard templates may differ
    from what's checked into this repo.
-5. **Newsletter double opt-in is only enforced on one of two creation paths.** A `Lead` created
+5. **Newsletter double opt-in is only enforced on one of two creation paths.** *(Decided 2026-09-21, A-1: double opt-in on every path; BUG-011, implemented in slice 9. The text below is the historical finding.)* A `Lead` created
    via the public newsletter-signup form goes through true double opt-in (this subscribe email
    is sent, confirmation required). A `Lead` created via the "newsletter" checkbox at account
    signup is created **already confirmed**, with no confirmation email sent at all — this

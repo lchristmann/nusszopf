@@ -120,6 +120,15 @@ These are established and should not be silently re-litigated by a future contri
   `text/plain` alternative. It is the intended format, not a defect; do not add text parts. It was received and
   rendered correctly in Proton Mail (`docs/release/parity/P-13-email-delivery.md`).
 
+- Mail provider (decided by the maintainer 2026-09-26, P-13; refines B5): **Resend is the recommended provider**
+  (`MAIL_MAILER=resend`, `RESEND_API_KEY`). It is the one verified with real delivery on the production stack, and its
+  whole integration is one Composer dependency. Nusszopf uses **Laravel's mail abstraction as it is** and does **not**
+  need, and must not grow, a provider abstraction of its own (no Nusszopf mail-driver interface, adapter or
+  per-provider code). A plain SMTP relay (`MAIL_MAILER=smtp`) stays supported through that same abstraction; it was
+  not tested against a real relay with TLS. No other provider is documented. Never hard-couple to a paid vendor:
+  the provider stays the operator's choice (`docs/deployment/README.md`, "Sending mail";
+  `docs/release/parity/P-13-email-delivery.md`).
+
 ## Decision categories (pre-implementation review pass, 2026-09-18)
 
 The 16 items previously listed as a flat "Requires human decision" list have been re-audited and
@@ -150,7 +159,7 @@ question — see that document for the reasoning behind each reclassification.
 | 2 | Backup tier for v1: plain `pg_dump`+`tar`+cron, or `spatie/laravel-backup`-equivalent from day one? | **Simple tier first**, advanced tier documented as an upgrade path | Purely an ops/engineering maturity tradeoff, fully reversible later, no product-behavior implication |
 | 3 | Health-check depth: bare Laravel `/up`, or a dependency-by-dependency status page? | **`spatie/laravel-health`-equivalent** | Small dependency, directly serves the self-hosting goal, no product impact |
 | 4 | Object storage in v1: local disk (S3 as documented upgrade) or required from the start? | **Local disk in v1**, S3-compatible storage as a documented later upgrade | Reversible infrastructure choice; avatars are the only affected feature and their historical behavior is unaffected either way |
-| 5 | Mail provider default: SMTP-only, or document specific transactional providers too? | **SMTP as the universal path**, common providers documented as options | Self-hosting operational concern, not a product decision — never hard-couple to a paid vendor |
+| 5 | Mail provider default: SMTP-only, or document specific transactional providers too? | **Laravel's mail abstraction; SMTP as the universal path; Resend documented and recommended** (refined at P-13, 2026-09-26; see "Already decided", "Mail provider") | Self-hosting operational concern, not a product decision — never hard-couple to a paid vendor |
 | 6 | Rich-text editor replacement for Slate — which package/approach? | **Any Livewire-compatible package, configured down to exactly the confirmed six-tool historical toolbar** (bold/italic/underline, ordered/unordered list, link) — **implemented as TipTap in the second slice** | The product-visible capability ceiling is already Confirmed from evidence (`architecture-decisions.md`) — only the implementing package is left, a pure technical substitution with zero product-visible difference as long as the toolbar is configured down correctly |
 | 7 | `Request` model naming — `App\Models\Request` vs. `App\Models\ProjectRequest`? | **`ProjectRequest`** | Avoids permanent import friction with `Illuminate\Http\Request`; no product-visible effect (German UI copy unaffected either way) |
 | 8 | `ProjectAnalytics` — separate table/model, or columns directly on `Project`? | **Keep separate** | Preserves hot-write/content-write isolation; low-stakes and reversible via a later migration either way |

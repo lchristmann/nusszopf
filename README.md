@@ -33,15 +33,20 @@ Self-hosting (Docker and a domain name; nothing else to install):
 mkdir /opt/nusszopf && cd /opt/nusszopf
 curl -fsSLO https://github.com/lchristmann/nusszopf/releases/latest/download/install.sh
 sh install.sh https://nusszopf.example.org
-# edit .env: MAIL_FROM_ADDRESS (required) and your SMTP relay (MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD)
+# edit .env: MAIL_FROM_ADDRESS (required) and how mail is sent: Resend (MAIL_MAILER=resend, RESEND_API_KEY),
+# recommended, or your own SMTP relay (MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD)
 docker compose up -d
 ```
 
-See `docs/deployment/README.md` for the details (reverse proxy, configuration) and `docs/deployment/operations.md` for running it (health, upgrades, recovery).
+There is no published release yet, so that download does not work today (`docs/release/parity/P-08-fresh-install.md`, P8-01).
+The first release publishes `install.sh` and the images.
+
+See `docs/deployment/README.md` for the details (reverse proxy, mail, configuration) and `docs/deployment/operations.md` for running it (health, backups, upgrades, recovery, troubleshooting).
 
 ## Development
 
-The development workflow is Docker-based and designed to be familiar to developers working on LCxHolz.
+The development workflow is Docker-based and designed to be familiar to developers working on LCxHolz. Everything
+runs in containers; the host needs Docker, Docker Compose and Git. See `README-DEV.md`.
 
 ## Testing
 
@@ -57,11 +62,13 @@ See `docs/README.md`.
 
 Important specifications include design, domain, user journeys, search, authentication, email, and release process.
 
-Start with `docs/rewrite/decisions-register.md` (what's decided vs. what needs a human call), `docs/rewrite/bugs.md` (classified historical defects), and `docs/rewrite/first-slice.md`, `docs/rewrite/second-slice.md` and `docs/rewrite/third-slice.md` (the implemented vertical slices: registration/login, search and project detail; the historical project creation wizard and edit screen; the project requests, Gesuche). `docs/rewrite/README.md` lists every implemented slice (through slice 9, the newsletter); the public shell — Home, legal pages, error pages, SEO — is the last one still to come.
+Start with `docs/rewrite/decisions-register.md` (what's decided vs. what needs a human call), `docs/rewrite/bugs.md` (classified historical defects) and `docs/rewrite/README.md`, which lists the ten implemented vertical slices (registration and login through the public shell: Home, legal pages, error pages, SEO). All feature slices are done. The remaining work before the first release is the finish-line phases, whose evidence is in `docs/release/parity/README.md`.
 
 ## Self-hosting
 
-Nusszopf is intended to be operated by its users. The reference deployment uses Docker Compose.
+Nusszopf is intended to be operated by its users. The reference deployment uses Docker Compose; `docs/deployment/README.md`
+is the installation guide and `docs/deployment/operations.md` the operator's handbook (health checks, backups and restore,
+upgrades and rollback, search recovery, troubleshooting).
 
 ## Releases
 
