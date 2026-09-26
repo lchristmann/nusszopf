@@ -7,7 +7,7 @@ Full evidence and rationale for each choice: `docs/references/lcxholz.md`. This 
 ## The gates
 
 Each row is a job of `.github/workflows/ci.yml`, which also runs as the gate of the release workflow
-(`docs/release/release-process.md`).
+(`docs/release/release-process.md`), except the last two: the `Security` workflow (`.github/workflows/security.yml`) is kept apart, because a new advisory appears without any change to the repository and must not block a release that changed nothing. Dependabot (`.github/dependabot.yml`) proposes the updates weekly.
 
 | Gate (CI job) | Tool | Local command | What it catches |
 |---|---|---|---|
@@ -19,6 +19,8 @@ Each row is a job of `.github/workflows/ci.yml`, which also runs as the gate of 
 | Visual regression | Playwright `toHaveScreenshot` | `docs/testing/visual-regression.md` | Any pixel drift of the 23 screens at phone, tablet and desktop width |
 | Production stack | `scripts/smoke-test.sh` | the same | The production images build, install with `install.sh`, start healthy and answer; `install.sh --upgrade` works |
 | Browser tests on the production images | `scripts/prod-e2e.sh` | the same | The whole Playwright suite against those images |
+| Dependency advisories (`Security` workflow, weekly and on every push and pull request) | `composer audit`, `npm audit` | `composer audit --locked`, `npm audit --omit=dev` | A locked dependency with a published vulnerability |
+| Secret scan (`Security` workflow) | gitleaks over the whole Git history, `.gitleaks.toml` | `docs/development/README.md`, "One canonical command per concern" | A credential committed anywhere in the history |
 
 Not in CI, on purpose: the drills that need a second Docker daemon or hours (`scripts/upgrade-test.sh`,
 `restore-test.sh`, `search-recovery-test.sh`, `queue-scheduler-test.sh`) and the one that sends real mail

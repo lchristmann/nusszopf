@@ -175,6 +175,10 @@ question — see that document for the reasoning behind each reclassification.
 |---|---|---|---|
 | 1 | Who writes changelog entries: PR author (CI-enforced) or maintainer at release time? | Explicitly revisit-once-there-are-more-contributors; does not affect the first implementation slices at all | `architecture-decisions.md` → "Who writes changelog entries" |
 | 2 | Auth: breached-password-check scope (Auth0's breached-password detection feature) | An optional enhancement beyond historical parity (nothing user-facing beyond one email template depended on it uniquely) — not required for the first slices, and can be added later without rework | `docs/authentication/README.md` §7–8 |
+| 3 | Personal data in `docs/deployment/legal-examples/legal-notice.md` (two named people, a street address, a telephone number, published again under a new owner): keep the historical text as the labelled example, or reduce it to placeholders? | A maintainer/privacy call, not a defect; the text is public in the historical repository | `docs/legal/provenance.md`, section 4; `docs/release/parity/P-15-foss-hygiene.md` |
+| 4 | A conduct and security mailbox: `CODE_OF_CONDUCT.md` and `SECURITY.md` use GitHub's private vulnerability form because no address of the project is known | Only the maintainer knows which address they want published | `docs/release/parity/P-15-foss-hygiene.md`, section 5 |
+| 5 | Funding: the historical repositories point `FUNDING.yml` at the original operators' Steady page; the new repository has none | Whose funding page a new repository names is the maintainer's call | `docs/release/parity/P-15-foss-hygiene.md`, section 5 |
+| 6 | E-mail fonts: the decision above says self-hosted, the mail layout still loads Barlow from Google Fonts | Implement it, or amend the decision: see `open-questions.md` | `docs/rewrite/open-questions.md`, "E-mail layout loads Barlow from Google Fonts" |
 
 ### Resolved (moved out of the decision register)
 

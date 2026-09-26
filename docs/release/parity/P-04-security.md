@@ -278,7 +278,8 @@ Nothing needed triage. These audits do not run in CI yet; see recommendations.
     non-empty `*_PASSWORD`, `*_SECRET`, `HEALTH_TOKEN` and `MEILISEARCH_KEY` assignments) found only the development
     defaults (`DB_PASSWORD=nusszopf`, `MAIL_PASSWORD=null`).
   - `tests/Visual/historical-harness/hist.env` holds throwaway values for the local historical harness only.
-  - P-15 repeats the history check with a dedicated scanner.
+  - P-15 repeated the history check with a dedicated scanner (gitleaks over every revision): no secret
+    (`P-15-foss-hygiene.md`, section 3). The `Security` workflow now runs it, with `composer audit` and `npm audit`.
 - **Installation:** `install.sh` generates `APP_KEY`, the database password, the Meilisearch key and `HEALTH_TOKEN`
   with `openssl rand`. It writes `.env` with mode 600 and never overwrites an existing one. Compose refuses to start
   without the required secrets.
@@ -319,7 +320,7 @@ Nothing needed triage. These audits do not run in CI yet; see recommendations.
   its restricted syntax. This is a post-1.0 opportunity: the policy already blocks inline and foreign scripts.
 - **HSTS** belongs to the operator's TLS proxy, not the app. A mistaken long `max-age` sent by the app could lock an
   instance out of plain HTTP. Recommended in `docs/deployment/README.md`.
-- **Dependency audits in CI:** run `composer audit` and `npm audit`, or Dependabot/Renovate (P-15), so a new advisory
+- **Dependency audits in CI:** done in P-15 (`security.yml` runs `composer audit` and `npm audit` weekly, Dependabot proposes updates), so a new advisory
   becomes visible without a manual run.
 - **Development stack:** `APP_ENV=local` does not pin URLs to `APP_URL` (SEC-01), so its in-container browser tests
   can use `http://web`. That is development only; the production images are covered by the smoke test.

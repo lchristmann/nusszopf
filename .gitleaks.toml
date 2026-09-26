@@ -1,0 +1,21 @@
+# Secret scanning configuration (.github/workflows/security.yml; docs/release/parity/P-15-foss-hygiene.md).
+# The default rules stay on; only the three known findings of the P-15 history scan are set aside, each one
+# a value that is public or throwaway by construction. Anything else fails the scan.
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Known non-secrets (P-15, section 3)"
+targetRules = ["generic-api-key"]
+regexTarget = "line"
+regexes = [
+  # The local historical-reference harness (tests/Visual/historical-harness/hist.env): MEILI_API_KEY/MEILI_PK are the
+  # public key Meilisearch v0.19 derives from the harness's own throwaway master key `meilipassword` (`GET /keys`).
+  '''MEILI_(API_KEY|PK)=8396ad0ac604d10823a132cbd027b9b5cb5870718fd7dbf71c6c83e0f80fec7f''',
+  # Archaeology (docs/security/README.md): the local-development Hasura admin secret that the public historical
+  # be-nusszopf repository itself commits. Quoted as evidence, never a credential of this project.
+  '''admin_secret: Si0rxaWj2asd83asdUhkl3''',
+  # Prose in the seventh slice's test table ("token single-use, ...") that the generic rule mistook for a key.
+  '''token single-use, tampered/unknown token rejected''',
+]

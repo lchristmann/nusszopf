@@ -1,0 +1,65 @@
+name: Bug report
+description: Something in Nusszopf does not work as it should
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. Please do not report security vulnerabilities here (see `SECURITY.md`), and do not paste
+        secrets, `.env` files or other people's personal data.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you saw, and what you expected instead. Screenshots help.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to ...
+        2. Click ...
+        3. See ...
+    validations:
+      required: true
+  - type: dropdown
+    id: historical
+    attributes:
+      label: Compared with the historical Nusszopf
+      description: Nusszopf 2 reproduces the historical product (github.com/nusszopf), so a difference from it is a bug, and so is a defect it already had.
+      options:
+        - I don't know
+        - The historical Nusszopf behaved differently (this is a difference)
+        - The historical Nusszopf behaved the same (this is an inherited defect)
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: "The `NUSSZOPF_VERSION` in your `.env` (or, for a development checkout, the commit). `/health` shows it when `HEALTH_TOKEN` is set."
+    validations:
+      required: true
+  - type: dropdown
+    id: setup
+    attributes:
+      label: How it is run
+      options:
+        - Production stack (docker-compose.yaml, released images)
+        - Development stack (compose.dev.yaml)
+        - Something else
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser, device and operating system
+      description: For a problem on a page. Leave empty for a server-side problem.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: "`docker compose logs --tail 200 php-fpm queue-worker` (remove anything private)."
+      render: shell

@@ -1,0 +1,33 @@
+name: Suggestion
+description: A change to what Nusszopf does or how it is run
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Nusszopf 2 is a faithful reimplementation of the historical Nusszopf, so a change to the product's behavior or design
+        needs the maintainer's explicit approval and is recorded in `docs/rewrite/intentional-changes.md`. Suggestions
+        about running, installing or maintaining it are welcome without that step.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of change is it
+      options:
+        - Operating it (installation, upgrades, backups, documentation)
+        - Development (tests, tooling, CI)
+        - Product behavior or design
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What you are trying to do and what stands in the way.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you suggest
+    validations:
+      required: true

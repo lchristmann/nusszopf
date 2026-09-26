@@ -10,6 +10,7 @@ This documentation describes Nusszopf 2 as a product, system, development projec
 - `domain/` — domain model and business rules
 - `email/` — historical email behavior
 - `journeys/` — end-to-end acceptance journeys
+- `legal/` — where the code, fonts and images come from, and under which licenses (`provenance.md`)
 - `references/` — reference-project findings
 - `release/` — FOSS releases and upgrades, and `release/parity/` (the finish-line parity report: one evidence page per phase)
 - `rewrite/` — rewrite methodology and decisions, including `master-roadmap.md` (the plan and the finish-line phases), `bugs.md` (the historical-defect register), `intentional-changes.md` (every deliberate difference from the historical product), `decisions-register.md` (the concise already-decided vs. needs-a-human-decision index), `architecture-decisions.md`, and one page per implemented slice (`first-slice.md` … `tenth-slice.md`)

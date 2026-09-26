@@ -1,0 +1,44 @@
+name: Security
+
+# Dependency advisories and secret scanning (docs/release/parity/P-15-foss-hygiene.md). Kept apart from ci.yml on
+# purpose: a new advisory appears without any change to this repository, and must not fail the release gate that
+# `release.yml` inherits from ci.yml; it shows up here, on the weekly run, instead.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "17 5 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-audit:
+    name: Dependency advisories (Composer, npm)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.5"
+      - name: composer audit (locked versions, production and development)
+        run: composer audit --locked
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: npm audit (production dependencies)
+        run: npm audit --omit=dev
+
+  secrets:
+    name: Secret scan (whole Git history)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # .gitleaks.toml sets aside three known, non-secret values; anything else fails the job. The scanner runs from
+      # its published image, so the same command works on a developer's machine (docs/development/README.md).
+      - run: >
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1
+          git /repo --redact --verbose --log-opts="--all"

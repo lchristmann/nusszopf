@@ -1,0 +1,56 @@
+# Dependency update automation (docs/release/parity/P-15-foss-hygiene.md).
+# One weekly pull request per ecosystem group, so a maintainer reviews a handful of PRs, not dozens. Every PR runs the
+# whole CI gate (.github/workflows/ci.yml). Updates that change stored data or must move in step with something else are
+# ignored below and done by hand, with the documented drill (docs/release/upgrades.md).
+version: 2
+
+updates:
+  - package-ecosystem: composer
+    directory: /
+    schedule: { interval: weekly }
+    groups:
+      composer-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /
+    schedule: { interval: weekly }
+    groups:
+      npm-minor-patch:
+        update-types: [minor, patch]
+    ignore:
+      # Must equal the Playwright image tag in compose.dev.yaml (browsers and library ship together); bumped by hand.
+      - dependency-name: "@playwright/test"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }
+    groups:
+      github-actions:
+        patterns: ["*"]
+
+  # docker/php/Dockerfile: node (the asset build) and nginx. The PHP base image takes its version from a build argument,
+  # which Dependabot cannot read; PHP is raised by hand.
+  - package-ecosystem: docker
+    directory: /docker/php
+    schedule: { interval: weekly }
+    ignore:
+      # Node stays on the current LTS line until the maintainer moves it.
+      - dependency-name: node
+        update-types: ["version-update:semver-major"]
+
+  # docker-compose.yaml (the operator stack) and compose.dev.yaml.
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule: { interval: weekly }
+    ignore:
+      # Stored data: a new major (PostgreSQL, Redis) or minor (Meilisearch) needs a dump/import or a reindex and the
+      # upgrade drills (docs/deployment/operations.md), so it is never proposed automatically.
+      - dependency-name: postgres
+        update-types: ["version-update:semver-major"]
+      - dependency-name: redis
+        update-types: ["version-update:semver-major"]
+      - dependency-name: getmeili/meilisearch
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      # Pinned to @playwright/test (see the npm entry above).
+      - dependency-name: mcr.microsoft.com/playwright

@@ -66,6 +66,8 @@ The compose service names (`web`, `php-fpm`, `workspace`, `queue-worker`, `sched
 | Search index recovery drill (loses the index four ways, recovers it with the documented blocks, compares every search answer; privileged `docker:dind`) | `sh scripts/search-recovery-test.sh` |
 | Queue and scheduler drill (restarts and kills the worker, Redis and the scheduler with work waiting, fails jobs through all their retries, breaks `search:reindex` three ways; privileged `docker:dind`, about an hour) | `sh scripts/queue-scheduler-test.sh` |
 | Real mail through the production stack (sends seven real messages; a release step) | `P13_RECIPIENT=you@example.org sh scripts/mail-delivery-test.sh` |
+| Dependency advisories (run inside `workspace` for Composer, anywhere with Node for npm; CI runs both weekly) | `composer audit --locked` and `npm audit --omit=dev` |
+| Secret scan of the whole Git history (host Docker; `.gitleaks.toml` is picked up; CI: `Security` workflow) | `docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 git /repo --redact --log-opts="--all"` |
 | Logs | `docker compose -f compose.dev.yaml logs -f [service]` |
 
 This table must stay in sync with `composer.json`/`package.json` scripts as they are implemented — a command listed here that no longer exists, or an implemented script missing from here, is a documentation bug.

@@ -2,7 +2,24 @@
 
 > Revival and faithful reimplementation of the Nusszopf project.
 
-<!-- Add technology badges here after confirming the final stack and CI/release targets. -->
+[![CI](https://github.com/lchristmann/nusszopf/actions/workflows/ci.yml/badge.svg)](https://github.com/lchristmann/nusszopf/actions/workflows/ci.yml)
+[![Security](https://github.com/lchristmann/nusszopf/actions/workflows/security.yml/badge.svg)](https://github.com/lchristmann/nusszopf/actions/workflows/security.yml)
+[![License: GPL v3 or later](https://img.shields.io/badge/License-GPL--3.0--or--later-blue.svg)](LICENSE)
+
+![PHP](https://img.shields.io/badge/PHP-8.5-777BB4?logo=php&logoColor=white)
+![Laravel](https://img.shields.io/badge/Laravel-13-FF2D20?logo=laravel&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
+![Blade](https://img.shields.io/badge/Blade-Template-F05340?logo=laravel&logoColor=white)
+![Livewire](https://img.shields.io/badge/Livewire-4-FB70A9?logo=livewire&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-Cache_%26_Queue-FF4438?logo=redis&logoColor=white)
+![Meilisearch](https://img.shields.io/badge/Meilisearch-1.11-FF5CAA?logo=meilisearch&logoColor=white)
+![Pest](https://img.shields.io/badge/Pest-5-8A4182?logo=php&logoColor=white)
+![Playwright](https://img.shields.io/badge/Playwright-E2E_Testing-2EAD33?logo=playwright&logoColor=white)
+![Larastan](https://img.shields.io/badge/Larastan-Level_7-4F5B93?logo=php&logoColor=white)
+![Laravel Pint](https://img.shields.io/badge/Laravel_Pint-Code_Style-FF2D20?logo=laravel&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-CI/CD-2088FF?logo=githubactions&logoColor=white)
 
 Nusszopf is a free and open-source, self-hostable application.
 
@@ -74,11 +91,17 @@ upgrades and rollback, search recovery, troubleshooting).
 
 Released versions, changelogs, upgrade instructions, and Docker images are documented under `docs/release/`.
 
+## Contributing, security and conduct
+
+Contributions are welcome: see [`CONTRIBUTING.md`](CONTRIBUTING.md). Please report vulnerabilities privately as described
+in [`SECURITY.md`](SECURITY.md). Everyone taking part is expected to follow the
+[Code of Conduct](CODE_OF_CONDUCT.md).
+
 ## License
 
 Nusszopf is free software, licensed under the **GNU General Public License v3.0 or later**
 (`GPL-3.0-or-later`); see [`LICENSE`](LICENSE). Third-party components and their licenses are listed
-in [`NOTICE`](NOTICE).
+in [`NOTICE`](NOTICE); where the assets come from is in [`docs/legal/provenance.md`](docs/legal/provenance.md).
 
 Nusszopf 2 is a reimplementation of the historical Nusszopf (`web-nusszopf`, `be-nusszopf`,
 `emails-nusszopf`), which is also licensed under the GPL v3.0. Its design, copy and email templates
