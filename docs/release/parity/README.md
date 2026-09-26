@@ -23,7 +23,7 @@ person is listed as pending), **In progress**, **Not started**.
 | P-10 Backup/restore drill | [`P-10-backup-restore.md`](P-10-backup-restore.md) | Done (closed by the maintainer 2026-09-25; restored onto an empty Docker host: data, files and search identical, the Chromium suite green; the rollback from `8c4a2eb` works and can be upgraded again; P10-01…P10-05 fixed; the GHCR pull, arm64 and a physically separate host deferred to P-16, not waived; encryption and stale-backup alerting out of v1 scope by decision B2) |
 | P-11 Search index recovery | [`P-11-search-recovery.md`](P-11-search-recovery.md) | Done (closed by the maintainer 2026-09-25; four losses, including an empty and a corrupt Meilisearch, each recovered by the documented block to identical answers, privacy intact; P11-01 (BUG-047, `id:asc` tie-break, approved), P11-02 and P11-03 fixed; GHCR/arm64 deferred to P-16, queue failure while reindexing to P-12, not waived) |
 | P-12 Queue/scheduler | [`P-12-queue-scheduler.md`](P-12-queue-scheduler.md) | Done (closed by the maintainer 2026-09-26; the production stack's worker, Redis and scheduler restarted, killed and stopped with work waiting, a job through all five attempts, `search:reindex` with the worker down, Redis down and Meilisearch lost; O-2 and P-7 evidence reused; P12-01…P12-06 fixed: a Redis crash lost every queued job, `failed_jobs` was invisible to `/health`, mails for deleted accounts, two `search:reindex` gaps, a misleading queue message; the `failed_jobs` health state approved, at-least-once delivery accepted as documented, the Redis AOF upgrade caveat deferred to P-16's N-1 upgrade, not waived) |
-| P-13 E-mail delivery | [`P-13-email-delivery.md`](P-13-email-delivery.md) | In progress (all seven mail types delivered through Resend on the production stack; P13-01 fixed; Proton inspection pending the maintainer; Gmail, Outlook and Apple Mail not verified, so not closable) |
+| P-13 E-mail delivery | [`P-13-email-delivery.md`](P-13-email-delivery.md) | Done (closed by the maintainer 2026-09-26; all seven mail types delivered through Resend on the production stack and inspected in Proton Mail; P13-01 fixed, P13-03 (HTML-only) accepted as the intended format; Gmail, Outlook and Apple Mail unverified and deferred to P-16, not waived; a generic SMTP relay with real TLS not tested) |
 | P-14 Documentation completion | [`P-14-documentation.md`](P-14-documentation.md) | Not started |
 | P-15 FOSS repository hygiene | [`P-15-foss-hygiene.md`](P-15-foss-hygiene.md) | Not started |
 | P-16 Release preparation and RC | [`P-16-release.md`](P-16-release.md) | Not started |
@@ -79,9 +79,14 @@ person is listed as pending), **In progress**, **Not started**.
 - **P-12 (queue):** a welcome or verification mail queued for an account that is deleted before the worker sends it
   failed with `ModelNotFoundException` and stayed in `failed_jobs`. Done in P-12: such a job is now dropped (P12-03).
 
-- **P-13 (e-mail):** P-12 used a Mailpit, so the retry policy against a real relay's failures (greylisting, throttling,
-  timeouts) is still unmeasured, and a mail queued at the moment of a worker crash can be delivered twice
-  (`P-12-queue-scheduler.md`, section 6).
+- **P-13 (e-mail):** done in P-13 for Resend (a controlled provider failure reached `failed_jobs`; the P-12 queue path is
+  unchanged). Rate limiting (429), greylisting and a provider outage are still unmeasured, and a mail queued at the
+  moment of a worker crash can be delivered twice (`P-12-queue-scheduler.md`, section 6), which with a real provider is a
+  second mail. A generic SMTP relay with real TLS was not tested either.
+
+- **P-16 (release):** the seven mails of `scripts/mail-delivery-test.sh` must be received and rendered in Gmail, Outlook
+  (desktop and web) and Apple Mail, and the result recorded in `P-13-email-delivery.md` (section 9), including whether the
+  inline SVG logo shows. The maintainer deferred it on 2026-09-26; it is not waived.
 
 - **P-14 (documentation):** a fresh dev stack needs `chown 1000:1000 /var/www/vendor /var/www/node_modules` in the
   `workspace` container before `composer install`, and `MEILISEARCH_KEY=nusszopf-dev-master-key-change-me` in `.env`

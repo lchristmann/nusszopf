@@ -275,6 +275,10 @@ These four are triggered directly by `web-nusszopf`'s Next.js API routes calling
 
 ## Cross-cutting observations
 
+- **HTML-only mail (decided, P-13):** Nusszopf 2 sends every mail as HTML only, with no plain-text alternative. The
+  maintainer accepted this as the intended format on 2026-09-26 (`docs/rewrite/decisions-register.md`, "Mail format"),
+  so it is not a gap to fill. Real delivery through Resend: `docs/release/parity/P-13-email-delivery.md`.
+
 - **Links in Nusszopf 2 mails (P-4, SEC-01):** every link starts with `APP_URL`, never with the host of the request that
   triggered the mail, so a forged `Host` header cannot redirect a reset or confirmation token
   (`docs/release/parity/P-04-security.md`).

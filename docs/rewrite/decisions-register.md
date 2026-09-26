@@ -116,6 +116,10 @@ These are established and should not be silently re-litigated by a future contri
 - Dedicated `queue-worker` and `scheduler` Compose services (LCxHolz's pattern) — Nusszopf has real
   background work (search indexing, mail) that needs them, unlike two of the three references.
 
+- Mail format (decided by the maintainer 2026-09-26, P-13; P13-03): every Nusszopf mail is **HTML-only**, with no
+  `text/plain` alternative. It is the intended format, not a defect; do not add text parts. It was received and
+  rendered correctly in Proton Mail (`docs/release/parity/P-13-email-delivery.md`).
+
 ## Decision categories (pre-implementation review pass, 2026-09-18)
 
 The 16 items previously listed as a flat "Requires human decision" list have been re-audited and

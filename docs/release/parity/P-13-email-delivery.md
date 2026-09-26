@@ -3,9 +3,11 @@
 Exit evidence (`master-roadmap.md` §4): "Every mail type received and rendered in at least Gmail, Outlook and Apple
 Mail; docs list operator DNS prerequisites."
 
-**Status: In progress. Not closable yet.** Delivery through a real provider is done and the operator documentation
-exists. The roadmap's rendering evidence is not complete: Proton Mail is waiting for the maintainer's manual
-inspection (section 5), and Gmail, Outlook and Apple Mail could not be inspected (section 9).
+**Status: Done (closed by the maintainer 2026-09-26), with Gmail, Outlook and Apple Mail deferred to P-16, not
+waived.** All seven mail types were delivered through a real provider on the production stack and inspected by the
+maintainer in Proton Mail, the operator documentation exists, and the failure path was observed. The roadmap names
+Gmail, Outlook and Apple Mail; none of them was available, so their rendering has **not** been verified (section 9).
+The maintainer closed the phase on that basis. The three checks are carried to P-16 and remain owed.
 
 The maintainer's scope, in short: use the Resend account as the real transactional provider; keep Mailpit for
 development; send every mail type the application sends through the production queue to one test mailbox; verify
@@ -45,7 +47,7 @@ Environment: `scripts/mail-delivery-test.sh` builds the production images from t
 installs them into a clean directory with `install.sh`, as P-7 does, and starts the production stack (`docker-compose.yaml`
 plus `compose.prod.yaml`, project `nusszopf-mail-delivery`) with the Redis queue, the production worker command and no
 Mailpit. `APP_URL` is `http://127.0.0.1:18113`, so links in the received mails work on the maintainer's machine, while
-the stack is left running (section 5).
+the stack ran (section 5).
 
 ## 3. Send matrix and delivery result
 
@@ -95,10 +97,14 @@ mailer, and reads the message that reaches the transport. It sends nothing. Resu
   template syntax is shown as typed. The account name is hostile too (`<b>P13 "Nuss" & Zopf</b>`); no template prints it.
 - **Branding:** the shared layout, with the logo inlined as SVG (no external request), as before.
 
-## 5. Proton Mail: manual inspection (pending the maintainer)
+## 5. Proton Mail: manual inspection
 
-The seven messages were sent at 16:21 UTC (18:21 in Germany) to the test mailbox. Nothing below is marked as passed
-until the maintainer has looked. **Result: not yet confirmed.**
+The seven messages were sent at 16:21 UTC (18:21 in Germany) to the test mailbox.
+
+**Result (the maintainer, 2026-09-26): all seven messages inspected in Proton Mail; delivery, rendering, branding,
+links and the relevant message behaviour were correct; no observations and no defects.** This is the maintainer's
+statement; the checklist below is what was asked of them, and no per-item values (header results, the presence of a
+plain-text part) were reported back, so none are recorded here as observed.
 
 Do this once in the mailbox (`More` → `View headers`, or `View source`, on any one message, for the header checks;
 the same headers apply to all seven):
@@ -122,11 +128,11 @@ Then, for each message, look at the rendered mail (dark and light theme of the c
 | 6 | Newsletter – Anmeldebestätigung | Heading with soft hyphens ("Der News­letter ist zum Grei­fen nah!"), button "E-Mail-Adresse bestätigen" | The button: the confirmation page |
 | 7 | Newsletter – Abmeldebestätigung | Heading "Der Nusszopf liebt dich sowieso!", button "Abmelden bestätigen" | The button: the unsubscribe confirmation |
 
-Links point at `http://127.0.0.1:18113` and work only on this machine while the stack is left running
-(`docker compose -p nusszopf-mail-delivery -f /tmp/tmp.gTUPKTJIlo/docker-compose.yaml down -v` stops it). Mail clients
+Links pointed at `http://127.0.0.1:18113`, which worked on the maintainer's machine while the stack ran; the stack has been
+removed since. Mail clients
 that rewrite or proxy links (Proton warns before opening one) are expected to show their usual notice.
-Also note in the Resend dashboard (Emails) whether all seven show **Delivered**; the API key used here is restricted to
-sending, so the events could not be read by the scripts.
+The Resend dashboard's delivery events were not reported and could not be read by the scripts (the key is restricted to
+sending); the maintainer's inspection of all seven received messages is the delivery evidence.
 
 ## 6. DNS and header evidence
 
@@ -171,7 +177,7 @@ the same exception type and take the same retry path; that is a reasoning, not a
 |---|---|---|
 | P13-01 | `MAIL_MAILER=resend` could not send: the mailer and the key were configured, but `resend/resend-php` was not installed, so the image had no transport | **Fixed.** Dependency added to `require`. Regression tests `tests/Feature/Mail/ResendMailerTest.php` (the package is a production dependency; the mailer builds from `RESEND_API_KEY`). Verified by real delivery |
 | P13-02 | Operator documentation named only an SMTP relay; `.env.production.example` did not mention the Resend option, the recreate-not-restart rule, or that a sender on an unverified domain is refused | **Fixed.** `docs/deployment/README.md` "Sending mail", `.env.production.example`, `docs/testing/README.md` |
-| P13-03 | The application sends **HTML-only** mails: no `text/plain` alternative on any of the seven | **Open, not fixed.** The historical templates were MJML sent through SendGrid dynamic templates; whether those had a text part is Unknown (`docs/email/README.md`, cross-cutting). The received source (section 5) shows whether Resend adds one. Adding a text part would be a product decision, not a fix, until then |
+| P13-03 | The application sends **HTML-only** mails: no `text/plain` alternative on any of the seven | **Accepted by the maintainer (2026-09-26) as the intended Nusszopf mail format; not a defect, no change.** Do not add text parts. Recorded in `docs/rewrite/decisions-register.md` ("Mail format") and `docs/email/README.md` |
 | P13-04 | With a `no-reply@` sender and no `NUSSZOPF_CONTACT_EMAIL`, every footer, the error page and the contact card say "write to the no-reply address" | **Documented**, not a code change: it is the existing, decided fallback (`docs/deployment/README.md`, "Your identity"); the new "Sending mail" section says to set the variable |
 
 None of the four is a historical defect, so `docs/rewrite/bugs.md` and `intentional-changes.md` are unchanged.
@@ -183,10 +189,13 @@ None of the four is a historical defect, so `docs/rewrite/bugs.md` and `intentio
 | Gmail | **Not verified.** No Gmail mailbox was available |
 | Outlook | **Not verified.** No Outlook mailbox was available. Outlook desktop's Word-based renderer is the client most likely to differ (rounded buttons, inlined SVG) |
 | Apple Mail | **Not verified.** No Apple device was available |
-| Proton Mail | Sent; awaiting the maintainer's observation (section 5). Additional evidence, **not** a replacement for the three |
+| Proton Mail | **Verified by the maintainer**, all seven messages (section 5). Additional evidence, **not** a replacement for the three |
 
-Consequence: the roadmap's exit criterion is **not met**. P-13 stays open until the three clients are inspected, or the
-maintainer explicitly narrows the criterion in writing. It was not narrowed here.
+Consequence: the roadmap's exit criterion names Gmail, Outlook and Apple Mail, so it is **not fully met**. The
+maintainer closed P-13 anyway on 2026-09-26, keeping the three checks recorded as unverified and deferred, as P-5
+deferred the real-device pass. They are **not waived**: P-16 (release candidate testing) must receive the seven
+messages in a Gmail, an Outlook (desktop and web) and an Apple Mail mailbox and record the result here, including
+whether the inline SVG logo shows.
 
 A risk worth knowing for that pass: the logo is an inline `<svg>`, and email clients are commonly reported not to render
 inline SVG (Gmail and Outlook in particular). This was not tested here. If the header shows nothing in a client, that
@@ -194,12 +203,13 @@ is a finding for this phase (the historical logo was a hosted image, `docs/email
 
 ## 10. Limitations and deferred checks
 
-- Gmail, Outlook, Apple Mail (section 9); Proton pending (section 5).
+- Gmail, Outlook, Apple Mail: unverified, deferred to P-16 (section 9).
 - A generic SMTP relay with real TLS: not tested; Resend was used through its API. The SMTP path is still verified only
   against Mailpit.
 - Provider-side delivery events (delivered, bounced, complained): the key is restricted to sending, so they were not
-  read; the maintainer reads them in the dashboard (section 5). A full-access key would let the script check them.
-- DKIM/SPF/DMARC results as a receiver saw them: pending the received headers.
+  read by the scripts. A full-access key would let them check.
+- DKIM/SPF/DMARC results as a receiver saw them: not recorded (the maintainer reported no header values), so the
+  alignment reasoning in section 6 stays an inference.
 - The message identifiers Resend returned were not recorded, so a message cannot be matched to the dashboard except by
   time (16:21 UTC) and subject.
 - Rate limits (429), key revocation, provider outage, greylisting: not measured (section 7). The queue may deliver a
@@ -214,4 +224,4 @@ P13_RECIPIENT=you@example.org sh scripts/mail-delivery-test.sh          # real m
 docker compose exec -T php-fpm php < scripts/mail-delivery-inspect.php   # what goes on the wire; sends nothing
 ```
 
-Not started: P-14 and later.
+Closed by the maintainer 2026-09-26. Not started: P-14 and later.
