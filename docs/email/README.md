@@ -54,7 +54,9 @@ Common structure across every template:
   background `#CFD8DC` (blue-grey 100).
 - Header: 180px-wide Nusszopf logo image (hosted on SendGrid's CDN
   `cdn.mcauto-images-production.sendgrid.net`), top of card, no padding.
-- Body typography: font family "Barlow" (Google Fonts, weights 500/700), heading
+- Body typography: font family "Barlow" (Google Fonts, weights 500/700; **Nusszopf 2 serves the same two weights
+  itself**, `public/build/fonts/barlow-latin-{500,700}.woff2` through `@font-face`, decision "Repository hygiene
+  decisions" of `docs/rewrite/decisions-register.md`), heading
   `24px/700/#37474F`, body text `16px/500/#37474F` line-height `22px`.
 - "Not you?" / security-notice text, where present, is colored `#B84405` (burnt orange).
 - Buttons: pill-shaped (`border-radius: 100px`), `2px solid #37474F` border,

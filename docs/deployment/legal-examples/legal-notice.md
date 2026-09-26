@@ -1,21 +1,21 @@
-> **Beispiel, nicht zur Veröffentlichung.** Dies ist der Text der ursprünglichen Nusszopf-Betreiber:innen (Stand 2021), unverändert aus dem historischen Quellcode übernommen. Er ist weder geprüft noch auf deine Instanz zugeschnitten – ersetze ihn durch deinen eigenen Text.
+> **Beispiel, nicht zur Veröffentlichung.** Dies ist der Text der ursprünglichen Nusszopf-Betreiber:innen (Stand 2021), aus dem historischen Quellcode übernommen; die Angaben zu Personen, Anschrift und Telefon sind durch Platzhalter in eckigen Klammern ersetzt, die du selbst ausfüllen musst. Er ist weder geprüft noch auf deine Instanz zugeschnitten – ersetze ihn durch deinen eigenen Text.
 
 ## Angaben gemäß § 5 TMG
 
-Melina Oppelt & Michael Schwarz  
-Schertlinstraße 10  
-86159 Augsburg
+[Name der verantwortlichen Person oder Organisation]  
+[Straße und Hausnummer]  
+[Postleitzahl und Ort]
 
 ## Kontakt
 
-T: (+49) 179 422 53 70  
+T: [Telefonnummer]  
 M: mail@nusszopf.org
 
 ## Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV
 
-Melina Oppelt & Michael Schwarz  
-Schertlinstraße 10  
-86159 Augsburg
+[Name der verantwortlichen Person oder Organisation]  
+[Straße und Hausnummer]  
+[Postleitzahl und Ort]
 
 ## Haftung für Inhalte
 

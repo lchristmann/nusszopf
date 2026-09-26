@@ -4,10 +4,11 @@ Exit evidence (`master-roadmap.md` §4): "Checklist against Waffle Dashboard's r
 LICENSE, CONTRIBUTING, SECURITY.md, CODE_OF_CONDUCT, issue/PR templates, third-party license notices, asset provenance
 (A-5), Dependabot/Renovate, the `.env.example` audit and "no secrets in history" (roadmap §7.5, item 21).
 
-**Status: Done, awaiting the maintainer's sign-off.** Every item of the roadmap row now exists and was checked; ten
-findings were fixed or recorded (section 2); the whole Git history (117 commits, and the root commit separately) has
-no secret; the dependencies have no known vulnerability and no incompatible license. What is left needs the maintainer
-or a release, and is listed in section 5 with the reason.
+**Status: Done (closed by the maintainer 2026-09-26, on commit `8c62991` with the decisions and fixes of section 8).**
+Every item of the roadmap row now exists and was checked; twelve findings were fixed or recorded (section 2); the whole
+Git history (118 commits) has no secret; the dependencies have no known vulnerability and no incompatible license. The
+maintainer's decisions on the open points were applied and recorded (section 8). What is left is two GitHub settings
+that only the maintainer can change from their account, and the first run of the workflows on GitHub (section 5).
 
 ## 1. Method
 
@@ -28,15 +29,17 @@ or a release, and is listed in section 5 with the reason.
 | ID | Finding | Result |
 |---|---|---|
 | P15-01 | No `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, issue templates or pull-request template; `.github` held only the two workflows | **Fixed.** `CONTRIBUTING.md` restates the existing rules for people (read the register and `bugs.md` first, the bug-classification workflow, the checks in the order of `docs/development/README.md`, docs in the same change, no SaaS concepts); the pull-request template is the same checklist. `SECURITY.md`: private reporting through GitHub, latest release supported, scope, no promised response time (a single maintainer). Issue forms: bug report (asks whether the historical Nusszopf did the same), suggestion (product changes need approval, as `CLAUDE.md` says), `config.yml` with blank issues off and links to the private form and the operator's handbook |
-| P15-02 | The historical repositories carry a Contributor Covenant **1.4** whose enforcement contact was never filled in (it reads "at undefined") | **Fixed** in the new file: Contributor Covenant **2.1**, unmodified except the contact, which is GitHub's private form, since no project address is known (section 5, D2). The historical `bug_report.md` template is a GitHub default; the new forms replace it |
+| P15-02 | The historical repositories carry a Contributor Covenant **1.4** whose enforcement contact was never filled in (it reads "at undefined") | **Fixed** in the new file: Contributor Covenant **2.1**, unmodified except the contact, which is GitHub's private form, since the maintainer decided on no separate address (section 8). The historical `bug_report.md` template is a GitHub default; the new forms replace it |
 | P15-03 | The production build carried **no license notices**: MIT and OFL require them to accompany what is shipped, and the bundle had no legal comments and the Barlow fonts no OFL text | **Fixed.** `vite.config.js`: `build.license` writes `public/build/THIRD-PARTY-LICENSES.txt` (the 37 bundled JavaScript packages) and a small plugin emits `public/build/LICENSE-barlow.txt`. Both are in the image (the frontend stage copies `public/build`) and served under `/build/` as `text/plain`, checked in the development stack. `NOTICE` names them |
 | P15-04 | The environment templates had drifted from the code: `.env.example` lacked `RESEND_API_KEY`, `HEALTH_TOKEN`, `NUSSZOPF_REGISTER_LIMIT` and `LOCATIONIQ_URL`, and carried `VITE_APP_NAME`, which nothing reads | **Fixed** in `.env.example` (commented optional entries; the unused line removed). `.env.production.example` was already complete (P-14); every key of both templates is read by the code or the Compose files, and the keys of the code that they lack are framework defaults, the development stub URL and test knobs. No non-empty secret in either: only the documented development defaults (`DB_PASSWORD=nusszopf`) |
-| P15-05 | The README's badge comment still waited for the stack and CI targets, both settled | **Fixed:** CI, Security and license badges, and the technology badges of `README-DEV.md`. There is no release badge until the first release (P-16). The CI and Security badges show "no status" until the repository is public and the workflows have run (D1) |
+| P15-05 | The README's badge comment still waited for the stack and CI targets, both settled | **Fixed:** CI, Security and license badges, and the technology badges of `README-DEV.md`. There is no release badge until the first release (P-16). The CI and Security badges show "no status" until the workflows have run on GitHub (D7) |
 | P15-06 | No dependency-update automation and no advisory check in CI (P-4's recommendation) | **Fixed.** `.github/dependabot.yml`: weekly, grouped pull requests for Composer, npm, GitHub Actions, the Dockerfile and the Compose files. It ignores what must not move alone: majors of PostgreSQL and Redis and any major or minor of Meilisearch (stored data: dump/import or reindex and the upgrade drills), the Playwright image and `@playwright/test` (they must match), Node majors; PHP takes its version from a build argument and is raised by hand. `.github/workflows/security.yml` runs `composer audit --locked`, `npm audit --omit=dev` and the secret scan on push, pull request and weekly. It is separate from `ci.yml` on purpose, so that an advisory published tomorrow cannot fail a release gate for a commit that changed nothing |
 | P15-07 | Asset provenance was undocumented (A-5 decided the rights, not where each file comes from) | **Fixed:** `docs/legal/provenance.md` lists every shipped asset and dependency set with origin and terms. Confirmed by byte comparison with the historical repository: all five sponsor/partner logos, the big Nusszopf logo, all favicons, the pinned-tab SVG and `og-image.png` are identical to `web-nusszopf`; Feather (MIT, license text present), Barlow (OFL) and Lucide (ISC) are named; the one test image is a synthetic gradient |
-| P15-08 | `docs/deployment/legal-examples/legal-notice.md` publishes two named people's street address and telephone number, again, under a new owner. The register says the historical texts ship as labelled examples (A-4/A-5) | **Not changed; needs the maintainer** (register C3). The text is public in the historical repository, so this is a privacy judgment, not a defect |
-| P15-09 | The mail layout loads Barlow from `fonts.googleapis.com`; the register and roadmap say the email fonts are self-hosted | **Not changed; needs the maintainer** (register C6, `open-questions.md`). It contradicts a recorded decision, so it is written down instead of coded around; it is not hygiene |
+| P15-08 | `docs/deployment/legal-examples/legal-notice.md` published two named people's street address and telephone number, again, under a new owner (the same address is in `legal-policy.md` and `privacy.md`, together with the names) | **Fixed on the maintainer's decision (register, "Repository hygiene decisions"):** names, street address and telephone number are bracketed placeholders in all three examples, whose first line says so; `legal-examples/README.md` explains it. `mail@nusszopf.org`, the historical operator's public contact, stays. Nothing else in the tracked files names a private person (searched: names, street, telephone number) |
+| P15-09 | The mail layout loaded Barlow from `fonts.googleapis.com`; the register and roadmap say the email fonts are self-hosted | **Fixed on the maintainer's decision.** `vite.config.js` emits the Barlow Latin 500 and 700 files as `public/build/fonts/barlow-latin-{500,700}.woff2` (fixed names: the hashed names of `public/build/assets/` change with every build, and a mail sent last year must keep finding its font); the layout declares them with `@font-face` (absolute URLs of the instance) and keeps `'Barlow', Arial, sans-serif`, so clients that ignore web fonts or block remote content show Arial. Same weights, subset (Latin: German copy), family and sizes as the historical mail; no request goes to Google. Regression test in `tests/Feature/Mail/ContactMailTest.php`. Not verified in real Gmail/Outlook/Apple Mail (P-16's real-client pass) |
 | P15-10 | The local, untracked `.env` holds a real Resend key (P-13) | **Not a finding for the repository:** the file is ignored (`.gitignore`), excluded from the image (`.dockerignore`), and its value is in no revision of the history (searched for the value itself, not for a pattern) |
+| P15-11 | The repository is public (the maintainer's decision); `SECURITY.md`, the issue-form link and the Code of Conduct name GitHub's private vulnerability form as the only private channel | **Recorded.** No separate security or conduct mailbox, no `FUNDING.yml`: register, "Repository hygiene decisions". Private vulnerability reporting and Dependabot alerts/security updates could not be switched on from this environment (section 5, D1) |
+| P15-12 | `docs/deployment/README.md` still said the repository would go public in P-15 | **Fixed** (it is public) |
 
 ## 3. Secrets
 
@@ -74,15 +77,14 @@ No history rewrite was needed or done.
 
 | # | Item | Why | Owner |
 |---|---|---|---|
-| D1 | Make the repository public, enable **private vulnerability reporting** (Settings, Code security), Dependabot alerts and security updates, set the description and topics, and check that the CI and Security badges resolve | Outward-facing settings; the repository appears to be private today (an anonymous `git ls-remote` of its URL asks for credentials). `SECURITY.md`, the Code of Conduct and the issue form link to the private reporting form, which does not exist until it is enabled. Suggested description: "Revival and faithful reimplementation of Nusszopf, a free, self-hostable application"; topics: `laravel`, `livewire`, `self-hosted`, `foss`, `postgresql`, `meilisearch`, `docker` | Maintainer, before P-16 |
-| D2 | A project address for conduct reports and vulnerabilities, if the maintainer wants one besides GitHub's form | Only the maintainer knows which address to publish (register C4) | Maintainer |
-| D3 | `FUNDING.yml` | The historical one names the original operators' Steady page; whose page a new repository names is the maintainer's call (register C5). The Profile's sponsoring link is the historical brand URL (A-5) and unchanged | Maintainer |
-| D4 | P15-08, the named people in the legal example | Register C3 | Maintainer |
-| D5 | P15-09, the Google Fonts link in the mail layout | Register C6, `open-questions.md` | Maintainer |
+| D1 | **Enable private vulnerability reporting** (repository Settings, Code security, "Private vulnerability reporting") and **Dependabot alerts and Dependabot security updates** (same page). Then check that the CI and Security badges resolve, and set the description and topics. Suggested description: "Revival and faithful reimplementation of Nusszopf, a free, self-hostable application"; topics: `laravel`, `livewire`, `self-hosted`, `foss`, `postgresql`, `meilisearch`, `docker` | **Not done, cannot be done from this environment:** there is no `gh` CLI and no GitHub token here (the remote is an SSH URL), so the settings were neither changed nor read back. They are the maintainer's actions, not complete. Until private reporting is enabled, the "Report a vulnerability" links in `SECURITY.md`, `CODE_OF_CONDUCT.md` and the issue form lead to a page that does not accept reports. (The repository itself is public: an anonymous `git ls-remote` and the API answer without credentials.) | Maintainer, before P-16 |
 | D6 | The Home sponsor row naming Vercel, Auth0 and Sanity (A-5 asked for a re-read "before the release candidate") | The maintainer's explicit fidelity choice; not a hygiene defect | P-16 |
-| D7 | The first Dependabot pull requests, and the `Security` workflow's first run on GitHub, cannot be seen until D1; the workflow's three commands were run locally as written (section 6) | Needs the public repository | Maintainer / P-16 |
-| D8 | A docs link check in CI (P-14 D5 suggested it here) | The script of P-14 was a one-off and is not in the repository; a link checker is a tool choice, not a hygiene requirement. The links of the pages written here were checked by hand (section 6) | later |
-| D9 | `CHANGELOG.md` content, the first tag's number, GHCR/arm64 checks, real-device and mail-client passes | Unchanged, P-16 | P-16 |
+| D7 | The first Dependabot pull requests, and the `Security` workflow's first run on GitHub, cannot be seen until the maintainer pushes the commits and enables D1; the workflow's three commands were run locally as written (section 6) | Needs the pushed repository | Maintainer / P-16 |
+| D8 | A docs link check in CI (P-14 D5 suggested it here) | **A non-blocking future improvement, by decision** (section 8). The links of the pages written and changed here were checked by hand | later, unscheduled |
+| D9 | `CHANGELOG.md` content, the first tag's number, GHCR/arm64 checks, real-device and mail-client passes (this includes how the self-hosted Barlow renders in real clients) | Unchanged, P-16 | P-16 |
+
+Closed by the maintainer's decisions of section 8: the conduct/security address (D2: none), `FUNDING.yml` (D3: none), the
+named people in the legal example (D4) and the mail layout's Google Fonts link (D5).
 
 ## 6. Validation
 
@@ -95,8 +97,19 @@ No history rewrite was needed or done.
 | The workflow's commands, run locally | `composer audit --locked`, `npm audit --omit=dev` and the pinned gitleaks image command: all clean |
 | Links and repository paths in `README.md`, `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `NOTICE`, `docs/legal/provenance.md` and the changed docs | All resolve |
 
-Not run: the Playwright and production-image suites (no application code or Docker file changed; the build change is
-the one Vite option and a plugin, exercised above), and the workflows themselves on GitHub (D7).
+After the decisions of section 8 (2026-09-26):
+
+| Check | Result |
+|---|---|
+| `composer lint:check`, `composer larastan`, `composer test` in the development stack | Pass: 177 files, no errors, 625 tests and 2281 assertions (one test added: the rendered mail names no font provider and points at the two local font files) |
+| `npm run build`, then `curl` of `/build/fonts/barlow-latin-500.woff2` | Both files emitted (22.0 and 22.8 kB); answers 200 `font/woff2` |
+| gitleaks v8.30.1 over all 118 commits, the workflow's command | No leaks. A scan of the working directory (not what CI does) reports only the ignored local `.env` (P15-10) |
+| Search of the tracked files for the names, the street and the telephone number, and for `fonts.googleapis.com` | Only this report and `open-questions.md` mention the font host, as history |
+| The legal examples on `/legalNotice`, `/legalPolicy` and `/privacy` | Covered by the existing `LegalPagesTest` (banner, labelled example): pass |
+
+Not run: the Playwright and production-image suites and the visual suite (its `reseed.sh` empties the development
+database, and the legal pages are already listed as an accepted difference in `docs/testing/visual-regression.md`; no
+other screen changed), and the workflows themselves on GitHub (D7).
 
 ## 7. Checklist against Waffle Dashboard's repository layout
 
@@ -116,6 +129,20 @@ Waffle Dashboard's root (checked out from GitHub at `0f57a0b`) has `LICENSE`, `R
 The historical repositories have `LICENSE`, `CODE_OF_CONDUCT.md`, `.github/FUNDING.yml` (all three, funding aside) and
 one bug-report template; the roadmap's "historical repos have one" is now **Confirmed** (Contributor Covenant 1.4).
 
-## 8. Sign-off
+## 8. Sign-off and decisions
 
-Awaiting the maintainer. Not started: P-16 and later. The first tag's number stays deferred.
+Approved by the maintainer on 2026-09-26, with these decisions and fixes, all applied in the closing change and
+recorded in `docs/rewrite/decisions-register.md` ("Repository hygiene decisions"; former C3-C6 are resolved) and, for
+the fonts, `docs/rewrite/open-questions.md`:
+
+1. The repository is public.
+2. The named people's names, street address and telephone number are replaced by placeholders in the legal examples
+   (P15-08).
+3. GitHub private vulnerability reporting is the security contact; no separate security mailbox.
+4. No `FUNDING.yml`.
+5. The mail layout no longer depends on Google Fonts; the fonts are self-hosted (P15-09).
+6. The docs link check stays a non-blocking future improvement (D8).
+7. Enabling private vulnerability reporting and Dependabot alerts/security updates: a maintainer action (D1), listed
+   above as not done.
+
+Not started: P-16 and later. The first tag's number stays deferred.

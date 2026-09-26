@@ -13,6 +13,12 @@
     product-fidelity requirement in itself, the same relationship Tailwind has
     to the historical UI (CLAUDE.md).
 
+    Typography: Barlow is served by this instance itself (public/build/fonts/,
+    emitted by vite.config.js under fixed names), never by Google Fonts, so
+    opening a mail contacts no third party (decision C6). Clients that ignore
+    web fonts (Gmail, Outlook) fall back to Arial, and so does any client that
+    blocks remote content.
+
     Footer links follow this instance's identity (decision A-5, slice 10):
     the mail icon uses `config('nusszopf.contact_email')` and "Nusszopf als
     Kontakt speichern" downloads the vCard generated from it
@@ -31,7 +37,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light">
 <title>{{ $title ?? config('app.name') }}</title>
-<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;700&display=swap" rel="stylesheet">
+<style>
+@font-face { font-family: 'Barlow'; font-style: normal; font-weight: 500; src: url('{{ asset('build/fonts/barlow-latin-500.woff2') }}') format('woff2'); }
+@font-face { font-family: 'Barlow'; font-style: normal; font-weight: 700; src: url('{{ asset('build/fonts/barlow-latin-700.woff2') }}') format('woff2'); }
+</style>
 </head>
 <body style="margin:0; padding:0; background-color:#ECEFF1;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ECEFF1;">

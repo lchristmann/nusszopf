@@ -28,7 +28,7 @@ Checked with `composer.lock` and `package-lock.json` (each package's declared li
 | Composer, runtime | 87 | MIT 78, BSD-3-Clause 6, Apache-2.0 1 (`phpoption/phpoption`), and 2 `nette/*` packages offering BSD-3-Clause **or** GPL-2.0-only **or** GPL-3.0-only (used under BSD-3-Clause) | Yes, in the image (`composer install --no-dev`); each package keeps its own `LICENSE` in `vendor/` |
 | Composer, development | 54 | MIT, BSD-3-Clause | No (Pest, Larastan, Pint and their dependencies) |
 | npm, in the browser bundle | 37 | all MIT (TipTap, ProseMirror, cropperjs and their dependencies) | Yes, as `public/build/assets/*.js` |
-| npm, fonts | 1 | `@fontsource/barlow`: SIL OFL 1.1 | Yes, the Barlow font files under `public/build/assets/` |
+| npm, fonts | 1 | `@fontsource/barlow`: SIL OFL 1.1 | Yes, the Barlow font files under `public/build/assets/`, and the Latin 500 and 700 weights again as `public/build/fonts/barlow-latin-{500,700}.woff2`, which the e-mail layout loads |
 | npm, other runtime entries | 2 | `signal-exit` ISC, `type-fest` MIT OR CC0-1.0 | No: Node build tooling, not in the bundle |
 | npm, development | 102 | MIT, ISC, Apache-2.0, BSD-3-Clause, 0BSD, and MPL-2.0 (26, the platform builds of the CSS compiler) | No: build time only |
 
@@ -62,13 +62,13 @@ The Home copy, the legal-page text and the mail texts are the historical German 
 
 ## 4. Personal data in the repository
 
-**Confirmed, needs a decision.** `docs/deployment/legal-examples/legal-notice.md` reproduces the original operators'
-legal notice unchanged (decision A-4/A-5: shipped only as a clearly labelled example): two named people, a street
-address and a telephone number, and `mail@nusszopf.org`. The same text is public in the historical repository, but this
-repository publishes it again under a new owner. It is a maintainer decision whether that is intended or whether the
-example should be reduced to placeholders; it was not changed in P-15. Nothing else in the repository names a private
-person: test and documentation addresses are `example.*` or `*.test`, and the mailbox `mail@nusszopf.org` is the historical
-operator's public contact.
+**Confirmed, decided 2026-09-26.** `docs/deployment/legal-examples/` reproduced the original operators' legal texts
+as clearly labelled examples (decision A-4/A-5), with two named people, a street address and a telephone number. The
+same text is public in the historical repository, but this repository publishes it again under a new owner, so the
+maintainer decided not to republish personal details: names, street address and telephone number are bracketed
+placeholders in all three examples, whose first line says so (register, "Repository hygiene decisions"). The mailbox
+`mail@nusszopf.org` is the historical operator's public contact and stays in the notice example. Nothing else in the
+repository names a private person: test and documentation addresses are `example.*` or `*.test`.
 
 ## 5. Secrets
 

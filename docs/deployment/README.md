@@ -6,8 +6,8 @@
 > alone (P-8), upgrades on populated installations (P-9), the backup script and the restore onto an empty host, also as the
 > rollback of an upgrade (P-10), the search index recovery (P-11), the queue, Redis and scheduler under failure (P-12) and
 > real mail delivery through Resend (P-13). Not yet done, by roadmap: a real tag has never been published, so the release
-> workflow, the GitHub download, the GHCR pull and arm64 are untested until the first one (P-16, with the repository
-> going public in P-15).
+> workflow, the GitHub download, the GHCR pull and arm64 are untested until the first one (P-16; the repository is public
+> since P-15).
 
 ## Table of contents
 

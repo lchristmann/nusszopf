@@ -82,3 +82,14 @@ it('leaves a failed contact send in failed_jobs instead of losing it', function 
         ->and($failed->unique()->all())->toBe([ContactMail::class])
         ->and(DB::table('jobs')->count())->toBe(0);
 });
+
+it('serves Barlow from this instance and contacts no font provider (decision C6)', function () {
+    $html = (new ContactMail('owner@example.test', 'visitor@example.test', 'Gartenprojekt', null, 'Hallo!'))->render();
+
+    expect($html)
+        ->not->toContain('fonts.googleapis.com')
+        ->not->toContain('fonts.gstatic.com')
+        ->toContain(asset('build/fonts/barlow-latin-500.woff2'))
+        ->toContain(asset('build/fonts/barlow-latin-700.woff2'))
+        ->toContain("'Barlow',Arial,sans-serif");
+});

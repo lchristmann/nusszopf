@@ -215,8 +215,9 @@ Unresolved historical behavior, consolidated from the archaeology pass across `d
 
 ### E-mail layout loads Barlow from Google Fonts
 
-- Status: **Open — needs a maintainer decision** (found in P-15, 2026-09-26)
+- Status: **Resolved** — option (a), decided by the maintainer and implemented 2026-09-26 (found in P-15)
 - Area: E-mail / Privacy
 - Evidence: `resources/views/components/mail/layout.blade.php` links `https://fonts.googleapis.com/css2?family=Barlow...`, as the historical templates did (`docs/email/README.md`, "Body typography"). `docs/rewrite/decisions-register.md` ("Adopted without further ask") and the roadmap say the email logo and fonts are **self-hosted**. The logo is an inline SVG; the font is not. Every mail that is opened makes the recipient's mail client contact Google unless it blocks remote content.
 - Options: (a) implement the decision: serve the two Barlow weights from a stable public path of the instance and reference them in an `@font-face`, keeping the Arial fallback (many mail clients ignore web fonts either way); (b) amend the decision to keep the Google link and say so in the privacy guidance for operators.
-- Recommendation: (a), because the decision was made for a GDPR reason and the historical link is a third party the operators' Datenschutz text must then not name. Not changed in P-15: it is neither hygiene nor a documented Unknown that investigation can settle.
+- Resolution: (a). `vite.config.js` publishes the Barlow Latin 500 and 700 files as `public/build/fonts/barlow-latin-{500,700}.woff2` (fixed names, not the hashed ones of `public/build/assets/`), and the mail layout declares them with `@font-face` (absolute URLs of the instance) in front of the `'Barlow', Arial, sans-serif` stack. No mail makes a client contact Google any more; the operators' Datenschutz text need not name Google Fonts. Web fonts in mail are honored by few clients (Apple Mail, iOS Mail and some others); the rest show Arial, and so does any client that blocks remote content. Regression test: `tests/Feature/Mail/ContactMailTest.php`. Recorded in `decisions-register.md`, "Repository hygiene decisions".
+- Date resolved: 2026-09-26

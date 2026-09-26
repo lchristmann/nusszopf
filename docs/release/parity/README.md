@@ -25,7 +25,7 @@ person is listed as pending), **In progress**, **Not started**.
 | P-12 Queue/scheduler | [`P-12-queue-scheduler.md`](P-12-queue-scheduler.md) | Done (closed by the maintainer 2026-09-26; the production stack's worker, Redis and scheduler restarted, killed and stopped with work waiting, a job through all five attempts, `search:reindex` with the worker down, Redis down and Meilisearch lost; O-2 and P-7 evidence reused; P12-01…P12-06 fixed: a Redis crash lost every queued job, `failed_jobs` was invisible to `/health`, mails for deleted accounts, two `search:reindex` gaps, a misleading queue message; the `failed_jobs` health state approved, at-least-once delivery accepted as documented, the Redis AOF upgrade caveat deferred to P-16's N-1 upgrade, not waived) |
 | P-13 E-mail delivery | [`P-13-email-delivery.md`](P-13-email-delivery.md) | Done (closed by the maintainer 2026-09-26; all seven mail types delivered through Resend on the production stack and inspected in Proton Mail; P13-01 fixed, P13-03 (HTML-only) accepted as the intended format; Gmail, Outlook and Apple Mail unverified and deferred to P-16, not waived; a generic SMTP relay with real TLS not tested) |
 | P-14 Documentation completion | [`P-14-documentation.md`](P-14-documentation.md) | Done (closed by the maintainer 2026-09-26; the docs were audited against the code and P-1…P-13, twelve findings fixed, among them a dev first-run sequence that left the containers without an `APP_KEY`; no Proposal banner left; the P-13 mail decision recorded everywhere; the first tag's number, the changelog and the release-only checks deferred to P-16, repository hygiene to P-15; a complete fresh-clone run of the dev setup was not performed, the steps were checked individually) |
-| P-15 FOSS repository hygiene | [`P-15-foss-hygiene.md`](P-15-foss-hygiene.md) | Done, awaiting the maintainer's sign-off (CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, issue and PR templates, Dependabot and a weekly advisory/secret workflow, license notices in the build, asset provenance, `.env.example` audit, README badges; the whole Git history scanned with gitleaks, no secret; no known dependency vulnerability; publishing the repository, GitHub's private vulnerability reporting, a conduct/security mailbox, `FUNDING.yml`, the named people in the legal example and the mail layout's Google Fonts link are the maintainer's, section 5) |
+| P-15 FOSS repository hygiene | [`P-15-foss-hygiene.md`](P-15-foss-hygiene.md) | Done (closed by the maintainer 2026-09-26; CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, issue and PR templates, Dependabot and a weekly advisory/secret workflow, license notices in the build, asset provenance, `.env.example` audit, README badges; the whole Git history scanned with gitleaks, no secret; no known dependency vulnerability; on the maintainer's decisions the repository is public, the legal examples carry placeholders instead of the original operators' personal details, GitHub's private vulnerability reporting is the only security contact, there is no `FUNDING.yml`, and the mail layout serves Barlow itself instead of Google Fonts; enabling private vulnerability reporting and Dependabot alerts/security updates on GitHub is a maintainer action, not done, and the docs-link CI check is a non-blocking future improvement) |
 | P-16 Release preparation and RC | `P-16-release.md` (created by the phase) | Not started |
 | P-17 Final sign-off | this page, below | Maintainer only |
 
@@ -105,10 +105,11 @@ person is listed as pending), **In progress**, **Not started**.
     roadmap P-16 names `1.0.0-rc.N`. The maintainer decides when P-16 starts (`docs/release/versioning.md`).
   - Who writes changelog entries stays deferred (register C1).
 
-- **P-15 (repository hygiene):** done in P-15 (`P-15-foss-hygiene.md`). What it leaves is the maintainer's: making the
-  repository public and enabling private vulnerability reporting, a conduct/security mailbox, `FUNDING.yml`, the named
-  people in the legal example (register C3-C5), and the mail layout's Google Fonts link (register C6). The first
-  Dependabot pull requests and the `Security` workflow's first run on GitHub can only be seen once the repository is public.
+- **P-15 (repository hygiene):** closed (`P-15-foss-hygiene.md`). What it leaves is the maintainer's: enabling
+  private vulnerability reporting and Dependabot alerts and security updates in the repository settings (the links in
+  `SECURITY.md` do not accept reports until then). The first Dependabot pull requests and the `Security` workflow's
+  first run on GitHub can only be seen once the commits are pushed and those settings are on. How the self-hosted
+  Barlow renders in real mail clients belongs to the P-16 mail-client pass.
 
 ## Section 7 checklist
 

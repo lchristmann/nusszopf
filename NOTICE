@@ -13,7 +13,8 @@ Third-party components bundled in the source or the built application (all GPL-3
 - Barlow typeface (@fontsource/barlow): SIL Open Font License 1.1, Copyright 2017 The Barlow Project Authors.
 - The production build writes the notices these licenses require next to the assets it ships:
   `public/build/THIRD-PARTY-LICENSES.txt` (every bundled JavaScript package) and `public/build/LICENSE-barlow.txt`
-  (served under `/build/`).
+  (served under `/build/`). The e-mail layout loads Barlow from the instance's own
+  `public/build/fonts/`, not from a font provider.
 - Feather icons: MIT, Copyright (c) 2013-2023 Cole Bemis (resources/icons/LICENSE-feather.txt);
   one glyph from Lucide (ISC).
 

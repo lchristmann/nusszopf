@@ -1,12 +1,12 @@
-> **Beispiel, nicht zur Veröffentlichung.** Dies ist der Text der ursprünglichen Nusszopf-Betreiber:innen (Stand 2021), unverändert aus dem historischen Quellcode übernommen – nur die Abschnitte und Sätze zu Diensten, die Nusszopf 2 nicht verwendet (Visitor Analytics, Auth0, SendGrid), sind entfernt und markiert. Er ist weder geprüft noch auf deine Instanz zugeschnitten – ersetze ihn durch deinen eigenen Text.
+> **Beispiel, nicht zur Veröffentlichung.** Dies ist der Text der ursprünglichen Nusszopf-Betreiber:innen (Stand 2021), aus dem historischen Quellcode übernommen; die Angaben zu Personen, Anschrift und Telefon sind durch Platzhalter in eckigen Klammern ersetzt, die du selbst ausfüllen musst; außerdem wurden die Abschnitte und Sätze zu Diensten, die Nusszopf 2 nicht verwendet (Visitor Analytics, Auth0, SendGrid), entfernt und markiert. Er ist weder geprüft noch auf deine Instanz zugeschnitten – ersetze ihn durch deinen eigenen Text.
 
 ## Benennung der verantwortlichen Stelle
 
 Die verantwortliche Stelle für die Datenverarbeitung auf dieser Webseite ist:
 
-Melina Oppelt & Michael Schwarz  
-Schertlinstraße 10  
-86159 Augsburg
+[Name der verantwortlichen Person oder Organisation]  
+[Straße und Hausnummer]  
+[Postleitzahl und Ort]
 
 Die verantwortliche Stelle entscheidet allein oder gemeinsam mit Anderen über die Zwecke und Mittel der Verarbeitung von personenbezogenen Daten (z.B. Namen, Kontaktdaten o. Ä.).
 

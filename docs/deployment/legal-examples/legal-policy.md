@@ -1,4 +1,4 @@
-> **Beispiel, nicht zur Veröffentlichung.** Dies ist der Text der ursprünglichen Nusszopf-Betreiber:innen (Stand 2021), unverändert aus dem historischen Quellcode übernommen. Er ist weder geprüft noch auf deine Instanz zugeschnitten – ersetze ihn durch deinen eigenen Text.
+> **Beispiel, nicht zur Veröffentlichung.** Dies ist der Text der ursprünglichen Nusszopf-Betreiber:innen (Stand 2021), aus dem historischen Quellcode übernommen; die Angaben zu Personen, Anschrift und Telefon sind durch Platzhalter in eckigen Klammern ersetzt, die du selbst ausfüllen musst. Er ist weder geprüft noch auf deine Instanz zugeschnitten – ersetze ihn durch deinen eigenen Text.
 
 Das ist der Stand der Nutzungsbedingungen Februar 2021. Wir sind gerade noch am Verbessern und Verfeinern, weshalb sich hier noch öfter Änderungen ergeben können. Bei Fragen melde dich bitte bei uns.
 
@@ -8,7 +8,7 @@ Falls Du dich mit Themen wie Datenschutz, Impressum, Nutzungsbedingungen oder Ri
 
 ### §1 Zustandekommen des Vertragsverhältnisses und Änderungen der Nutzungsbedingungen
 
-1. Die nachfolgenden Nutzungsbedingungen regeln das vertragliche Verhältnis zwischen dem:der Anbieter:in Nusszopf, Schertlinstraße 10, 86159 Augsburg (nachfolgend Nusszopf) und dem:der Nutzer:in.
+1. Die nachfolgenden Nutzungsbedingungen regeln das vertragliche Verhältnis zwischen dem:der Anbieter:in Nusszopf, [Straße und Hausnummer], [Postleitzahl und Ort] (nachfolgend Nusszopf) und dem:der Nutzer:in.
 2. Durch den Zugriff auf die Webseite oder Dienstleistungen vom Nusszopf akzeptiert der:die Nutzer:in die Nutzungsbedingungen und Datenschutzbestimmungen. Wenn der:die Nutzer:in diese Bedingungen nicht anerkennt, darf er:sie diese Webseite/Dienstleistungen nicht benutzen.
 3. Entgegenstehende oder von diesen Nutzungsbedingungen abweichende Bedingungen des:der Nutzer:in werden im Zweifel nur durch eine ausdrückliche schriftliche Bestätigung durch den Nusszopf anerkannt.
 4. Der Nusszopf kann diese Bedingungen jederzeit überarbeiten, indem auf dieser Webseite eine aktualisierte Version veröffentlicht wird. Der:Die Nutzer:in sollte diese Seite regelmäßig besuchen und die Bedingungen lesen, da diese verbindlich für ihn:sie sind. Mit der Weiternutzung nach erfolgten Änderungen erkennt der:die Nutzer:in diese Änderungen an.

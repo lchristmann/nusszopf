@@ -72,7 +72,30 @@ These are established and should not be silently re-litigated by a future contri
   - Adopted without further ask: the operator mailbox (`mail@nusszopf.org`) and operator identity become
     instance configuration rather than hard-coded values; third-party analytics (Visitor Analytics) is
     not reproduced (own server-side counter only, GDPR requirement); email logo and fonts are self-hosted
-    (the historical templates load them from SendGrid's CDN and Google Fonts).
+    (the historical templates load them from SendGrid's CDN and Google Fonts). The fonts part is implemented
+    (P-15, 2026-09-26; see "Repository hygiene decisions" below).
+- Repository hygiene decisions (decided by the maintainer 2026-09-26, at the sign-off of P-15; these settle the
+  former C3-C6):
+  - The repository is **public**.
+  - **Personal data in the legal examples**: the original operators' names, street address and telephone number
+    are not republished. `docs/deployment/legal-examples/{legal-notice,legal-policy,privacy}.md` carry bracketed
+    placeholders (`[Name der verantwortlichen Person oder Organisation]`, `[Straße und Hausnummer]`,
+    `[Postleitzahl und Ort]`, `[Telefonnummer]`) and say so in their first line. This supersedes the "unchanged"
+    transcription of A-4/A-5 for personal data only; the rest of the texts is as before. The historical
+    operator's public mailbox `mail@nusszopf.org` stays in the notice example.
+  - **Security contact**: GitHub's **private vulnerability reporting** (`SECURITY.md`). No separate security
+    mailbox. The Code of Conduct's enforcement contact is the same form (`CODE_OF_CONDUCT.md`), because GitHub
+    has no other private channel.
+  - **No `FUNDING.yml`.**
+  - **E-mail fonts are self-hosted**, as A-4/A-5 already said: the mail layout no longer links Google Fonts.
+    `vite.config.js` publishes the Barlow Latin 500 and 700 files under the fixed, unhashed names
+    `public/build/fonts/barlow-latin-{500,700}.woff2` (a mail sent last year must still find its font, and the
+    hashed names in `public/build/assets/` change with each build); the layout declares them with `@font-face`
+    and keeps `'Barlow', Arial, sans-serif`. Clients that ignore web fonts (Gmail, Outlook) or block remote
+    content show Arial. Not verified in real mail clients (the P-16 real-client pass is the place): a client
+    that treated Google's stylesheet specially may now show Arial. Regression
+    test: `tests/Feature/Mail/ContactMailTest.php`. The operator's Datenschutz text need not name Google Fonts.
+  - A docs-link check in CI stays a **non-blocking future improvement** (P-15 D8); it is not scheduled.
 - Container registry and namespace (decided by the maintainer 2026-09-21; A-10): **GHCR**, published from
   GitHub Actions on a version tag, under the repository owner's personal namespace:
   `ghcr.io/lchristmann/nusszopf-php-fpm` and `ghcr.io/lchristmann/nusszopf-web`. The repository stays at
@@ -175,16 +198,16 @@ question — see that document for the reasoning behind each reclassification.
 |---|---|---|---|
 | 1 | Who writes changelog entries: PR author (CI-enforced) or maintainer at release time? | Explicitly revisit-once-there-are-more-contributors; does not affect the first implementation slices at all | `architecture-decisions.md` → "Who writes changelog entries" |
 | 2 | Auth: breached-password-check scope (Auth0's breached-password detection feature) | An optional enhancement beyond historical parity (nothing user-facing beyond one email template depended on it uniquely) — not required for the first slices, and can be added later without rework | `docs/authentication/README.md` §7–8 |
-| 3 | Personal data in `docs/deployment/legal-examples/legal-notice.md` (two named people, a street address, a telephone number, published again under a new owner): keep the historical text as the labelled example, or reduce it to placeholders? | A maintainer/privacy call, not a defect; the text is public in the historical repository | `docs/legal/provenance.md`, section 4; `docs/release/parity/P-15-foss-hygiene.md` |
-| 4 | A conduct and security mailbox: `CODE_OF_CONDUCT.md` and `SECURITY.md` use GitHub's private vulnerability form because no address of the project is known | Only the maintainer knows which address they want published | `docs/release/parity/P-15-foss-hygiene.md`, section 5 |
-| 5 | Funding: the historical repositories point `FUNDING.yml` at the original operators' Steady page; the new repository has none | Whose funding page a new repository names is the maintainer's call | `docs/release/parity/P-15-foss-hygiene.md`, section 5 |
-| 6 | E-mail fonts: the decision above says self-hosted, the mail layout still loads Barlow from Google Fonts | Implement it, or amend the decision: see `open-questions.md` | `docs/rewrite/open-questions.md`, "E-mail layout loads Barlow from Google Fonts" |
 
 ### Resolved (moved out of the decision register)
 
 | # | Question | Resolution | Full detail |
 |---|---|---|---|
 | 1 | `ProjectAnalytics.contactRequests` (BUG-017): confirm real usage before deciding whether to keep an equivalent field | **Resolved, Confirmed dead** — `ContactDialog.js`'s submit handler was read in full and contains no GraphQL mutation of any kind. Nusszopf 2 does not reproduce this field. | `docs/rewrite/bugs.md` → BUG-017 |
+| 2 | (former C3) Personal data in the legal examples: keep the historical text, or placeholders? | **Placeholders** for names, street address and telephone number, 2026-09-26 | "Repository hygiene decisions" above; `docs/deployment/legal-examples/README.md` |
+| 3 | (former C4) A conduct and security mailbox | **None.** GitHub's private vulnerability reporting is the security contact, and the conduct contact too, 2026-09-26 | "Repository hygiene decisions" above; `SECURITY.md` |
+| 4 | (former C5) `FUNDING.yml` | **Not added**, 2026-09-26 | "Repository hygiene decisions" above |
+| 5 | (former C6) E-mail fonts: self-hosted per A-4/A-5, but the mail layout loaded Google Fonts | **Self-hosted**, implemented 2026-09-26 | "Repository hygiene decisions" above; `docs/rewrite/open-questions.md`, "E-mail layout loads Barlow from Google Fonts" |
 
 ## Explicitly not open (do not re-ask)
 
