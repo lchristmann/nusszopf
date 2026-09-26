@@ -42,3 +42,4 @@ playwright-report-visual/
 
 # Visual-regression reference harness work folder (tests/Visual/historical-harness/run.sh)
 /.historical-harness
+junit.xml

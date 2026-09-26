@@ -49,6 +49,32 @@ maintainer** (only with the maintainer's word, dated).
 - Local gate on the tagged commit's tree, on the dev stack: Pint (177 files), Larastan (85 files, no errors), Pest
   (625 tests, 2281 assertions), `composer audit` and `npm audit` (no advisories).
 
-## 2. CI on GitHub
+## 2. CI on GitHub (Done, after three findings)
 
-_Written as the phase proceeds._
+**The gate had not run since 2026-09-23.** Every CI run from 2026-09-23 22:04 on, seven in a row, ended with "The job was
+not started because recent account payments have failed or your spending limit needs to be increased": no job started, so
+no test, no lint, no build. Commits of P-7…P-15 were therefore never checked by GitHub. Since the repository became
+public, jobs start again (the push of this phase's first commit was the first to run). The gate runs before a tag
+publishes anything, so this had to be settled before the tag.
+
+Three things stood in the way of a green gate. Each was reproduced locally first, on an empty stack with CI's settings
+(`CI=1`, one worker, `SEARCH_PAGE_SIZE=5`, the `E2E_*` variables), and each is a defect of the test suite or its baselines,
+not of the product:
+
+| ID | Finding | Kind | State |
+|---|---|---|---|
+| P16-01 | `zz-aria.spec.ts`, a developer's accessibility-tree dump, needs the visual reference dataset (the `demo` user and a fixed project id). On any other stack it timed out at the login. It is not run by `prod-e2e.sh`, but the three desktop engines of the CI job ran it. Introduced in `20d3eeb` on 2026-09-23 23:15, so it never ran in CI. It failed in chromium, firefox and webkit; the three phone/tablet projects skip it, which is why they were green | Test defect | Fixed: the spec skips itself unless `E2E_ARIA_DUMP=1` |
+| P16-02 | `axe.spec.ts` ("visitor screens and states") creates a project and opens `/search` at once. The queue worker indexes it a moment later and the page does not refresh, so on an empty database (CI's) no card was found. `search.spec.ts` already waited for the index. It failed in chromium, firefox, webkit and in the production-image job | Test defect (race) | Fixed: the spec reloads until the card is there, as `search.spec.ts` does |
+| P16-03 | Nine visual baselines (the three legal screens at three widths) still showed the original operators' legal texts. P-15 replaced them with the placeholders and the "Beispiel, nicht zur Veröffentlichung" banner, so the visual job failed. The diff was text reflow only: header, typography and layout are unchanged | Stale baseline, an approved change (P-15) | Fixed: the nine baselines were rewritten with `--update-snapshots=all`; exactly those nine files changed |
+
+- Regression coverage: the fixed specs pass on an empty database with CI's settings (58 passed, 2 skipped: the aria dump
+  and the reindex-command spec that needs the runner's Docker). One failed run in between was the documented shared
+  newsletter budget (10 requests per 15 minutes per IP) exhausted by my own repeated local runs; it is not a finding.
+- CI on `73dbd7e`: all 11 job groups green (Pint, Larastan, Pest, frontend build, production stack, the whole suite on
+  the production images, three engines and three device projects on the dev stack, and the visual comparison). The
+  Security workflow was green on its first run on GitHub as well.
+- Observed but not blocking: the Actions runner warns that Node.js 20 actions are forced to Node 24
+  (`actions/checkout@v4`, `setup-node@v4`, `upload-artifact@v4`, `setup-buildx-action@v3`), and that `ubuntu-latest`
+  moves to Ubuntu 26 on 2026-10-19. Dependabot proposes the action bumps.
+- Lesson recorded for the release process: a red or never-started CI is invisible from the terminal. Before every tag,
+  check the badge or the run page of the exact commit (`docs/release/release-process.md`).

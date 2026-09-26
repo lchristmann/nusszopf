@@ -100,7 +100,22 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
-      - run: composer test
+      - run: composer test -- --log-junit=junit.xml
+      # The job log needs a GitHub login; annotations do not. A failing test therefore shows up on the run page.
+      - name: Annotate failing tests
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          import os, xml.etree.ElementTree as ET
+          if not os.path.exists("junit.xml"):
+              print("::error title=Pest::no junit.xml, the run stopped before or while starting Pest")
+          else:
+              for case in ET.parse("junit.xml").iter("testcase"):
+                  for bad in list(case.findall("failure")) + list(case.findall("error")):
+                      text = (bad.get("message") or bad.text or "").strip().splitlines()
+                      head = " | ".join(t.strip() for t in text[:6])[:900].replace("%", "%25")
+                      print(f"::error title={case.get('classname')}::{case.get('name')}: {head}")
+          PY
 
   build-assets:
     name: Frontend build
