@@ -21,7 +21,7 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
 | BUG-006 | Email / copy                                | Trivial  | Fix                                 | Implemented — ninth slice (2026-09-23), `docs/rewrite/ninth-slice.md` |
 | BUG-007 | Domain / `visibility` constraint            | Low      | Fix                                 | Implemented — first vertical slice (2026-09-18)                                         |
 | BUG-008 | Search / operations                         | Medium   | Fix                                 | Implemented — first vertical slice (2026-09-18); extended to requests and completed with `search:reindex` — fourth slice (2026-09-21) |
-| BUG-009 | Background jobs / operations                | Medium   | Fix                                 | Implemented (search-sync path) — first vertical slice (2026-09-18); failed-job regression test incl. requests — fourth slice (2026-09-21) |
+| BUG-009 | Background jobs / operations                | Medium   | Fix                                 | Implemented (search-sync path) — first vertical slice (2026-09-18); failed-job regression test incl. requests — fourth slice (2026-09-21); durability and visibility completed — P-12 |
 | BUG-010 | Email / contact form validation             | Medium   | Fix                                 | Implemented — sixth slice (2026-09-22)                                                  |
 | BUG-011 | Newsletter / consent asymmetry              | Medium   | Fix                                 | Implemented — ninth slice (2026-09-23), `docs/rewrite/ninth-slice.md` |
 | BUG-012 | Auth / Apple social login                   | Low      | Replace (drop)                      | Decided — do not implement                                                              |
@@ -195,6 +195,10 @@ correct it deliberately), **Replace** (obsolete infrastructure, behavior preserv
   gets indexed).
 - Classification: **Fix**
 - Full spec: `docs/rewrite/intentional-changes.md` → "Queue-backed sync jobs with retry/dead-letter".
+- Completed in P-12 (`docs/release/parity/P-12-queue-scheduler.md`), because the fix's intent — no invisible loss of
+  queued work — was not yet true in two places: a Redis crash dropped every queued job since the last snapshot with
+  nothing in `failed_jobs` (P12-01, fixed by Redis's append-only file), and a worker that failed every job looked
+  healthy, so `/health` never showed `failed_jobs` (P12-02, fixed by a `failed_jobs` health check).
 
 ### BUG-010 — Contact-form fields have no server-side validation or sanitization
 

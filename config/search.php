@@ -28,4 +28,17 @@ return [
 
     'settings_wait_attempts' => 120,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Waiting for the queue worker
+    |--------------------------------------------------------------------------
+    |
+    | With the queue in use, the queue worker writes the documents of a
+    | `search:reindex`. The command checks the queue every 0.25 s, this many
+    | times (30 s), and warns when jobs are still waiting after that.
+    |
+    */
+
+    'queue_wait_attempts' => 120,
+
 ];

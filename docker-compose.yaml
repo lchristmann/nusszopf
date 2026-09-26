@@ -116,9 +116,14 @@ services:
 
   # Pinned to a major version, like postgres and meilisearch: `docker compose pull` then brings minor and patch
   # releases only, never a new major one with a new data format (P-9).
+  # The queue lives here: mails and search updates that are waiting for the worker. Redis alone saves a snapshot
+  # only every five minutes to an hour, depending on traffic, so a crash (power loss, out-of-memory kill) would
+  # silently drop every job queued since, with nothing in `failed_jobs`. The append-only file loses at most about
+  # a second (P-12, finding P12-01).
   redis:
     image: redis:8-alpine
     restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis-data:/data
     healthcheck:

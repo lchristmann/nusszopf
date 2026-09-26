@@ -62,6 +62,7 @@ The compose service names above (`web`, `php-fpm`, `workspace`, `queue-worker`, 
 | Upgrade test (installs an earlier release, fills it, upgrades it to the working copy, checks nothing was lost; host Docker) | `sh scripts/upgrade-test.sh <previous tag> [--suite]` |
 | Backup/restore drill (backs up from cron with the documented script, restores onto an empty Docker host, and rolls back an upgrade; privileged `docker:dind`) | `sh scripts/restore-test.sh [--suite] [--rollback-from <previous tag>]` |
 | Search index recovery drill (loses the index four ways, recovers it with the documented blocks, compares every search answer; privileged `docker:dind`) | `sh scripts/search-recovery-test.sh` |
+| Queue and scheduler drill (restarts and kills the worker, Redis and the scheduler with work waiting, fails jobs through all their retries, breaks `search:reindex` three ways; privileged `docker:dind`, about an hour) | `sh scripts/queue-scheduler-test.sh` |
 | Logs | `docker compose -f compose.dev.yaml logs -f [service]` |
 
 This table must stay in sync with `composer.json`/`package.json` scripts as they are implemented — a command listed here that no longer exists, or an implemented script missing from here, is a documentation bug.

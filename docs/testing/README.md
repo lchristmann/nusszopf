@@ -249,6 +249,26 @@ not run it; it is a release step. It does the following:
 After every recovery, it waits until the index holds as many documents as PostgreSQL says it should. In every
 answer, no private project or request may appear, and none may be in the index. `SEARCH_RECOVERY_KEEP=1` keeps the host.
 
+### Queue and scheduler drill (P-12, `docs/release/parity/P-12-queue-scheduler.md`)
+
+`sh scripts/queue-scheduler-test.sh` runs the queue worker, Redis, the scheduler and `search:reindex` under failure on
+the production Compose stack, in a separate Docker daemon (`docker:dind`, privileged). CI does not run it; it is a
+release step and takes about an hour, because the retry policy, the health checks' three-minute tolerance and a
+five-minute scheduler outage are waited out for real. It installs the working copy with `install.sh`, fills it with
+`tests/Upgrade/seed.php`, adds a Mailpit as the relay, and runs nine steps: the shipped configuration; a mail for an
+account deleted before it is sent; the worker restarted, restarted by `queue:restart` and killed with 300 mails
+waiting; Redis restarted, killed (with and without the append-only file) and down while the stack runs; a job through
+all its five attempts into `failed_jobs` and out again with `queue:retry all`; `search:reindex` with the worker down,
+with Redis down and with Meilisearch lost while the documents wait in the queue; the scheduler restarted at the turn of
+the minute, the 03:30 purge and a scheduler stopped for five minutes; the worker stopped for four minutes; and the
+state at the end, which must be healthy and identical to the reference index. `tests/QueueScheduler/work.php` puts the
+work on the queue through the application's own classes. `QS_KEEP=1` keeps the host, `QS_REUSE=1` runs against it, and
+`QS_STEPS="4 5"` runs some steps only.
+
+The fast counterparts run with the Pest suite: `tests/Feature/SchedulerTest.php` (what the scheduler runs and when),
+`tests/Feature/Mail/QueuedMailTest.php`, the `failed_jobs` cases of `tests/Feature/HealthTest.php`, and the queue cases
+of `tests/Feature/Search/ReindexSearchTest.php`.
+
 ## Visual parity
 
 Because visual fidelity is a hard requirement (`CLAUDE.md`, `.claude/rules/02-visual-fidelity.md`), every screen is compared with the running historical app. The suite is `docs/testing/visual-regression.md`: Playwright `toHaveScreenshot` (register B9), 23 screens × phone/tablet/desktop, exact baselines in `tests/Visual/baselines/` compared in CI (the `visual` job), and reference captures of the historical webapp from `tests/Visual/historical-harness/`. Zero differing pixels are tolerated (per-pixel colour threshold 0.05), because the screenshots always come from the same pinned Playwright image.

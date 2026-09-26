@@ -1,7 +1,7 @@
 # Operations
 
 > **Status: health, logs, queue and scheduler, upgrades, rollback, search recovery and troubleshooting are implemented and verified
-> (operational track O-1/O-2, 2026-09-22); upgrades were tested again on populated installations in P-9 (2026-09-25); backups, the restore onto an empty host and the rollback of an upgrade were drilled in P-10 (2026-09-25, `scripts/restore-test.sh`); the search index recovery in P-11 (2026-09-25, `scripts/search-recovery-test.sh`).**
+> (operational track O-1/O-2, 2026-09-22); upgrades were tested again on populated installations in P-9 (2026-09-25); backups, the restore onto an empty host and the rollback of an upgrade were drilled in P-10 (2026-09-25, `scripts/restore-test.sh`); the search index recovery in P-11 (2026-09-25, `scripts/search-recovery-test.sh`); the queue worker, the scheduler, Redis and the queue's part in `search:reindex` in P-12 (`scripts/queue-scheduler-test.sh`).**
 > Commands assume the operator's directory (`docker-compose.yaml` and `.env` next to each other); contributors add
 > `-f compose.dev.yaml` and use the `workspace` service.
 
@@ -24,13 +24,13 @@
 
 ```bash
 docker compose ps                                        # every service "healthy"
-docker compose exec php-fpm php artisan nusszopf:health  # running version + database, redis, search, scheduler, queue
+docker compose exec php-fpm php artisan nusszopf:health  # running version + database, redis, search, scheduler, queue, failed jobs
 curl -s https://nusszopf.example.org/health              # {"status":"ok"} (200) or {"status":"degraded"} (503) — point a monitor here
 curl -s -H "Authorization: Bearer $HEALTH_TOKEN" https://nusszopf.example.org/health   # + version and each check's reason
 ```
 
 `/up` is the container liveness probe and tests nothing behind the application. The scheduler and queue worker prove themselves with a heartbeat once a minute,
-so a freshly started stack reports `degraded` for up to a minute — that is the check working, not a fault. Details: `docs/deployment/README.md`, "Health checks".
+so a freshly started stack reports `degraded` for up to a minute — that is the check working, not a fault. A stopped worker or scheduler shows after up to three minutes, the age at which a heartbeat counts as missing. The scheduler also queues the queue's heartbeat, so a stopped scheduler fails `queue` as well as `scheduler`. A job that ran out of its tries (`failed_jobs`) keeps `/health` `degraded` until you retry or forget it (see "Queue worker and scheduler"): a worker that is alive but failing every job would otherwise look healthy. Details: `docs/deployment/README.md`, "Health checks".
 
 ## Logs
 
@@ -40,7 +40,7 @@ so a freshly started stack reports `degraded` for up to a minute — that is the
 
 The historical product had no scheduled work (its cron triggers were empty), so the scheduler runs the two heartbeats plus one task added with the newsletter (slice 9): `newsletter:purge-unconfirmed`, daily at 03:30 UTC (the application runs in UTC; there is no timezone setting), deletes newsletter subscriptions nobody confirmed within 14 days (decision A-1). New scheduled work is added only with the slice that needs it.
 The queue carries search indexing and mail (`App\Mail\ContactMail` since the sixth slice, the newsletter mails since the ninth). The worker runs `queue:work --tries=5 --backoff=10,30,60,120 --max-time=3600`: a failing job is tried again after 10 s, 30 s, 1 min and 2 min,
-then kept in the `failed_jobs` table — the historical webhooks gave up silently after three tries (BUG-009).
+then kept in the `failed_jobs` table — the historical webhooks gave up silently after three tries (BUG-009). A job kept there makes `nusszopf:health` and `/health` report `failed_jobs` failing, with the count, until the table is empty.
 
 ```bash
 docker compose logs -f queue-worker                      # RUNNING / DONE / FAIL per job, errors with the reason
@@ -51,6 +51,15 @@ docker compose restart queue-worker                      # after a bad deploy or
 docker compose logs scheduler                            # the two heartbeats, once a minute
 ```
 
+Which of the two to use, after the cause is fixed: `queue:retry all` for a mail that has not been delivered, since the mail is only in that table. For index updates either works: `search:reindex` rebuilds everything, so `queue:flush` then just clears the table.
+
+What was verified on the production stack (P-12, `scripts/queue-scheduler-test.sh`):
+- **Restarts.** `docker compose restart queue-worker` in the middle of 300 waiting mails: the worker finishes its job and exits, and all 300 arrive, each once. `queue:restart` (what `--max-time` does every hour) ends the worker with exit code 0; Docker starts it again at once.
+- **A crash.** `kill -9` in the middle of the same 300 mails: every recipient still gets theirs. A queue promises *at least once*: the one job the dead worker was holding comes back after 90 s (`retry_after`), so that one mail can arrive twice. Nothing is lost.
+- **A mail for a deleted account** (a welcome mail whose account is deleted before the worker sends it) is dropped. There is no one left to send it to, so it neither fails nor waits in `failed_jobs`. Every other failure of a mail still ends in `failed_jobs` after five tries.
+- **Redis restarts with work waiting** (`docker compose restart redis`, or the host's shutdown): everything waiting is still there afterwards. Redis writes an append-only file, so a crash (power loss, an out-of-memory kill) loses at most about a second of queued work, not everything since a snapshot (P12-01). No release existed before the append-only file, but a stack started from an earlier build starts with an empty Redis once: its sessions and queued jobs are gone.
+- **The scheduler.** Restarted and killed at the turn of the minute, four times: each task still ran once per minute, none twice, none missed. It has no catch-up beyond that: a run that fell into a time the scheduler was down is not made up. For the daily purge that changes nothing, since it deletes by age: the first run after an outage deletes everything that expired meanwhile.
+
 ## What happens when a dependency is down
 
 Verified on the production stack (2026-09-22) by stopping each service, working, and starting it again
@@ -60,8 +69,10 @@ to stop):
 | Down | What the visitor sees | What the stack does | Recovery |
 |---|---|---|---|
 | **Meilisearch** | Pages work; search shows no hits ("Verzopft…" — the historical behavior for a failed query); a project saved meanwhile is not searchable yet | `/health` → 503 with `search` failing. Index jobs fail and retry at +10 s, +30 s, +1 min, +2 min; after five attempts (about 3½ minutes) the job lands in `failed_jobs` | Start Meilisearch. The retry that follows finds it; give it up to a minute (the worker's DNS cache). Jobs already in `failed_jobs`: `queue:retry all`, or simply `search:reindex` |
-| **Redis** | Every page is a 500 (sessions live in Redis); `/up` stays 200 | `/health` → 503 (it needs no session, so it still answers); the queue worker crash-loops and Docker restarts it; nothing is lost that was queued before | Start Redis; everything resumes by itself, no manual step |
+| **Redis** | Every page is a 500 (sessions live in Redis); `/up` stays 200 | `/health` → 503 (it needs no session, so it still answers); the queue worker crash-loops and Docker restarts it (10 times in the first minute); the scheduler keeps running and logs an error each minute; nothing is lost that was queued before, even if Redis was killed (append-only file, P-12) | Start Redis; everything resumes by itself, no manual step. In P-12 every container and check was healthy again 52 s after the start |
 | **PostgreSQL** | Pages that read data fail; the search page shell still renders | `/health` → 503 with `database` failing; `php-fpm` stays "healthy" (its check is PHP-FPM's own ping) | Start PostgreSQL; resumes by itself |
+| **Queue worker** (stopped, or crashed and not restarted) | Everything works. Mails are not sent and search updates do not appear until it runs again | Jobs wait in Redis, one heartbeat job more each minute. `nusszopf:health` and `/health` fail `queue` once the last heartbeat is three minutes old; `docker compose ps` shows the worker `unhealthy` a little later | `docker compose up -d queue-worker`. The waiting jobs run at once, in order, and the check is green within a minute |
+| **Scheduler** (stopped) | Everything works. The daily newsletter purge and the heartbeats do not run | After three minutes `scheduler` **and** `queue` fail: the scheduler also queues the queue's heartbeat, so a stopped scheduler makes a healthy worker look stopped. `docker compose ps` shows the `queue-worker` `unhealthy` too | `docker compose up -d scheduler`. Runs missed meanwhile are not made up; the purge deletes by age, so its next run catches up |
 | **SMTP** | Contact form, registration, "forgot password", a newsletter sign-up/unsubscribe request, a login lockout: the triggering action still succeeds (every mail is queued, never sent inline) | Every mailable (`App\Mail\ContactMail`/`WelcomeMail`/`ChangePasswordMail`/`VerifyEmailMail`/`BlockedAccountMail`, all `ShouldQueue`) rides the same queue and retry/backoff policy as search indexing; an unreachable mail server fails and retries the same way, landing in `failed_jobs` after five attempts. Verified at the Feature-test level (e.g. `tests/Feature/Mail/ContactMailTest.php`, "leaves a failed contact send in failed_jobs instead of losing it"), and live on the production stack in P-7 (2026-09-24, `docs/release/parity/P-07-production-e2e.md`): with the relay stopped, a welcome mail failed and was delivered by the next retry once the relay was back; with the relay down for good, it reached `failed_jobs` after five attempts (about 4 minutes) and `queue:retry all` delivered it | `queue:retry all` once SMTP is reachable again |
 | **Google (OAuth)** — no GOOGLE_CLIENT_ID/SECRET configured | The login screen simply has no Google button; password/username login and registration are entirely unaffected | Both `/auth/google/*` routes 404 | Set `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` and restart; not a dependency the app requires to function |
 | **Google (OAuth)** — configured but unreachable/erroring mid-login | A generic "Sorry, da lief etwas schief." toast on the login screen; no account is created or modified | `GoogleController::callback()` catches the failure and redirects to `/login`, synchronously (this is a request-time auth exchange, not a background job — there is nothing to retry) | The visitor retries, or uses password/username login instead |
@@ -92,8 +103,18 @@ It does three things, in this order:
 
 `Index settings applied.` and `Search index rebuilt` mean all three steps were accepted. With `SCOUT_QUEUE=true` (the
 default), the queue worker writes the documents, so search fills up over the next seconds to minutes, depending on the number
-of projects. It is complete when `docker compose logs -f queue-worker` stops showing `MakeSearchable` jobs. In P-11, 151
-documents took 1 to 2 seconds.
+of projects. The command waits up to 30 seconds for the worker and then says which:
+- `Search index rebuilt (the queue worker has written every document).`: done. In P-11, 151 documents took 1 to 2 seconds.
+- `Search index rebuilt, but N queue job(s) … were still waiting after 30 s`: the worker is not running, or has a lot of
+  work. Search shows nothing until the jobs have run. Check `docker compose ps queue-worker`; when the worker is fine,
+  `docker compose logs -f queue-worker` stops showing `MakeSearchable` jobs once it is done. The command still exits 0,
+  because everything it does itself was done. Nothing needs to be run again.
+
+**Before it changes anything, the command checks that the queue can take the import.** If Redis is down it stops with
+`The queue cannot be reached … nothing was changed` and leaves a working index alone. (It used to drop every document first
+and fail after, which left the site with no search results until it was run again, P12-04.) Meilisearch being down stops
+it at the first step in the same way. If something fails after the documents were dropped, for example Redis dies halfway
+through the import, the message says the index is incomplete: fix the cause and run it again.
 
 After that, **normal indexing** takes over again by itself. Every saved, published, unpublished or deleted project or request
 updates the index through the queue. That is not a recovery tool: it only writes what changes. On a lost index it even
@@ -110,8 +131,12 @@ The health check notices a missing index and missing settings. It does not notic
 run the command whenever results look wrong.
 
 If the command names a step that failed, Meilisearch is unreachable or misconfigured: fix that and run it again. Failed sync
-jobs stay visible in the `failed_jobs` table (`php artisan queue:failed`) and can be retried with `queue:retry all`;
-reindexing makes them unnecessary.
+jobs stay visible in the `failed_jobs` table (`php artisan queue:failed`) and keep `/health` degraded. They can be retried
+with `queue:retry all`; reindexing makes them unnecessary, and `queue:flush` then clears the table.
+
+If Meilisearch was lost while documents were waiting in the queue, the worker writes them into the new, empty Meilisearch,
+which creates the index without its settings. `nusszopf:health` then fails `search`, naming the differing settings and
+`run php artisan search:reindex`. Run it, and the index is identical to what it was before (P-12, 6c).
 
 **If Meilisearch itself does not start.** `docker compose ps` then shows `meilisearch` restarting, and
 `docker compose logs meilisearch` shows an error such as `MDB_INVALID: File is not an LMDB file`: its data on disk is damaged.
@@ -415,6 +440,8 @@ docker compose run --rm --no-deps --entrypoint php php-fpm artisan key:generate 
 - **`php-fpm` exits at once with "APP_KEY is not set"**: generate one (Running one-off Artisan commands) and put it into `.env`.
 - **`php-fpm` stays "starting" for minutes after an upgrade**: a migration is running (`docker compose logs -f php-fpm`); it has up to three minutes before it counts as unhealthy. If a migration failed, `php-fpm` keeps restarting, the site answers 502, and the log names the migration with `FAIL` and the database error. PostgreSQL undoes a failed migration completely (verified in P-9), so the database stays as the previous release left it. Go back as described in [Rollback](#rollback), then report the error. Do not run migrations by hand.
 - **`queue-worker`/`scheduler` "unhealthy" right after start**: they need their first heartbeat (up to a minute after `php-fpm` is up). Persistently unhealthy: `docker compose logs scheduler queue-worker`; `nusszopf:health` names the failing check and how old the last heartbeat is.
+- **`/health` says `degraded` and `nusszopf:health` shows `failed_jobs` failing**: jobs ran out of their tries. `queue:failed` names them and the reason. Fix the cause, then `queue:retry all` (mails: they are only there) or, for search updates after a `search:reindex`, `queue:flush`. The table must be empty for the check to pass.
+- **`queue` fails and `scheduler` fails**: start with the scheduler: it queues the heartbeat the queue check reads. `docker compose ps`, then `docker compose up -d scheduler`.
 - **Search shows nothing / is stale**: `nusszopf:health` (is `search` ok?), `queue:failed`, then `search:reindex`. If `meilisearch` keeps restarting, see "Search index recovery", "If Meilisearch itself does not start".
 - **Links or redirects use `http://` behind a proxy, or the login loops**: `TRUSTED_PROXIES`, `APP_URL=https://…` and `SESSION_SECURE_COOKIE` in `.env`, then `docker compose up -d` again (`config:cache` is rebuilt on start).
 - **A link from an e-mail (verification, "Das bin ich!") answers 403**, or **styles and scripts do not load**: every link the application writes starts with `APP_URL`, which must be the exact public address; and a proxy outside the private networks must be listed in `TRUSTED_PROXIES`, or the application sees `http` where the signed link says `https` (`docs/deployment/README.md`, "Reverse proxy and TLS").

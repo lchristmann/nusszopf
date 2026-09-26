@@ -63,7 +63,10 @@ class HealthChecker
         $checks['scheduler'] = $this->heartbeat(self::SCHEDULER_HEARTBEAT, 'the scheduler is not running (php artisan schedule:work)');
 
         if (config('queue.default') !== 'sync') {
-            $checks['queue'] = $this->heartbeat(self::QUEUE_HEARTBEAT, 'the queue worker is not running (php artisan queue:work)');
+            $checks['queue'] = $this->heartbeat(self::QUEUE_HEARTBEAT, 'the queue worker is not running (php artisan queue:work), or the scheduler that queues its heartbeat is not');
+            if (in_array(config('queue.failed.driver'), ['database', 'database-uuids'], true)) {
+                $checks['failed_jobs'] = $this->failedJobs();
+            }
         }
 
         return $checks;
@@ -92,6 +95,24 @@ class HealthChecker
         } catch (Throwable $e) {
             return ['ok' => false, 'detail' => $e->getMessage()];
         }
+    }
+
+    /**
+     * A job that ran out of its tries (an undelivered mail, a missed index update) waits in `failed_jobs` for the
+     * operator, who retries or forgets it. A worker that is alive and failing every job passes the heartbeat check
+     * (P-12, finding P12-02), so a monitor on /health would never see it.
+     *
+     * @return array{ok: bool, detail: string}
+     */
+    private function failedJobs(): array
+    {
+        return $this->attempt(function () {
+            $count = DB::table(config('queue.failed.table'))->count();
+
+            return $count === 0
+                ? 'none'
+                : throw new \RuntimeException("{$count} failed ".($count === 1 ? 'job' : 'jobs').' — see php artisan queue:failed; run queue:retry all to try them again, or queue:flush to forget them');
+        });
     }
 
     /**

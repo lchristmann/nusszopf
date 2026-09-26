@@ -236,6 +236,7 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 - Migration implications: none.
 - Tests: a Feature test forcing a sync job to fail and asserting it lands in `failed_jobs` rather than disappearing.
 - Approval: Approved (2026-09-18) for the search-sync path. A dedicated failed-job test is tracked as follow-up work for this slice (see the first-slice completion report).
+- P-12 addition (2026-09-26, `docs/release/parity/P-12-queue-scheduler.md`): "visible" and "not lost" now also hold for a Redis crash (the queue is kept in Redis's append-only file, so at most about a second of queued work can be lost, instead of everything since the last snapshot) and for a worker that fails every job (`nusszopf:health` and `/health` report `failed_jobs`). Same intent, no product behavior changes. Tests: `tests/Feature/HealthTest.php`, `scripts/queue-scheduler-test.sh` (step 4).
 
 ---
 

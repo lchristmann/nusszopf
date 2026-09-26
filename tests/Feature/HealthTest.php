@@ -5,6 +5,7 @@ use App\Jobs\QueueHeartbeat;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
  * docs/deployment/operations.md, "Health checks": /up is the liveness probe, /health the operator's
@@ -98,4 +99,37 @@ it('records a queue heartbeat when the job runs', function () {
 
 it('reports the release the image was built from', function () {
     expect(config('nusszopf.version'))->toBe('dev');
+});
+
+/**
+ * P-12, finding P12-02: a worker that is alive but failing every job passes the queue heartbeat, so the jobs that
+ * ran out of tries have their own check.
+ */
+it('fails while a job waits in failed_jobs, and says what to do', function () {
+    config(['queue.default' => 'database']);
+    beat(HealthChecker::SCHEDULER_HEARTBEAT);
+    beat(HealthChecker::QUEUE_HEARTBEAT);
+    DB::table('failed_jobs')->insert(['uuid' => (string) Str::uuid(), 'connection' => 'redis', 'queue' => 'default', 'payload' => '{}', 'exception' => 'boom', 'failed_at' => now()]);
+
+    $this->getJson('/health')->assertStatus(503)->assertExactJson(['status' => 'degraded']);
+
+    config(['nusszopf.health_token' => 'geheim']);
+    $this->getJson('/health', ['Authorization' => 'Bearer geheim'])
+        ->assertStatus(503)
+        ->assertJsonPath('checks.queue.ok', true)
+        ->assertJsonPath('checks.failed_jobs.ok', false)
+        ->assertJsonPath('checks.failed_jobs.detail', fn (string $detail) => str_contains($detail, '1 failed job') && str_contains($detail, 'queue:retry all') && str_contains($detail, 'queue:flush'));
+
+    // The worker container's own check looks only at the heartbeat: a failed job must not make Docker call it unhealthy.
+    expect(Artisan::call('nusszopf:health', ['--only' => 'queue']))->toBe(0)
+        ->and(Artisan::call('nusszopf:health', ['--only' => 'failed_jobs']))->toBe(1);
+
+    DB::table('failed_jobs')->delete();
+    $this->getJson('/health')->assertOk();
+});
+
+it('has no failed_jobs check when jobs run synchronously', function () {
+    config(['queue.default' => 'sync']);
+
+    expect(array_keys((new HealthChecker)->run()))->not->toContain('failed_jobs');
 });

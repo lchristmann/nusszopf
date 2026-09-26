@@ -48,10 +48,10 @@ it; `install.sh --upgrade` does both (see `docs/deployment/operations.md`, "Upgr
 |---|---|---|
 | `web` | `ghcr.io/lchristmann/nusszopf-web` — nginx built `FROM` the application image's own assets | HTTP; serves static assets, passes PHP to `php-fpm`. The only published port (`APP_BIND`:`APP_PORT`) |
 | `php-fpm` | `ghcr.io/lchristmann/nusszopf-php-fpm` (PHP 8.5-FPM, Laravel 13, Livewire 4, non-root) | Request handling. Its entrypoint refuses to start without `APP_KEY`, runs `migrate --force --isolated`, warms the config, route, view and event caches, and applies the search index settings (`scout:sync-index-settings`; only a warning if Meilisearch is unreachable) |
-| `queue-worker` | same application image | `queue:work --tries=5 --backoff=10,30,60,120`: background jobs (search indexing, contact-form mail). Healthy while it processes the scheduler's heartbeat job |
+| `queue-worker` | same application image | `queue:work --tries=5 --backoff=10,30,60,120 --max-time=3600`: background jobs (search indexing, every mail). Healthy while it processes the scheduler's heartbeat job |
 | `scheduler` | same application image | `schedule:work`. Its only tasks are the two heartbeats (`routes/console.php`) — the historical product had no periodic work. Healthy while its heartbeat is fresh |
 | `postgres` | `postgres:16-alpine` | Primary datastore |
-| `redis` | `redis:8-alpine` | Sessions, cache, queue |
+| `redis` | `redis:8-alpine`, started with `--appendonly yes` | Sessions, cache, queue. The append-only file keeps waiting mails and index updates through a crash (P-12) |
 | `meilisearch` | `getmeili/meilisearch:v1.11`, `MEILI_ENV=production`, master key from `MEILISEARCH_KEY` | Search index — derived data, rebuilt with `search:reindex` (`docs/deployment/operations.md`, "Search index recovery", also for a Meilisearch whose data no longer opens) |
 | `workspace` (dev only) | Node + Composer + CLI tools | Contributor shell |
 
@@ -198,7 +198,7 @@ Named volumes, one per stateful concern (never one shared "data" volume, so that
 - `laravel-storage` — uploaded files: the avatars (slice 8) and Livewire's temporary uploads. Backed up by the backup script; a build never puts files into it (`.dockerignore`, P10-04), because Docker fills a new volume from the image
 - `./legal` (a bind mount, not a volume) — your legal texts; back it up with `.env`
 - `meilisearch-data` — search index. Derived from PostgreSQL: never backed up; a restore rebuilds it with `search:reindex` (`docs/deployment/operations.md`)
-- `redis-data` — sessions, queue, cache. Not backed up: after a restore everyone signs in again (`docs/deployment/operations.md`, "Backups")
+- `redis-data` — sessions, queue, cache, with its append-only file. Not backed up: after a restore everyone signs in again (`docs/deployment/operations.md`, "Backups")
 
 No shared assets volume — see [above](#why-a-dedicated-nginx-image-not-a-shared-assets-volume).
 
@@ -211,7 +211,7 @@ Three layers, all verified by the smoke test:
   the worker must process) is at most three minutes old. `depends_on: condition: service_healthy` orders the start (databases → `php-fpm` → `web`, `queue-worker`, `scheduler`).
 - **`/up`**: Laravel's liveness probe — 200 while the application boots. Touches no dependency.
 - **`/health`**: 200 `{"status":"ok"}` or 503 `{"status":"degraded"}`; it starts no session, so it still answers while Redis is down. With `HEALTH_TOKEN` set, a request with
-  `Authorization: Bearer <token>` also gets the version and each check (`database`, `redis`, `search`, `scheduler`, `queue`) with its reason. `search` passes only while Meilisearch answers *and* the `items` index exists with the settings of `config/scout.php`; a lost index, or one recreated without its settings, fails it with "run php artisan search:reindex" (P-11). Point an uptime monitor at it.
+  `Authorization: Bearer <token>` also gets the version and each check (`database`, `redis`, `search`, `scheduler`, `queue`, `failed_jobs`) with its reason. `search` passes only while Meilisearch answers *and* the `items` index exists with the settings of `config/scout.php`; a lost index, or one recreated without its settings, fails it with "run php artisan search:reindex" (P-11). `failed_jobs` fails while a job that ran out of its tries waits in the `failed_jobs` table, and names the commands that clear it (P-12); the container health of `queue-worker` ignores it, since a worker that fails a job is not a dead worker. Point an uptime monitor at it.
 - **`php artisan nusszopf:health`** — the same from the shell, with the running version; exit code 1 when a check fails. `php artisan about` shows the version too, and `docker image inspect` the `org.opencontainers.image.version` label.
 
 The version is the Git tag: the release workflow passes it as the `NUSSZOPF_VERSION` build argument (there is no hand-maintained version file); an image built from a working copy reports `dev`.

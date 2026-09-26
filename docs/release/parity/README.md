@@ -22,7 +22,7 @@ person is listed as pending), **In progress**, **Not started**.
 | P-9 Upgrade/migration | [`P-09-upgrade.md`](P-09-upgrade.md) | Done (closed by the maintainer 2026-09-25; tested from `4de0194` and `8c4a2eb`, the closest builds to an N-1, because no release exists; P9-01 fixed; the true N-1 test and the real release download, GHCR pull and arm64 checks deferred to P-16, not waived; the restore drill stays in P-10) |
 | P-10 Backup/restore drill | [`P-10-backup-restore.md`](P-10-backup-restore.md) | Done (closed by the maintainer 2026-09-25; restored onto an empty Docker host: data, files and search identical, the Chromium suite green; the rollback from `8c4a2eb` works and can be upgraded again; P10-01…P10-05 fixed; the GHCR pull, arm64 and a physically separate host deferred to P-16, not waived; encryption and stale-backup alerting out of v1 scope by decision B2) |
 | P-11 Search index recovery | [`P-11-search-recovery.md`](P-11-search-recovery.md) | Done (closed by the maintainer 2026-09-25; four losses, including an empty and a corrupt Meilisearch, each recovered by the documented block to identical answers, privacy intact; P11-01 (BUG-047, `id:asc` tie-break, approved), P11-02 and P11-03 fixed; GHCR/arm64 deferred to P-16, queue failure while reindexing to P-12, not waived) |
-| P-12 Queue/scheduler | [`P-12-queue-scheduler.md`](P-12-queue-scheduler.md) | Not started |
+| P-12 Queue/scheduler | [`P-12-queue-scheduler.md`](P-12-queue-scheduler.md) | Evidence complete, awaiting the maintainer (2026-09-26; the production stack's worker, Redis and scheduler restarted, killed and stopped with work waiting, a job through all five attempts, `search:reindex` with the worker down, Redis down and Meilisearch lost; O-2 and P-7 evidence reused; P12-01…P12-06 fixed: a Redis crash lost every queued job, `failed_jobs` was invisible to `/health`, mails for deleted accounts, two `search:reindex` gaps, a misleading queue message) |
 | P-13 E-mail delivery | [`P-13-email-delivery.md`](P-13-email-delivery.md) | Not started |
 | P-14 Documentation completion | [`P-14-documentation.md`](P-14-documentation.md) | Not started |
 | P-15 FOSS repository hygiene | [`P-15-foss-hygiene.md`](P-15-foss-hygiene.md) | Not started |
@@ -65,9 +65,9 @@ person is listed as pending), **In progress**, **Not started**.
   - `--upgrade` without a version, which moves to `latest`;
   - `docker compose pull` fetching the Nusszopf images from GHCR (`P-09-upgrade.md`, "Limitations").
 
-- **P-12 (queue):** from P-11, the queue failing while `search:reindex` runs (the worker down, or Meilisearch
-  lost mid-import). P-11 only showed that a reindex against an unreachable Meilisearch fails visibly
-  (`P-11-search-recovery.md`, section 8).
+- **P-12 (queue):** from P-11, the queue failing while `search:reindex` runs. Done in P-12 (step 6 of
+  `scripts/queue-scheduler-test.sh`): the worker down, Redis down and Meilisearch lost while the documents wait each
+  end in a documented, verified state, and two gaps were fixed (P12-04, P12-05).
 
 - **P-16 (release):** as for P-8…P-10, the search-recovery drill ran on locally built images. Run
   `sh scripts/search-recovery-test.sh` on the release candidate, with the images pulled from GHCR, and on arm64.
@@ -77,9 +77,19 @@ person is listed as pending), **In progress**, **Not started**.
   runs one engine per job. Give the test its own index prefix, or run it last.
 
 - **P-12 (queue):** a welcome or verification mail queued for an account that is deleted before the worker sends it
-  fails with `ModelNotFoundException` and stays in `failed_jobs`. Observed during P-3 after quick
-  register-then-delete runs and a database reset. It is noise for an operator who reads `failed_jobs`; decide
-  there whether such jobs should be dropped instead.
+  failed with `ModelNotFoundException` and stayed in `failed_jobs`. Done in P-12: such a job is now dropped (P12-03).
+
+- **P-13 (e-mail):** P-12 used a Mailpit, so the retry policy against a real relay's failures (greylisting, throttling,
+  timeouts) is still unmeasured, and a mail queued at the moment of a worker crash can be delivered twice
+  (`P-12-queue-scheduler.md`, section 6).
+
+- **P-14 (documentation):** a fresh dev stack needs `chown 1000:1000 /var/www/vendor /var/www/node_modules` in the
+  `workspace` container before `composer install`, and `MEILISEARCH_KEY=nusszopf-dev-master-key-change-me` in `.env`
+  for the `meilisearch`-group tests. Neither is in `README-DEV.md`.
+
+- **P-16 (release):** run `sh scripts/queue-scheduler-test.sh` on the release candidate with the images pulled from
+  GHCR, and on arm64. P-9's `upgrade-test.sh` from the stand-ins `4de0194` and `8c4a2eb` now loses sessions and
+  in-flight jobs once, because they run Redis without the append-only file; a real N-1 tag does not.
 
 ## Section 7 checklist
 

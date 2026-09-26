@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Mail\SendQueuedMailUnlessModelGone;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Console\AboutCommand;
+use Illuminate\Mail\SendQueuedMailable;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
@@ -14,7 +16,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(SendQueuedMailable::class, SendQueuedMailUnlessModelGone::class);
     }
 
     /**

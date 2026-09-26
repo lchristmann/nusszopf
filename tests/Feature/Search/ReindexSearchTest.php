@@ -4,6 +4,7 @@ use App\Models\Project;
 use App\Models\ProjectRequest;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
 use Laravel\Scout\EngineManager;
 use Meilisearch\Client;
 use Meilisearch\Exceptions\ApiException;
@@ -152,4 +153,49 @@ it('fails visibly, and says so, when the engine cannot be reached', function () 
     app()->forgetInstance(Client::class);
 
     $this->artisan('search:reindex')->expectsOutputToContain('the search index is incomplete')->assertFailed();
+})->group('meilisearch');
+
+/**
+ * P-12 (docs/release/parity/P-12-queue-scheduler.md): with the queue in use the queue worker writes the documents, so
+ * the queue is part of a rebuild.
+ */
+it('leaves the working index alone when the queue cannot take the import (P12-04)', function () {
+    Project::removeAllFromSearch();
+    seedProjects(w('Warteschlangenwort'));
+    $expected = expectedDocumentIds();
+    expect(awaitDocumentCount(count($expected)))->toBeTrue();
+    $before = indexSnapshot();
+
+    // Redis is down: before the fix the documents were dropped first and the import failed after.
+    config(['scout.queue' => true, 'queue.default' => 'redis']);
+    Queue::shouldReceive('connection')->andThrow(new RuntimeException('Connection refused'));
+
+    $this->artisan('search:reindex')
+        ->expectsOutputToContain('The queue cannot be reached (Connection refused); nothing was changed')
+        ->assertFailed();
+
+    expect(indexSnapshot())->toBe($before);
+})->group('meilisearch');
+
+it('says so when no queue worker writes the documents (P12-05)', function () {
+    config(['scout.queue' => true, 'queue.default' => 'database', 'search.queue_wait_attempts' => 1]);
+    seedProjects(w('Arbeiterwort'));
+    DB::table('jobs')->delete();
+
+    $this->artisan('search:reindex')
+        ->expectsOutputToContain('were still waiting after 0 s. Search shows nothing until they have run: check that the queue worker is running (docker compose ps queue-worker)')
+        ->assertSuccessful();
+
+    expect(DB::table('jobs')->count())->toBeGreaterThan(0);
+})->group('meilisearch');
+
+it('reports success once the queue has written every document', function () {
+    config(['scout.queue' => true, 'queue.default' => 'sync']);
+    seedProjects(w('Fertigwort'));
+
+    $this->artisan('search:reindex')
+        ->expectsOutputToContain('the queue worker has written every document')
+        ->assertSuccessful();
+
+    expect(awaitDocumentCount(count(expectedDocumentIds())))->toBeTrue();
 })->group('meilisearch');
