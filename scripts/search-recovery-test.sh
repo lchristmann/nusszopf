@@ -180,7 +180,7 @@ docker build -q -f "$ROOT/docker/php/Dockerfile" --target nginx --build-arg NUSS
     -t "ghcr.io/lchristmann/nusszopf-web:$VERSION" "$ROOT" >/dev/null
 mkdir -p "$WORK/release"
 cp "$ROOT/docker-compose.yaml" "$ROOT/scripts/install.sh" "$WORK/release/"
-sed "s|^NUSSZOPF_VERSION=.*|NUSSZOPF_VERSION=$VERSION|" "$ROOT/.env.production.example" > "$WORK/release/.env.production.example"
+sed "s|^NUSSZOPF_VERSION=.*|NUSSZOPF_VERSION=$VERSION|" "$ROOT/.env.production.example" > "$WORK/release/env.production.example"
 
 step "A new host: install, fill"
 docker rm -f -v "$HOST" >/dev/null 2>&1 || true

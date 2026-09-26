@@ -40,7 +40,7 @@ fail() { echo "FAIL: $1" >&2; (cd "$WORK" && compose logs --tail 40 2>&1 | tail 
 step "Install into a clean directory (install.sh, release assets taken from this working copy)"
 mkdir "$WORK/assets"
 cp "$ROOT/docker-compose.yaml" "$WORK/assets/docker-compose.yaml"
-sed "s|^NUSSZOPF_VERSION=.*|NUSSZOPF_VERSION=$VERSION|" "$ROOT/.env.production.example" > "$WORK/assets/.env.production.example"
+sed "s|^NUSSZOPF_VERSION=.*|NUSSZOPF_VERSION=$VERSION|" "$ROOT/.env.production.example" > "$WORK/assets/env.production.example"
 cd "$WORK"
 NUSSZOPF_BASE_URL="file://$WORK/assets" sh "$ROOT/scripts/install.sh" "$BASE" >/dev/null
 sed -i "s|^APP_PORT=.*|APP_PORT=$PORT|" .env
@@ -61,7 +61,7 @@ mkdir "$WORK/upgrade"
     printf 'name: nusszopf\n# an earlier release\n' > docker-compose.yaml
     sed -e 's|^NUSSZOPF_VERSION=.*|NUSSZOPF_VERSION=0.0.1|' -e 's|^APP_KEY=.*|APP_KEY=base64:kept|' \
         -e 's|^TRUSTED_PROXIES=.*|TRUSTED_PROXIES=*|' -e 's|^MAIL_FROM_ADDRESS=.*|MAIL_FROM_ADDRESS="mail@nusszopf.org"|' \
-        -e '/^NUSSZOPF_REGISTER_LIMIT=/d' "$WORK/assets/.env.production.example" > .env
+        -e '/^NUSSZOPF_REGISTER_LIMIT=/d' "$WORK/assets/env.production.example" > .env
     chmod 600 .env
     NUSSZOPF_BASE_URL="file://$WORK/assets" sh "$ROOT/scripts/install.sh" --upgrade > upgrade.out
     cmp -s docker-compose.yaml "$WORK/assets/docker-compose.yaml" || fail "--upgrade kept the old docker-compose.yaml"

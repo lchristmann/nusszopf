@@ -34,7 +34,7 @@ Docker Compose is the reference deployment. No Kubernetes, no orchestration plat
 | File | Audience | What it is |
 |---|---|---|
 | `docker-compose.yaml` (repository root, attached to every release) | Operators | The whole stack, `image:`-only: no build context, nothing to compile. Which release runs is `NUSSZOPF_VERSION` in `.env` |
-| `.env.production.example` (attached to every release with its version filled in) | Operators | Every setting of a production installation, the ones that must be set marked `REQUIRED` |
+| `.env.production.example` (attached to every release with its version filled in, as `env.production.example`: GitHub drops a leading dot from an asset's name) | Operators | Every setting of a production installation, the ones that must be set marked `REQUIRED` |
 | `scripts/install.sh` (attached to every release) | Operators | Downloads the two files above, generates `APP_KEY` and the database, search and health secrets, writes `.env`. `install.sh --upgrade <version>` moves an existing installation to that release: it replaces the two files and sets `NUSSZOPF_VERSION`, keeping the rest of `.env` (`docs/deployment/operations.md`, "Upgrades") |
 | `compose.prod.yaml` | Contributors / CI | An *override* that only adds `build:` to `web` and `php-fpm`: `docker compose -f docker-compose.yaml -f compose.prod.yaml up -d --build` runs the working copy's own images in the operator's stack |
 | `compose.dev.yaml` | Contributors | Bind-mounted source, Xdebug, a `workspace` sidecar for Composer/Node/Artisan, the Vite dev server, Playwright |
@@ -224,10 +224,21 @@ Verified on a freshly installed Ubuntu 24.04 host with Docker Engine 29.8 and Co
 ```sh
 mkdir /opt/nusszopf && cd /opt/nusszopf
 curl -fsSLO https://github.com/lchristmann/nusszopf/releases/latest/download/install.sh
-sh install.sh https://nusszopf.example.org          # or: sh install.sh https://nusszopf.example.org 0.1.0
+sh install.sh https://nusszopf.example.org          # or: sh install.sh https://nusszopf.example.org 1.0.0
 ```
 
-`install.sh` downloads the release's `docker-compose.yaml` and `.env.production.example`, writes `.env` with freshly generated secrets
+**Release candidates.** GitHub's `releases/latest` never points at a pre-release, so until a stable release exists that
+URL is a 404. To install a candidate, name it in both places (`1.0.0-rc.2` is an example; the releases page lists them):
+
+```sh
+curl -fsSLO https://github.com/lchristmann/nusszopf/releases/download/1.0.0-rc.2/install.sh
+sh install.sh https://nusszopf.example.org 1.0.0-rc.2
+```
+
+The same goes for `sh install.sh --upgrade 1.0.0-rc.2`: without a version, `--upgrade` asks for `latest`.
+`1.0.0-rc.1` cannot be installed with its own `install.sh` (P16-04); use `1.0.0-rc.2` or later.
+
+`install.sh` downloads the release's `docker-compose.yaml` and `env.production.example` (kept on your host as `.env.production.example`), writes `.env` with freshly generated secrets
 (`APP_KEY`, `DB_PASSWORD`, `MEILISEARCH_KEY`, `HEALTH_TOKEN`; mode 600), and refuses to overwrite an existing `.env`. Then:
 
 1. Edit `.env`: set `MAIL_FROM_ADDRESS` (**required**: your sender address, also shown as the contact address unless `NUSSZOPF_CONTACT_EMAIL` is set) and how mail is sent: `MAIL_MAILER=resend` with `RESEND_API_KEY` (recommended), or your relay in `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD` ([Sending mail](#sending-mail-mail_-resend_api_key)); `APP_BIND=127.0.0.1` when a reverse proxy runs on this host. Optional: `NUSSZOPF_CONTACT_EMAIL`, `LOCATIONIQ_KEY`, `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`. Everything a first-time operator *must* set is marked `REQUIRED` in the file, and Compose refuses to start with a clear message if one is missing.
@@ -241,7 +252,7 @@ sh install.sh https://nusszopf.example.org          # or: sh install.sh https://
    (`docs/domain/entities.md`, "Entities confirmed absent"; `docs/rewrite/decisions-register.md`,
    "Explicitly not open") — every account is an ordinary equal-privilege user.
 
-Doing it by hand instead of `install.sh`: download `docker-compose.yaml` and `.env.production.example` (renamed `.env`) from the
+Doing it by hand instead of `install.sh`: download `docker-compose.yaml` and `env.production.example` (renamed `.env`) from the
 release, set the `REQUIRED` lines, and generate the key with
 `docker compose run --rm --no-deps --entrypoint php php-fpm artisan key:generate --show` (`.env` must contain `NUSSZOPF_VERSION`
 and the database/search passwords first, Compose reads them).

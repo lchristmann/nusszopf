@@ -48,7 +48,7 @@ fail() { echo "FAIL: $1" >&2; exit 1; }
 step "Install into a clean directory (install.sh, release assets taken from this working copy)"
 mkdir "$WORK/assets"
 cp "$ROOT/docker-compose.yaml" "$WORK/assets/docker-compose.yaml"
-sed "s|^NUSSZOPF_VERSION=.*|NUSSZOPF_VERSION=$VERSION|" "$ROOT/.env.production.example" > "$WORK/assets/.env.production.example"
+sed "s|^NUSSZOPF_VERSION=.*|NUSSZOPF_VERSION=$VERSION|" "$ROOT/.env.production.example" > "$WORK/assets/env.production.example"
 cd "$WORK"
 NUSSZOPF_BASE_URL="file://$WORK/assets" sh "$ROOT/scripts/install.sh" "$BASE" >/dev/null
 

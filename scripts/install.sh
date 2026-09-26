@@ -61,7 +61,7 @@ if [ "$MODE" = "upgrade" ]; then
     fi
     echo "Downloading from $NUSSZOPF_BASE_URL ..."
     curl -fsSL "$NUSSZOPF_BASE_URL/docker-compose.yaml" -o docker-compose.yaml.new
-    curl -fsSL "$NUSSZOPF_BASE_URL/.env.production.example" -o .env.production.example.new
+    curl -fsSL "$NUSSZOPF_BASE_URL/env.production.example" -o .env.production.example.new
 
     # The release asset names its own version, also for "latest".
     TARGET="$(sed -n 's/^NUSSZOPF_VERSION=//p' .env.production.example.new)"
@@ -143,7 +143,7 @@ fi
 
 echo "Downloading from $NUSSZOPF_BASE_URL ..."
 curl -fsSL "$NUSSZOPF_BASE_URL/docker-compose.yaml" -o docker-compose.yaml
-curl -fsSL "$NUSSZOPF_BASE_URL/.env.production.example" -o .env.production.example
+curl -fsSL "$NUSSZOPF_BASE_URL/env.production.example" -o .env.production.example
 
 # The release asset already names its version; fill in the secrets and the address.
 cp .env.production.example .env

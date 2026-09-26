@@ -366,7 +366,7 @@ was signed in stays signed in, and work that was still queued is done by the new
    docker compose exec php-fpm php artisan nusszopf:health    # shows the new version
    ```
 
-   `sh install.sh --upgrade` without a version moves to the latest release.
+   `sh install.sh --upgrade` without a version moves to the latest release. GitHub's "latest" never is a pre-release, so while only release candidates exist, name the version (`sh install.sh --upgrade 1.0.0-rc.2`).
 
 `install.sh --upgrade` changes only these files:
 - **`docker-compose.yaml`:** replaced by the new release's. A release can change this file, for example with a new

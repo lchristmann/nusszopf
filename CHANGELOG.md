@@ -6,6 +6,19 @@ inline (`**Breaking:**`, `**Migration required:**`); see `docs/release/changelog
 
 ## [Unreleased]
 
+## [1.0.0-rc.2] - 2026-09-26
+
+The second release candidate. `1.0.0-rc.1` was published but cannot be installed with its own `install.sh`: the
+installer asked GitHub for `.env.production.example`, and GitHub serves an asset that starts with a dot under another
+name. Everything else of `1.0.0-rc.1` is unchanged; its section below still describes the application. It is the
+"to" of the first real upgrade test from `1.0.0-rc.1`.
+
+### Fixed
+
+- `install.sh` and the release now use the asset name `env.production.example`, so
+  `sh install.sh <url> 1.0.0-rc.2` and `sh install.sh --upgrade 1.0.0-rc.2` work from the published release. Install a
+  candidate by naming it: GitHub's `releases/latest` does not point at a pre-release (`docs/deployment/README.md`).
+
 ## [1.0.0-rc.1] - 2026-09-26
 
 The first release candidate of Nusszopf 2, the faithful reimplementation of the historical Nusszopf on PHP 8.5,

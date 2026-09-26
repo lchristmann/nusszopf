@@ -59,7 +59,11 @@ build() {
 release_files() {
     mkdir -p "$3"
     cp "$1/docker-compose.yaml" "$3/docker-compose.yaml"
-    sed "s|^NUSSZOPF_VERSION=.*|NUSSZOPF_VERSION=$2|" "$1/.env.production.example" > "$3/.env.production.example"
+    sed "s|^NUSSZOPF_VERSION=.*|NUSSZOPF_VERSION=$2|" "$1/.env.production.example" > "$3/env.production.example"
+    # An installer from before P16-04 (rc.1 and earlier) asks for the dotted name, which a real release cannot serve.
+    if grep -q 'NUSSZOPF_BASE_URL/\.env\.production\.example' "$1/scripts/install.sh"; then
+        cp "$3/env.production.example" "$3/.env.production.example"
+    fi
     cp "$1/scripts/install.sh" "$3/install.sh"
 }
 

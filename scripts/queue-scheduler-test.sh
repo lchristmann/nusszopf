@@ -122,7 +122,7 @@ setup() {
         -t "ghcr.io/lchristmann/nusszopf-web:$VERSION" "$ROOT" >/dev/null
     mkdir -p "$WORK/release"
     cp "$ROOT/docker-compose.yaml" "$ROOT/scripts/install.sh" "$WORK/release/"
-    sed "s|^NUSSZOPF_VERSION=.*|NUSSZOPF_VERSION=$VERSION|" "$ROOT/.env.production.example" > "$WORK/release/.env.production.example"
+    sed "s|^NUSSZOPF_VERSION=.*|NUSSZOPF_VERSION=$VERSION|" "$ROOT/.env.production.example" > "$WORK/release/env.production.example"
 
     docker rm -f -v "$HOST" >/dev/null 2>&1 || true
     docker run -d --privileged --name "$HOST" -p "127.0.0.1:$PORT:8080" "$DIND_IMAGE" >/dev/null

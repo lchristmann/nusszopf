@@ -55,8 +55,9 @@ sh install.sh https://nusszopf.example.org
 docker compose up -d
 ```
 
-There is no published release yet, so that download does not work today (`docs/release/parity/P-08-fresh-install.md`, P8-01).
-The first release publishes `install.sh` and the images.
+Until `1.0.0` is tagged, only release candidates exist, and GitHub's `releases/latest` does not point at a pre-release.
+Install a candidate by naming it: `curl -fsSLO https://github.com/lchristmann/nusszopf/releases/download/1.0.0-rc.2/install.sh`,
+then `sh install.sh https://nusszopf.example.org 1.0.0-rc.2` (`docs/deployment/README.md`).
 
 See `docs/deployment/README.md` for the details (reverse proxy, mail, configuration) and `docs/deployment/operations.md` for running it (health, backups, upgrades, recovery, troubleshooting).
 

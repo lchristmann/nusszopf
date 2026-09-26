@@ -116,11 +116,13 @@ jobs:
           fi
 
       # The operator's files: the compose file, the configuration template naming this very release, and the installer.
+      # The template is attached as `env.production.example`, without the dot: GitHub strips a leading dot from an
+      # asset's name (`default.env.production.example`), so a dotted name could not be downloaded (P-16, P16-04).
       - name: Operator files
         run: |
           mkdir release-assets
           cp docker-compose.yaml release-assets/docker-compose.yaml
-          sed "s|^NUSSZOPF_VERSION=.*|NUSSZOPF_VERSION=${GITHUB_REF_NAME}|" .env.production.example > release-assets/.env.production.example
+          sed "s|^NUSSZOPF_VERSION=.*|NUSSZOPF_VERSION=${GITHUB_REF_NAME}|" .env.production.example > release-assets/env.production.example
           cp scripts/install.sh release-assets/install.sh
 
       - name: Create the release
@@ -132,4 +134,4 @@ jobs:
           gh release create "$GITHUB_REF_NAME" $flags \
             --title "$GITHUB_REF_NAME" \
             --notes-file release-notes.md \
-            release-assets/docker-compose.yaml release-assets/.env.production.example release-assets/install.sh
+            release-assets/docker-compose.yaml release-assets/env.production.example release-assets/install.sh

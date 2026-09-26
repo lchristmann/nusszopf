@@ -19,9 +19,11 @@ maintainer** (only with the maintainer's word, dated).
 | # | Item | Source of the obligation | State |
 |---|---|---|---|
 | 1 | First-release version and changelog: number decided, `CHANGELOG.md` consolidated, the release workflow's notes extraction verified | P-14, `versioning.md`, `changelog.md` | Done (section 1) |
-| 2 | The CI gate is green on the commit that is tagged | `release.yml` runs the whole CI as its gate | Open (section 2) |
-| 3 | Build and publish `1.0.0-rc.1` to GHCR by the release workflow; both packages public | `release-process.md` | Open |
-| 4 | `releases/latest/download/install.sh`, `install.sh` without `NUSSZOPF_BASE_URL`, and the pull from GHCR (with its time) | P-8, P8-01 | Open |
+| 2 | The CI gate is green on the commit that is tagged | `release.yml` runs the whole CI as its gate | Done for `1.0.0-rc.1` (sections 2, 3) |
+| 2b | The one gate failure of the first tag attempt (Pest, exit code 2, not reproduced) | section 3 | Open, cause Unknown; annotations added to name it if it returns |
+| 3 | Build and publish `1.0.0-rc.1` to GHCR by the release workflow; both packages pullable without login | `release-process.md` | Done (section 3) |
+| 4 | `install.sh` without `NUSSZOPF_BASE_URL` from the real release, and the pull from GHCR (with its time) | P-8, P8-01 | Pull done (38 s); the install from the real release is blocked by P16-04 until `rc.2` |
+| 4b | `releases/latest/download/install.sh` and `--upgrade` without a version | P-8, P-9 | Deferred to the stable `1.0.0` tag (GitHub's "latest" excludes pre-releases, P16-05), not waived |
 | 5 | Production startup from the published images (`smoke-test.sh`-equivalent checks against the pulled images) | P-7 | Open |
 | 6 | arm64: the images run, the drills pass | P-8…P-11 | Open |
 | 7 | True N-1 → N upgrade: `upgrade-test.sh 1.0.0-rc.1 --suite` to `rc.2`, `install.sh --upgrade` from `releases/download/<version>/`, `--upgrade` without a version | P-9 | Open |
@@ -78,3 +80,31 @@ not of the product:
   moves to Ubuntu 26 on 2026-10-19. Dependabot proposes the action bumps.
 - Lesson recorded for the release process: a red or never-started CI is invisible from the terminal. Before every tag,
   check the badge or the run page of the exact commit (`docs/release/release-process.md`).
+
+## 3. `1.0.0-rc.1` published, and what its real path revealed
+
+The first attempt at the tag failed: the gate's Pest job ended with exit code 2 while the same commit's push run had
+passed it, and the log needs a GitHub login. The step was made readable without one (`ci.yml` now writes each failing test
+as an annotation), the tag was moved (nothing had been published from it), and the second gate passed all 13 jobs,
+Pest included. **The one failure was not reproduced** (Pest passed twice locally and in the push run), so its cause is
+**Unknown**; if it returns, the annotation will name the test. It is tracked in the checklist (item 2b), not waived.
+
+Release run `36270376826` on commit `138e63e`, 2026-09-26:
+
+- The images `ghcr.io/lchristmann/nusszopf-php-fpm:1.0.0-rc.1` and `…/nusszopf-web:1.0.0-rc.1` exist for `linux/amd64`
+  and `linux/arm64` (`docker manifest inspect`), carry `org.opencontainers.image.version=1.0.0-rc.1` and the
+  repository as their source, and `latest` was not moved. The multi-arch build took about 40 minutes on GitHub's
+  runners (arm64 under QEMU).
+- Both packages could be pulled without logging in, from the first push (the repository is public). From this
+  machine, `docker pull` of `nusszopf-php-fpm` (935 MB) took 38 s; `nusszopf-web` took 1.6 s, its layers being shared.
+  The pulled image reports `NUSSZOPF_VERSION=1.0.0-rc.1` and Laravel 13.
+- The GitHub Release is a pre-release with the changelog section as its notes and three files attached.
+
+| ID | Finding | Kind | State |
+|---|---|---|---|
+| P16-04 | **Blocker.** The release attaches `.env.production.example`, and GitHub strips a leading dot from an asset's name: it is served as `default.env.production.example`. `install.sh` requested `.env.production.example`, which is a 404 (`releases/download/1.0.0-rc.1/.env.production.example`). So the documented install could not work from a real release: the path P-8 could not test (P8-01) and that every harness bypassed with `NUSSZOPF_BASE_URL=file://…` | Defect of the release mechanism | Fixed: the asset is `env.production.example`, `install.sh` downloads that name and still keeps `.env.production.example` on the host; the harnesses serve the real name (and, for an older tree's own installer, also the dotted one); `tests/Feature/Release/ReleaseAssetsTest.php` fails on rc.1's files (3 of 3) and passes on the fix; `scripts/smoke-test.sh` passed with the new installer |
+| P16-05 | `releases/latest/download/…` is a 404 while only pre-releases exist, because GitHub's "latest" never is a pre-release. The README and the deployment guide told operators to use it | Documentation, GitHub's rule | Fixed in the docs: a candidate is installed by naming it (`releases/download/<tag>/install.sh`, `sh install.sh <url> <tag>`, `--upgrade <tag>`). The `latest` URLs themselves can be checked only once a stable tag exists: **deferred to the `1.0.0` tag, not waived** (checklist item 4b) |
+
+`1.0.0-rc.1` therefore stays published as a pre-release that cannot be installed with its own `install.sh`; its tag is not
+moved, since image tags are immutable (`docker-images.md`). It is the N-1 of the upgrade test, and its manual install is
+described there. `1.0.0-rc.2` carries the fix.
