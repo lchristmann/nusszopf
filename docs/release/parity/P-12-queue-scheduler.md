@@ -213,6 +213,21 @@ The operator documentation now says what the drill showed, and nothing else:
 
 ## Status
 
-Evidence complete, awaiting the maintainer. The exit criterion ("kill Meilisearch, SMTP and Redis during a write; jobs
-retry, fail visibly and recover") is met with the O-2 and P-7 evidence and the drills above; six findings, all fixed
-with regression coverage. P-13 and later phases are not started.
+**Done.** Closed by the maintainer on 2026-09-26 on the evidence above (commit `939eae0`). The exit criterion ("kill
+Meilisearch, SMTP and Redis during a write; jobs retry, fail visibly and recover") is met by the O-2 and P-7 evidence
+together with the P-12 acceptance drill, which the maintainer accepted as satisfying it.
+
+The maintainer approved P12-01 through P12-06, and decided:
+- The `failed_jobs` check of `/health` stays as implemented. A degraded health state is the right visibility for a
+  worker that keeps failing jobs, and the recovery path (`queue:retry all`) is documented.
+- The at-least-once behavior seen after a worker kill (301 mails for 300 jobs) is accepted as documented behavior. No
+  idempotency is added without a demonstrated product requirement.
+- The Redis append-only-file upgrade caveat stays deferred as reported: it is exercised through the real release/N-1
+  upgrade path when that exists, and does not block P-12.
+
+The limitations in section 6 stay deferred, not waived:
+- P-13: real SMTP delivery and the retry policy against a real relay;
+- P-14: the dev-stack onboarding notes;
+- P-16: the GHCR pull and arm64, and the Redis append-only-file caveat on a real N-1 upgrade.
+
+They do not reopen P-12. P-13 and later phases are not started.
