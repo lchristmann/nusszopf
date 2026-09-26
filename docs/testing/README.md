@@ -249,6 +249,16 @@ not run it; it is a release step. It does the following:
 After every recovery, it waits until the index holds as many documents as PostgreSQL says it should. In every
 answer, no private project or request may appear, and none may be in the index. `SEARCH_RECOVERY_KEEP=1` keeps the host.
 
+### Mail delivery drill (P-13, `docs/release/parity/P-13-email-delivery.md`)
+
+`P13_RECIPIENT=you@example.org sh scripts/mail-delivery-test.sh` builds the production images, installs them as an
+operator would, takes `MAIL_MAILER`, `MAIL_FROM_ADDRESS` and the key or SMTP login from your untracked `.env`, queues one
+mail of every type through `scripts/mail-delivery-send.php` and waits for the production worker to deliver them
+(`failed_jobs` must stay empty). It sends **real mail** (seven messages) and needs a mailbox you can read; the recipient
+is never a default. `docker compose exec -T php-fpm php < scripts/mail-delivery-inspect.php` prints what each mail
+looks like on the wire (headers, parts, links, escaping) without sending anything. Reading the received mail in
+Gmail, Outlook, Apple Mail or any other client is manual.
+
 ### Queue and scheduler drill (P-12, `docs/release/parity/P-12-queue-scheduler.md`)
 
 `sh scripts/queue-scheduler-test.sh` runs the queue worker, Redis, the scheduler and `search:reindex` under failure on

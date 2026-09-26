@@ -104,6 +104,38 @@ Datenschutz text and change it whenever that text changes. Default `1`. Exportin
 external sender, retention and the unsubscribe link every issue must carry: `docs/deployment/operations.md`,
 "Newsletter subscribers". Newsletter mails need the same `MAIL_*` relay as every other mail.
 
+### Sending mail (`MAIL_*`, `RESEND_API_KEY`)
+
+Every mail (account, contact, newsletter) is queued and sent by the `queue-worker`. Two ways of sending are supported;
+set one in `.env` and run `docker compose up -d` (the containers read `.env` when they are created, so
+`docker compose restart` is not enough).
+
+| | SMTP relay | Resend API |
+|---|---|---|
+| `MAIL_MAILER` | `smtp` (the default) | `resend` |
+| Set | `MAIL_HOST`, `MAIL_PORT` (587 with STARTTLS, 465 with implicit TLS), `MAIL_USERNAME`, `MAIL_PASSWORD`, optionally `MAIL_SCHEME` (`smtps` for 465) | `RESEND_API_KEY` |
+| Verified | Only against a Mailpit that does not check certificates (P-7, P-12). **Not yet** against a real relay | Delivered for real to a mailbox at a third party, on the production images (P-13) |
+
+Both need `MAIL_FROM_ADDRESS`, an address on a domain **your provider has verified you may send for**. With Resend,
+sending from any other domain is refused (`The <domain> domain is not verified`), and the mail ends in `failed_jobs`
+after five tries. TLS certificates are always verified; there is no setting to switch that off.
+
+The DNS records found (with `dig`) on the domain P-13 sent from through Resend. They are what that one setup had, not
+a checklist derived from the provider's documentation, and another provider needs its own records
+(`docs/release/parity/P-13-email-delivery.md`, section 6):
+
+- a **DKIM** `TXT` record at `resend._domainkey.<your domain>`;
+- a **return-path** subdomain `send.<your domain>`: an `MX` record (priority 10) and an SPF `TXT` record
+  (`v=spf1 include:amazonses.com ~all`). The SPF of the bare domain is untouched by it (there it named the mailbox
+  provider), because SPF is checked against the return-path domain;
+- a **DMARC** `TXT` record at `_dmarc.<your domain>`. Nusszopf does not require one; the domain observed had
+  `v=DMARC1; p=quarantine`.
+
+Two addresses are worth a thought. `MAIL_FROM_ADDRESS` is the sender of every mail. When it is a `no-reply@` address,
+set `NUSSZOPF_CONTACT_EMAIL` to a mailbox you read: without it, every mail footer, the error page and the contact card
+tell people to write to the no-reply address. The contact form's mails carry the visitor's address as `Reply-To`, so
+"Reply" reaches the visitor whatever the sender is.
+
 ### Your identity (`NUSSZOPF_CONTACT_EMAIL`)
 
 The address shown wherever Nusszopf says "write to us": the error page, Home's "Partner:in werden"/"Feedback
