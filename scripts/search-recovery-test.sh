@@ -20,13 +20,15 @@
 #   sh scripts/search-recovery-test.sh
 #
 # Environment: SEARCH_RECOVERY_PORT (default 18111), SEARCH_RECOVERY_KEEP=1 to keep the host.
+# RELEASE_TAG=<tag> (P-16): run the drill on the images published to GHCR under that tag, pulled instead of built; the
+# working copy must then be a checkout of that tag, because its compose file, installer and template are the release's.
 # Needs Docker (a privileged container for docker:dind), git and python3. The Nusszopf images are built locally and
 # loaded into the host, standing in for the GHCR pull.
 set -eu
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 [ $# -eq 0 ] || { echo "Usage: sh scripts/search-recovery-test.sh" >&2; exit 2; }
-VERSION="search-recovery"
+VERSION="${RELEASE_TAG:-search-recovery}"
 PORT="${SEARCH_RECOVERY_PORT:-18111}"
 BASE="http://127.0.0.1:$PORT"
 WORK="$(mktemp -d)"
@@ -173,11 +175,17 @@ doc_block 1 | sed 's/^/     /'
 echo "and, if Meilisearch itself does not start:"
 doc_block 2 | sed 's/^/     /'
 
-step "Build this working copy's release"
-docker build -q -f "$ROOT/docker/php/Dockerfile" --target php-fpm --build-arg NUSSZOPF_VERSION="$VERSION" \
-    -t "ghcr.io/lchristmann/nusszopf-php-fpm:$VERSION" "$ROOT" >/dev/null
-docker build -q -f "$ROOT/docker/php/Dockerfile" --target nginx --build-arg NUSSZOPF_VERSION="$VERSION" \
-    -t "ghcr.io/lchristmann/nusszopf-web:$VERSION" "$ROOT" >/dev/null
+if [ -n "${RELEASE_TAG:-}" ]; then
+    step "Pull the published release $RELEASE_TAG from GHCR ($(uname -m))"
+    docker pull -q "ghcr.io/lchristmann/nusszopf-php-fpm:$VERSION" >/dev/null
+    docker pull -q "ghcr.io/lchristmann/nusszopf-web:$VERSION" >/dev/null
+else
+    step "Build this working copy's release"
+    docker build -q -f "$ROOT/docker/php/Dockerfile" --target php-fpm --build-arg NUSSZOPF_VERSION="$VERSION" \
+        -t "ghcr.io/lchristmann/nusszopf-php-fpm:$VERSION" "$ROOT" >/dev/null
+    docker build -q -f "$ROOT/docker/php/Dockerfile" --target nginx --build-arg NUSSZOPF_VERSION="$VERSION" \
+        -t "ghcr.io/lchristmann/nusszopf-web:$VERSION" "$ROOT" >/dev/null
+fi
 mkdir -p "$WORK/release"
 cp "$ROOT/docker-compose.yaml" "$ROOT/scripts/install.sh" "$WORK/release/"
 sed "s|^NUSSZOPF_VERSION=.*|NUSSZOPF_VERSION=$VERSION|" "$ROOT/.env.production.example" > "$WORK/release/env.production.example"

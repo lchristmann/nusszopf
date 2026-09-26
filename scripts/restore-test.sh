@@ -34,8 +34,11 @@ while [ $# -gt 0 ]; do
     esac
     shift
 done
+# RELEASE_TAG=<tag> (P-16): the working copy is a checkout of that release; it and --rollback-from <published tag> are
+# pulled from GHCR under their own tags, not built.
 NEW="restore-to"
 OLD="restore-from"
+if [ -n "${RELEASE_TAG:-}" ]; then NEW="$RELEASE_TAG"; OLD="$ROLLBACK_FROM"; fi
 PORT="${RESTORE_PORT:-18110}"
 MAILPIT_PORT="${RESTORE_MAILPIT_PORT:-18125}"
 BASE="http://127.0.0.1:$PORT"
@@ -72,7 +75,13 @@ doc_block() {
         found && inside' "$ROOT/docs/deployment/operations.md"
 }
 
+# build <tree> <version>: builds that tree's images, or, with RELEASE_TAG set (P-16), pulls the published ones.
 build() {
+    if [ -n "${RELEASE_TAG:-}" ]; then
+        docker pull -q "ghcr.io/lchristmann/nusszopf-php-fpm:$2" >/dev/null
+        docker pull -q "ghcr.io/lchristmann/nusszopf-web:$2" >/dev/null
+        return
+    fi
     docker build -q -f "$1/docker/php/Dockerfile" --target php-fpm --build-arg NUSSZOPF_VERSION="$2" \
         -t "ghcr.io/lchristmann/nusszopf-php-fpm:$2" "$1" >/dev/null
     docker build -q -f "$1/docker/php/Dockerfile" --target nginx --build-arg NUSSZOPF_VERSION="$2" \

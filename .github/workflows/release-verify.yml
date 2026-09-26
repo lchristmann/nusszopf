@@ -1,0 +1,72 @@
+name: Release verification
+
+# P-16 (docs/release/parity/P-16-release.md): the checks that need a *published* release, run by hand on the tag
+# after the release workflow has pushed it: the install as an operator runs it (the real download, the pull from
+# GHCR) and the drills of P-9, P-10, P-11 and P-12 on the pulled images, natively on amd64 and on arm64.
+# It publishes nothing. Start it from the Actions tab, or by pushing a tag `verify/<tag>` that points at the release's
+# commit (`git tag verify/1.0.0-rc.2 1.0.0-rc.2^{} && git push origin verify/1.0.0-rc.2`); the previous tag is then the
+# release before it in version order.
+on:
+  push:
+    tags:
+      - "verify/*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: The published tag to verify, e.g. 1.0.0-rc.2
+        required: false
+      from:
+        description: The previously published tag, for the upgrade and rollback drills (leave empty to skip them)
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: ${{ matrix.drill }} (${{ matrix.arch }})
+    runs-on: ${{ matrix.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [amd64, arm64]
+        drill: [install, search-recovery, queue-scheduler, upgrade, restore]
+    steps:
+      # The release's own checkout: its compose file, installer and template are what the release attached, and the
+      # drills read them. A `verify/<tag>` tag points at that commit; for a manual run, name the tag as `ref`.
+      # The previous tag is a second checkout the upgrade and rollback drills make themselves.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
+      - name: Run the drill
+        shell: bash
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+          INPUT_FROM: ${{ inputs.from }}
+          DRILL: ${{ matrix.drill }}
+        run: |
+          TAG="${INPUT_TAG:-${GITHUB_REF_NAME#verify/}}"
+          FROM="$INPUT_FROM"
+          if [ -z "$FROM" ]; then
+            FROM="$(git -c versionsort.suffix=-rc tag -l '[0-9]*' --sort=v:refname | grep -x -B1 "$TAG" | head -n 1)"
+            [ "$FROM" != "$TAG" ] || FROM=""
+          fi
+          echo "Verifying $TAG on $(uname -m); previous release: ${FROM:-none}"
+          skip() { echo "Skipped: $DRILL needs a previous tag (input 'from')."; exit 0; }
+          case "$DRILL" in
+            install)         sh scripts/release-check.sh "$TAG" ;;
+            search-recovery) RELEASE_TAG="$TAG" sh scripts/search-recovery-test.sh ;;
+            queue-scheduler) RELEASE_TAG="$TAG" sh scripts/queue-scheduler-test.sh ;;
+            upgrade)         [ -n "$FROM" ] || skip; RELEASE_TAG="$TAG" sh scripts/upgrade-test.sh "$FROM" --suite ;;
+            restore)         [ -n "$FROM" ] || skip; RELEASE_TAG="$TAG" sh scripts/restore-test.sh --rollback-from "$FROM" ;;
+          esac 2>&1 | tee drill.log
+      # The job log needs a GitHub login; annotations do not. The end of the drill's output is what says what failed.
+      - name: Annotate the end of a failing drill
+        if: failure()
+        shell: bash
+        run: |
+          [ -f drill.log ] || exit 0
+          text="$(tail -n 25 drill.log | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')"
+          echo "::error title=${{ matrix.drill }} (${{ matrix.arch }}) failed::${text:0:3800}"

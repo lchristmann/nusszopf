@@ -20,7 +20,7 @@ maintainer** (only with the maintainer's word, dated).
 |---|---|---|---|
 | 1 | First-release version and changelog: number decided, `CHANGELOG.md` consolidated, the release workflow's notes extraction verified | P-14, `versioning.md`, `changelog.md` | Done (section 1) |
 | 2 | The CI gate is green on the commit that is tagged | `release.yml` runs the whole CI as its gate | Done for `1.0.0-rc.1` (sections 2, 3) |
-| 2b | The one gate failure of the first tag attempt (Pest, exit code 2, not reproduced) | section 3 | Open, cause Unknown; annotations added to name it if it returns |
+| 2b | The intermittent Pest failure of the gate (`ReindexSearchTest`, BUG-047) | section 3 | Done: a test defect, found and fixed (P16-06) |
 | 3 | Build and publish `1.0.0-rc.1` to GHCR by the release workflow; both packages pullable without login | `release-process.md` | Done (section 3) |
 | 4 | `install.sh` without `NUSSZOPF_BASE_URL` from the real release, and the pull from GHCR (with its time) | P-8, P8-01 | Pull done (38 s); the install from the real release is blocked by P16-04 until `rc.2` |
 | 4b | `releases/latest/download/install.sh` and `--upgrade` without a version | P-8, P-9 | Deferred to the stable `1.0.0` tag (GitHub's "latest" excludes pre-releases, P16-05), not waived |
@@ -86,8 +86,7 @@ not of the product:
 The first attempt at the tag failed: the gate's Pest job ended with exit code 2 while the same commit's push run had
 passed it, and the log needs a GitHub login. The step was made readable without one (`ci.yml` now writes each failing test
 as an annotation), the tag was moved (nothing had been published from it), and the second gate passed all 13 jobs,
-Pest included. **The one failure was not reproduced** (Pest passed twice locally and in the push run), so its cause is
-**Unknown**; if it returns, the annotation will name the test. It is tracked in the checklist (item 2b), not waived.
+Pest included. The same test then failed once more on a push run, and this time the annotation named it: P16-06.
 
 Release run `36270376826` on commit `138e63e`, 2026-09-26:
 
@@ -103,8 +102,27 @@ Release run `36270376826` on commit `138e63e`, 2026-09-26:
 | ID | Finding | Kind | State |
 |---|---|---|---|
 | P16-04 | **Blocker.** The release attaches `.env.production.example`, and GitHub strips a leading dot from an asset's name: it is served as `default.env.production.example`. `install.sh` requested `.env.production.example`, which is a 404 (`releases/download/1.0.0-rc.1/.env.production.example`). So the documented install could not work from a real release: the path P-8 could not test (P8-01) and that every harness bypassed with `NUSSZOPF_BASE_URL=file://…` | Defect of the release mechanism | Fixed: the asset is `env.production.example`, `install.sh` downloads that name and still keeps `.env.production.example` on the host; the harnesses serve the real name (and, for an older tree's own installer, also the dotted one); `tests/Feature/Release/ReleaseAssetsTest.php` fails on rc.1's files (3 of 3) and passes on the fix; `scripts/smoke-test.sh` passed with the new installer |
+| P16-06 | `ReindexSearchTest` ("answers in the same order after a rebuild", the regression test of BUG-047) failed on GitHub's runners on two of four runs and never locally. The four requests of the test were created one after the other and each kept the `project` it had loaded at its creation, so its indexed `updated_at` (in seconds) could be older than the others' when a second boundary fell between two creations. `updated_at:desc` ranks before `id:asc`, so that one document came last (`[B, C, D, A]`). Shown deterministically with a 2 s gap between the creations (stale: wrong order; fresh models: right order), and with Meilisearch throttled to 0.25–0.5 CPUs; with the fix 30 of 30 throttled runs pass. The product is not affected: a project's requests are written from one state of the project, and `search:reindex` reads them fresh | Test defect (fixture) | Fixed: the test reads fresh models; it also waits for Meilisearch's task queue to drain (`awaitIndexIdle()`) instead of trusting document counts |
 | P16-05 | `releases/latest/download/…` is a 404 while only pre-releases exist, because GitHub's "latest" never is a pre-release. The README and the deployment guide told operators to use it | Documentation, GitHub's rule | Fixed in the docs: a candidate is installed by naming it (`releases/download/<tag>/install.sh`, `sh install.sh <url> <tag>`, `--upgrade <tag>`). The `latest` URLs themselves can be checked only once a stable tag exists: **deferred to the `1.0.0` tag, not waived** (checklist item 4b) |
 
 `1.0.0-rc.1` therefore stays published as a pre-release that cannot be installed with its own `install.sh`; its tag is not
 moved, since image tags are immutable (`docker-images.md`). It is the N-1 of the upgrade test, and its manual install is
 described there. `1.0.0-rc.2` carries the fix.
+
+## 4. How the release-only checks run
+
+Everything the previous phases could only do on locally built images now has a way to run on the published ones:
+
+- `scripts/release-check.sh <tag>` installs a published release as an operator does: `install.sh` downloaded from
+  `releases/download/<tag>/`, no `NUSSZOPF_BASE_URL`, the pull from GHCR (timed), start, `nusszopf:health`, the public
+  pages, the CSP header and the scheduler. It uses nothing built or faked.
+- `RELEASE_TAG=<tag>` on `search-recovery-test.sh`, `queue-scheduler-test.sh`, `upgrade-test.sh` and `restore-test.sh`
+  pulls the published images of that tag (and, for the upgrade and the rollback, of the previous tag) instead of
+  building them. The working copy must be a checkout of that tag, because its compose file, installer and template are
+  the release's.
+- `.github/workflows/release-verify.yml` runs these on GitHub's own amd64 and arm64 runners (arm64 natively, no
+  emulation). It starts when a tag `verify/<tag>` pointing at the release's commit is pushed, or by hand. It publishes
+  nothing. A failing drill writes the end of its output as an annotation, since job logs need a GitHub login.
+- The arm64 evidence therefore comes from a native runner, not from this machine, which has only amd64 and no QEMU.
+  `docker run --platform linux/arm64` here fails with `exec format error`; installing emulation would change the host
+  and is not needed.

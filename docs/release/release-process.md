@@ -41,6 +41,8 @@ The template is attached as `env.production.example`, without the leading dot, b
 **Before tagging, look at the CI run of the exact commit** (the badge, or the run page on GitHub): a CI that never started (P-16 found seven runs that had, because of a billing block) or that went red is invisible from the terminal, and the release workflow runs the same gate again before it publishes.
 The workflow had never run on a real tag before `1.0.0-rc.1`: treat the first release as its test (the first tag is `1.0.0-rc.1`, a pre-release; a second candidate, `1.0.0-rc.2`, then gives the first real N-1 → N upgrade, see `docs/release/versioning.md`), and check that `docker pull` and `install.sh` work from a machine that is not yours.
 
+After the tag: `sh scripts/release-check.sh <tag>` installs the published release as an operator does, and `git tag verify/<tag> <tag>^{} && git push origin verify/<tag>` starts `.github/workflows/release-verify.yml`, which runs that check and the search-recovery, queue/scheduler, upgrade (from the previous tag, with the browser suite) and rollback drills on the pulled images, natively on amd64 and arm64 (`RELEASE_TAG=<tag>` makes the scripts pull instead of build).
+
 Before the first tag, P-16 also owns what the finish-line phases could not do without a release (`docs/release/parity/README.md`, "Carried forward to later phases"): the real-iPhone and real-Android pass, the seven mails in Gmail, Outlook and Apple Mail (`scripts/mail-delivery-test.sh` for the sending, by hand for the reading), the drills on images pulled from GHCR and on arm64, and the first `CHANGELOG.md` section, without which the release workflow refuses to publish.
 
 ## Rollback

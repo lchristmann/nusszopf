@@ -23,7 +23,7 @@ set -eu
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 [ $# -eq 0 ] || { echo "Usage: sh scripts/queue-scheduler-test.sh" >&2; exit 2; }
-VERSION="queue-scheduler"
+VERSION="${RELEASE_TAG:-queue-scheduler}"
 PORT="${QS_PORT:-18112}"
 BASE="http://127.0.0.1:$PORT"
 WORK="$(mktemp -d)"
@@ -115,11 +115,17 @@ queue_idle() { [ "$(queue_jobs)" = "0" ]; }
 
 # ------------------------------------------------------------------------------------------------------------------
 setup() {
-    step "Build this working copy's release, install it on a new host, fill it"
-    docker build -q -f "$ROOT/docker/php/Dockerfile" --target php-fpm --build-arg NUSSZOPF_VERSION="$VERSION" \
-        -t "ghcr.io/lchristmann/nusszopf-php-fpm:$VERSION" "$ROOT" >/dev/null
-    docker build -q -f "$ROOT/docker/php/Dockerfile" --target nginx --build-arg NUSSZOPF_VERSION="$VERSION" \
-        -t "ghcr.io/lchristmann/nusszopf-web:$VERSION" "$ROOT" >/dev/null
+    step "Get this release's images, install it on a new host, fill it"
+    if [ -n "${RELEASE_TAG:-}" ]; then
+        echo "pulling the published release $RELEASE_TAG from GHCR ($(uname -m))"
+        docker pull -q "ghcr.io/lchristmann/nusszopf-php-fpm:$VERSION" >/dev/null
+        docker pull -q "ghcr.io/lchristmann/nusszopf-web:$VERSION" >/dev/null
+    else
+        docker build -q -f "$ROOT/docker/php/Dockerfile" --target php-fpm --build-arg NUSSZOPF_VERSION="$VERSION" \
+            -t "ghcr.io/lchristmann/nusszopf-php-fpm:$VERSION" "$ROOT" >/dev/null
+        docker build -q -f "$ROOT/docker/php/Dockerfile" --target nginx --build-arg NUSSZOPF_VERSION="$VERSION" \
+            -t "ghcr.io/lchristmann/nusszopf-web:$VERSION" "$ROOT" >/dev/null
+    fi
     mkdir -p "$WORK/release"
     cp "$ROOT/docker-compose.yaml" "$ROOT/scripts/install.sh" "$WORK/release/"
     sed "s|^NUSSZOPF_VERSION=.*|NUSSZOPF_VERSION=$VERSION|" "$ROOT/.env.production.example" > "$WORK/release/env.production.example"

@@ -71,17 +71,25 @@ it('answers in the same order after a rebuild: equally ranked hits by id, whatev
     $requests = collect(range(1, 4))->map(fn (int $i) => ProjectRequest::factory()->for($project)->category('rooms')->create(['title' => "Gesuch {$i}"]));
     $byId = $requests->pluck('id')->sort()->values()->all();
 
-    // Written newest first, one task each: Meilisearch's internal order is now the reverse of the ids.
+    // The requests were created one after the other, and each kept the `project` it loaded when it was created, so
+    // its `updated_at` (in seconds) could be one from before a later request touched the project. Across a second
+    // boundary that made one document rank lower, and the test failed now and then (P-16, P16-06; a test defect:
+    // a project's requests are always written from one state of the project). Fresh models read the same one.
+    $requests = $requests->map->fresh();
+
+    // Written newest first, one task each: Meilisearch's internal order is now the reverse of the ids. Each step waits
+    // for the whole task queue, not for a document count that an earlier step's tasks can also reach.
+    expect(awaitIndexIdle())->toBeTrue();
     $requests->each->unsearchable();
-    expect(awaitDocumentCount(0))->toBeTrue();
+    expect(awaitIndexIdle())->toBeTrue()->and(awaitDocumentCount(0))->toBeTrue();
     $requests->sortByDesc('id')->each->searchable();
-    expect(awaitDocumentCount(4))->toBeTrue();
+    expect(awaitIndexIdle())->toBeTrue()->and(awaitDocumentCount(4))->toBeTrue();
 
     $order = fn () => indexHits($word)->pluck('id')->all();
     expect($order())->toBe($byId);
 
     expect(Artisan::call('search:reindex'))->toBe(0);
-    expect(awaitDocumentCount(4))->toBeTrue()
+    expect(awaitIndexIdle())->toBeTrue()->and(awaitDocumentCount(4))->toBeTrue()
         ->and($order())->toBe($byId);
 })->group('meilisearch');
 

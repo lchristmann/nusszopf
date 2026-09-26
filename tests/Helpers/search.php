@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
 use Meilisearch\Client;
 use Meilisearch\Contracts\DocumentsQuery;
+use Meilisearch\Contracts\TasksQuery;
 
 /*
  * Helpers of the tests that talk to the real Meilisearch (group `meilisearch`), loaded by tests/Pest.php.
@@ -33,6 +34,25 @@ function awaitIndex(Closure $condition): bool
 {
     for ($attempt = 0; $attempt < 40; $attempt++) {
         if ($condition()) {
+            return true;
+        }
+        usleep(100_000);
+    }
+
+    return false;
+}
+
+/**
+ * Waits until Meilisearch has worked off every task of the test index. A document count is no substitute: it can equal
+ * the expected number in the middle of a sequence of writes and deletes.
+ */
+function awaitIndexIdle(): bool
+{
+    $client = new Client(config('scout.meilisearch.host'), config('scout.meilisearch.key'));
+    $pending = (new TasksQuery)->setIndexUids([Project::searchIndexName()])->setStatuses(['enqueued', 'processing']);
+
+    for ($attempt = 0; $attempt < 150; $attempt++) {
+        if ($client->getTasks($pending)->getTotal() === 0) {
             return true;
         }
         usleep(100_000);

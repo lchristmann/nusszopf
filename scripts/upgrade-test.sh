@@ -18,8 +18,11 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 FROM="${1:?Usage: sh scripts/upgrade-test.sh <from-ref> [--suite]}"
 SUITE=0
 [ "${2:-}" = "--suite" ] && SUITE=1
+# RELEASE_TAG=<tag> (P-16): the working copy is a checkout of that release, and both releases are pulled from GHCR
+# under their own tags, not built: <from-ref> must then be a published tag.
 OLD="upgrade-from"
 NEW="upgrade-to"
+if [ -n "${RELEASE_TAG:-}" ]; then OLD="$FROM"; NEW="$RELEASE_TAG"; fi
 PORT="${UPGRADE_PORT:-18093}"
 BASE="http://127.0.0.1:$PORT"
 WORK="$(mktemp -d)"
@@ -48,7 +51,13 @@ fail() { echo "FAIL: $1" >&2; (cd "$WORK/host" && docker compose logs --tail 40 
 set_value() { sed -i "s|^$1=.*|$1=$2|" .env; }
 q() { docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "$0"' "$1"; }
 
+# build <tree> <version>: builds that tree's images, or, with RELEASE_TAG set (P-16), pulls the published ones.
 build() {
+    if [ -n "${RELEASE_TAG:-}" ]; then
+        docker pull -q "ghcr.io/lchristmann/nusszopf-php-fpm:$2" >/dev/null
+        docker pull -q "ghcr.io/lchristmann/nusszopf-web:$2" >/dev/null
+        return
+    fi
     docker build -q -f "$1/docker/php/Dockerfile" --target php-fpm --build-arg NUSSZOPF_VERSION="$2" \
         -t "ghcr.io/lchristmann/nusszopf-php-fpm:$2" "$1" >/dev/null
     docker build -q -f "$1/docker/php/Dockerfile" --target nginx --build-arg NUSSZOPF_VERSION="$2" \
