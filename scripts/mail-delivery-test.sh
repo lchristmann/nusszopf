@@ -3,6 +3,7 @@
 #
 #   P13_RECIPIENT=you@example.org sh scripts/mail-delivery-test.sh            # install, start, send, report
 #   P13_RECIPIENT=you@example.org P13_KEEP=1 sh scripts/mail-delivery-test.sh  # leave the stack running
+#   RELEASE_TAG=1.0.0-rc.2 P13_RECIPIENT=you@example.org sh scripts/mail-delivery-test.sh  # the published images (P-16)
 #
 # 1. Builds the production images from this working copy and installs the operator's stack into a clean directory
 #    with install.sh, as prod-e2e.sh does, but with no Mailpit: the mail goes out through the relay you configure.
@@ -20,13 +21,17 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 : "${P13_RECIPIENT:?Set P13_RECIPIENT to the mailbox that receives the test mails}"
 ENV_FILE="${P13_ENV_FILE:-$ROOT/.env}"
 PORT="${P13_PORT:-18113}"
-VERSION="mail-delivery"
+VERSION="${RELEASE_TAG:-mail-delivery}"
 PROJECT="nusszopf-mail-delivery"
 WORK="$(mktemp -d)"
 BASE="http://127.0.0.1:$PORT"
 
 compose() {
-    NUSSZOPF_BUILD_CONTEXT="$ROOT" docker compose -p "$PROJECT" -f docker-compose.yaml -f "$ROOT/compose.prod.yaml" "$@"
+    if [ -n "${RELEASE_TAG:-}" ]; then
+        docker compose -p "$PROJECT" -f docker-compose.yaml "$@"
+    else
+        NUSSZOPF_BUILD_CONTEXT="$ROOT" docker compose -p "$PROJECT" -f docker-compose.yaml -f "$ROOT/compose.prod.yaml" "$@"
+    fi
 }
 
 cleanup() {
@@ -78,8 +83,13 @@ done
 [ "$mailer" != "smtp" ] || ! grep -q '^MAIL_HOST=mailpit$' .env || fail "MAIL_HOST=mailpit is the development catcher, not a relay"
 echo "mailer: $mailer, from: $(grep '^MAIL_FROM_ADDRESS=' .env | cut -d= -f2-)"
 
-step "Build the images and start the stack (waits for every healthcheck)"
-compose up -d --build --wait --wait-timeout 420
+if [ -n "${RELEASE_TAG:-}" ]; then
+    step "Pull the published release $RELEASE_TAG from GHCR and start the stack (waits for every healthcheck)"
+    compose up -d --wait --wait-timeout 420
+else
+    step "Build the images and start the stack (waits for every healthcheck)"
+    compose up -d --build --wait --wait-timeout 420
+fi
 
 step "Queue one mail of every type to the recipient"
 P13_RECIPIENT="$P13_RECIPIENT" ; export P13_RECIPIENT

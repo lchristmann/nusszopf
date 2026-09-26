@@ -8,11 +8,18 @@
 # Environment: RELEASE_CHECK_PORT (default 18130), RELEASE_CHECK_KEEP=1 to leave the stack running afterwards.
 # Needs Docker with the Compose plugin, curl and openssl (the documented prerequisites). The one setting it must
 # make is the sender address; mail is not sent here (scripts/mail-delivery-test.sh does that).
+#
+# For a hands-on check with real devices (docs/release/parity/P-16-release.md, "Real devices"):
+#   RELEASE_CHECK_KEEP=1 RELEASE_CHECK_DOUBLES=1 RELEASE_CHECK_URL=http://<this machine's LAN address>:18130 \
+#       sh scripts/release-check.sh <tag>
+# adds Mailpit as the mail relay (its inbox is on RELEASE_CHECK_PORT + 1) and the LocationIQ stub, so registration,
+# contact mails and the place suggestions work without any account. Never for a real installation.
 set -eu
 
 TAG="${1:?Usage: sh scripts/release-check.sh <tag>}"
 PORT="${RELEASE_CHECK_PORT:-18130}"
-BASE="http://127.0.0.1:$PORT"
+BASE="${RELEASE_CHECK_URL:-http://127.0.0.1:$PORT}"
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 WORK="$(mktemp -d)"
 export COMPOSE_PROJECT_NAME="nusszopf-release-check"
 
@@ -46,6 +53,25 @@ sh install.sh "$BASE" "$TAG" >/dev/null || fail "install.sh failed"
 grep -q "^NUSSZOPF_VERSION=$TAG\$" .env || fail ".env does not name $TAG"
 sed -i "s|^MAIL_FROM_ADDRESS=.*|MAIL_FROM_ADDRESS=release-check@example.test|; s|^APP_PORT=.*|APP_PORT=$PORT|" .env
 grep -q "^APP_PORT=$PORT\$" .env || echo "APP_PORT=$PORT" >> .env
+
+if [ "${RELEASE_CHECK_DOUBLES:-0}" = "1" ]; then
+    step "Test doubles for a hands-on check: Mailpit and the LocationIQ stub (compose.override.yaml)"
+    cp "$ROOT/docker/stubs/locationiq.conf" locationiq.conf
+    cat > compose.override.yaml <<YAML
+services:
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "0.0.0.0:$((PORT + 1)):8025"
+  locationiq-stub:
+    image: nginx:alpine
+    volumes:
+      - ./locationiq.conf:/etc/nginx/conf.d/default.conf:ro
+YAML
+    sed -i "s|^MAIL_HOST=.*|MAIL_HOST=mailpit|; s|^MAIL_PORT=.*|MAIL_PORT=1025|; s|^LOCATIONIQ_KEY=.*|LOCATIONIQ_KEY=nusszopf-e2e-stub-key|; s|^SESSION_SECURE_COOKIE=.*|SESSION_SECURE_COOKIE=false|" .env
+    printf '\n# Test-only (scripts/release-check.sh, RELEASE_CHECK_DOUBLES=1)\nLOCATIONIQ_URL=http://locationiq-stub/v1/autocomplete.php\n' >> .env
+    echo "Mail inbox: ${BASE%:*}:$((PORT + 1))"
+fi
 
 step "Pull the images from GHCR and start (timed)"
 started="$(date +%s)"

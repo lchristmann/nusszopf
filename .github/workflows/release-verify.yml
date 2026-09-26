@@ -31,7 +31,7 @@ jobs:
       fail-fast: false
       matrix:
         arch: [amd64, arm64]
-        drill: [install, search-recovery, queue-scheduler, upgrade, restore]
+        drill: [install, real-upgrade, search-recovery, queue-scheduler, upgrade, restore]
     steps:
       # The release's own checkout: its compose file, installer and template are what the release attached, and the
       # drills read them. A `verify/<tag>` tag points at that commit; for a manual run, name the tag as `ref`.
@@ -57,6 +57,7 @@ jobs:
           skip() { echo "Skipped: $DRILL needs a previous tag (input 'from')."; exit 0; }
           case "$DRILL" in
             install)         sh scripts/release-check.sh "$TAG" ;;
+            real-upgrade)    [ -n "$FROM" ] || skip; sh scripts/release-upgrade-check.sh "$FROM" "$TAG" ;;
             search-recovery) RELEASE_TAG="$TAG" sh scripts/search-recovery-test.sh ;;
             queue-scheduler) RELEASE_TAG="$TAG" sh scripts/queue-scheduler-test.sh ;;
             upgrade)         [ -n "$FROM" ] || skip; RELEASE_TAG="$TAG" sh scripts/upgrade-test.sh "$FROM" --suite ;;
