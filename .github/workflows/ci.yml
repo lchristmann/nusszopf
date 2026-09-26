@@ -149,9 +149,13 @@ jobs:
       # scripts/prod-e2e.sh (phase P-7, docs/release/parity/P-07-production-e2e.md): builds both images, installs
       # docker-compose.yaml with install.sh, adds the test doubles of tests/E2E/production/compose.e2e.yaml (Mailpit as
       # the SMTP relay, the LocationIQ stub) and runs every Playwright project against it from the pinned image.
-      - run: sh scripts/prod-e2e.sh
+      - run: sh scripts/prod-e2e.sh 2>&1 | tee prod-e2e.log
+        shell: bash
         env:
           PROD_E2E_WORKERS: 2
+      - name: Annotate a failure (the job log needs a GitHub login, annotations do not)
+        if: failure()
+        run: sh scripts/ci-annotate.sh "Browser tests on the production images" prod-e2e.log
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
@@ -233,7 +237,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps ${{ matrix.browser }}
-      - run: npx playwright test --project=${{ matrix.project }}
+      - run: npx playwright test --project=${{ matrix.project }} --reporter=list,html 2>&1 | tee e2e.log
+        shell: bash
         env:
           PLAYWRIGHT_BASE_URL: http://localhost:8080
           # The search specs that need the stack's page size, a way to wipe the index and the recovery command.
@@ -243,6 +248,9 @@ jobs:
           E2E_REINDEX_COMMAND: docker compose -f compose.dev.yaml exec -T php-fpm php artisan search:reindex
           # The contact-mail journey checks the message actually arrived, via Mailpit's own JSON API.
           E2E_MAILPIT_URL: http://localhost:8025
+      - name: Annotate a failure (the job log needs a GitHub login, annotations do not)
+        if: failure()
+        run: sh scripts/ci-annotate.sh "Browser tests (${{ matrix.project }})" e2e.log
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

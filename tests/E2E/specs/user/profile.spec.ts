@@ -35,7 +35,9 @@ test('uploads, crops and replaces an avatar', async ({ page }) => {
 
     // Replace it — the version increments and the previous file is gone.
     await page.getByTestId('btn_edit-avatar_settings-page').click();
+    await expect(page.getByTestId('avatar-dialog')).toBeVisible();
     await fileInput.setInputFiles(AVATAR_FIXTURE);
+    await expect(saveButton).toBeEnabled();
     await saveButton.click();
     await expect(page.getByText('Frisches Bild gespeichert.')).toBeVisible();
     await expect(avatarImg).toHaveAttribute('src', /\/storage\/avatars\/.+-v2\.jpg$/);
@@ -45,6 +47,38 @@ test('uploads, crops and replaces an avatar', async ({ page }) => {
     // can reach — dev/CI point them at different hosts).
     const oldFile = await page.request.get(new URL(new URL(avatarSrc!).pathname, page.url()).toString());
     expect(oldFile.status()).toBe(404);
+});
+
+/**
+ * P-16, P16-07: "Speichern" was enabled as soon as the picture had been read, before cropperjs had been fetched and
+ * built on it, and `save()` did nothing without a cropper. A click in that window (a slow connection, a fast test)
+ * did nothing and showed nothing. Now the button waits for the cropper.
+ */
+test('offers "Speichern" only once the cropper is ready', async ({ page }) => {
+    // Hold the cropper's chunk back, as a slow phone connection would.
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => (release = resolve));
+    await page.route('**/build/assets/cropper-*.js', async (route) => {
+        await held;
+        await route.continue();
+    });
+
+    await registerFreshUser(page);
+    await page.goto('/user/profile');
+    await page.getByTestId('btn_edit-avatar_settings-page').click();
+    await expect(page.getByTestId('avatar-dialog')).toBeVisible();
+
+    await page.locator('[data-test="avatar-dialog"] input[type="file"]').setInputFiles(AVATAR_FIXTURE);
+    // The picture has been read (the chooser is gone), but there is no cropper yet: nothing to save.
+    await expect(page.getByTestId('avatar-dialog').getByText('Bild auswählen')).toBeHidden();
+    const saveButton = page.getByTestId('btn_save_avatar-dialog');
+    await expect(saveButton).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Bild drehen' })).toBeDisabled();
+
+    release();
+    await expect(saveButton).toBeEnabled();
+    await saveButton.click();
+    await expect(page.getByText('Frisches Bild gespeichert.')).toBeVisible();
 });
 
 test('deletes the account', async ({ page }) => {

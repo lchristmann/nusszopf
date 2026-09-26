@@ -16,6 +16,10 @@
 document.addEventListener('alpine:init', () => {
     window.Alpine.data('nzAvatarCropper', () => ({
         hasImage: false,
+        // True once cropperjs is built on the picture. `hasImage` is true as soon as the file has been read, which is
+        // earlier: the library's chunk is still to be fetched, and `save()` does nothing without a cropper. Saving
+        // is offered only when it can work (P-16, P16-07).
+        ready: false,
         uploading: false,
         cropper: null,
         cropperLibrary: null,
@@ -46,6 +50,7 @@ document.addEventListener('alpine:init', () => {
 
         async startCropper(dataUrl) {
             const img = this.$refs.cropperImage;
+            this.ready = false;
             const Cropper = await this.cropperLibrary;
 
             this.cropper?.destroy();
@@ -62,6 +67,9 @@ document.addEventListener('alpine:init', () => {
                     toggleDragModeOnDblclick: false,
                     minCropBoxWidth: 100,
                     background: false,
+                    ready: () => {
+                        this.ready = true;
+                    },
                 });
             };
             img.src = dataUrl;
@@ -83,6 +91,7 @@ document.addEventListener('alpine:init', () => {
             this.cropper?.destroy();
             this.cropper = null;
             this.hasImage = false;
+            this.ready = false;
             this.uploading = false;
             if (this.$refs.fileInput) this.$refs.fileInput.value = '';
         },

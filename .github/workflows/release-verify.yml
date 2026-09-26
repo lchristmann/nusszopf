@@ -62,11 +62,7 @@ jobs:
             upgrade)         [ -n "$FROM" ] || skip; RELEASE_TAG="$TAG" sh scripts/upgrade-test.sh "$FROM" --suite ;;
             restore)         [ -n "$FROM" ] || skip; RELEASE_TAG="$TAG" sh scripts/restore-test.sh --rollback-from "$FROM" ;;
           esac 2>&1 | tee drill.log
-      # The job log needs a GitHub login; annotations do not. The end of the drill's output is what says what failed.
+      # The job log needs a GitHub login; annotations do not. The end of the drill's output says what failed.
       - name: Annotate the end of a failing drill
         if: failure()
-        shell: bash
-        run: |
-          [ -f drill.log ] || exit 0
-          text="$(tail -n 25 drill.log | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')"
-          echo "::error title=${{ matrix.drill }} (${{ matrix.arch }}) failed::${text:0:3800}"
+        run: sh scripts/ci-annotate.sh "${{ matrix.drill }} (${{ matrix.arch }})" drill.log

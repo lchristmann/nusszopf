@@ -18,6 +18,8 @@ name. Everything else of `1.0.0-rc.1` is unchanged; its section below still desc
 - `install.sh` and the release now use the asset name `env.production.example`, so
   `sh install.sh <url> 1.0.0-rc.2` and `sh install.sh --upgrade 1.0.0-rc.2` work from the published release. Install a
   candidate by naming it: GitHub's `releases/latest` does not point at a pre-release (`docs/deployment/README.md`).
+- "Speichern" in the avatar dialog is offered only once the picture can be saved. Before, it was enabled as soon as the
+  file had been read; a click before the cropper had loaded (a slow connection) did nothing and showed nothing.
 
 ## [1.0.0-rc.1] - 2026-09-26
 

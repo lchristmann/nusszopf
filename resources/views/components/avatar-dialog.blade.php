@@ -57,12 +57,12 @@
     </div>
 
     <div class="my-5 space-x-5 text-center">
-        <x-button x-bind:disabled="!hasImage" x-on:click="rotate()" variant="clean" size="circle" class="bg-steel-300" aria-label="Bild drehen" title="Bild drehen"><x-icon name="rotate-cw" /></x-button>
-        <x-button x-bind:disabled="!hasImage" x-on:click="zoomIn()" variant="clean" size="circle" class="bg-steel-300" aria-label="Vergrößern" title="Vergrößern"><x-icon name="zoom-in" /></x-button>
-        <x-button x-bind:disabled="!hasImage" x-on:click="zoomOut()" variant="clean" size="circle" class="bg-steel-300" aria-label="Verkleinern" title="Verkleinern"><x-icon name="zoom-out" /></x-button>
+        <x-button x-bind:disabled="!ready" x-on:click="rotate()" variant="clean" size="circle" class="bg-steel-300" aria-label="Bild drehen" title="Bild drehen"><x-icon name="rotate-cw" /></x-button>
+        <x-button x-bind:disabled="!ready" x-on:click="zoomIn()" variant="clean" size="circle" class="bg-steel-300" aria-label="Vergrößern" title="Vergrößern"><x-icon name="zoom-in" /></x-button>
+        <x-button x-bind:disabled="!ready" x-on:click="zoomOut()" variant="clean" size="circle" class="bg-steel-300" aria-label="Verkleinern" title="Verkleinern"><x-icon name="zoom-out" /></x-button>
     </div>
     <div class="mt-5 space-x-5 text-center">
-        <x-button data-test="btn_save_avatar-dialog" x-bind:disabled="!hasImage || uploading" x-on:click="save()" class="bg-steel-300">Speichern</x-button>
+        <x-button data-test="btn_save_avatar-dialog" x-bind:disabled="!ready || uploading" x-on:click="save()" class="bg-steel-300">Speichern</x-button>
         <x-button x-on:click="reset(); {{ $close }}">Abbrechen</x-button>
     </div>
 </x-dialog>
