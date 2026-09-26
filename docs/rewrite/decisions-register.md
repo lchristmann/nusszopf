@@ -120,7 +120,8 @@ These are established and should not be silently re-litigated by a future contri
   official Laravel Docker examples are the Docker-implementation reference — none of the three are
   product/domain sources (`docs/references/README.md`).
 - Semantic versioning, unprefixed tags (`1.2.0`, not `v1.2.0`), starting at `0.x.y` until the
-  first vertical slice(s) reach historical parity (`docs/release/versioning.md`).
+  first vertical slice(s) reach historical parity (`docs/release/versioning.md`). **Amended 2026-09-26 (P-16, maintainer):**
+  the first tag is `1.0.0-rc.1`; every tag before the P-17 sign-off is a `1.0.0-rc.N` pre-release and `0.x` is not used.
 - `CHANGELOG.md` in Keep a Changelog format, `**Breaking:**`/`**Migration required:**` inline tags
   (`docs/release/changelog.md`).
 - Release build/publish/tag automated via GitHub Actions, gated on the full quality-gate suite

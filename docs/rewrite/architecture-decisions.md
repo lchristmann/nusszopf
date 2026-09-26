@@ -16,6 +16,7 @@ Decisions about how Nusszopf 2 itself should work — as distinct from `docs/rew
 - Alternatives: `v`-prefixed tags (more common convention, but inconsistent with the FOSS-lifecycle reference this project explicitly follows); jumping straight to `1.0.0`.
 - Consequences: `0.x` communicates "not yet at parity" honestly to early self-hosters; requires discipline to actually cut `1.0.0` once parity is real rather than drifting in `0.x` forever.
 - Revisit conditions: none expected before the first vertical slice ships.
+- **Amended 2026-09-26 (P-16, maintainer decision):** the first tag is `1.0.0-rc.1`, not a `0.x` number. Every tag before the maintainer's P-17 sign-off is a `1.0.0-rc.N` pre-release; `1.0.0` follows the sign-off; `0.x` is never used. The parity evidence (P-1…P-16) replaces `0.x` as the signal that the rewrite is not yet final. See `docs/release/versioning.md`.
 
 ---
 

@@ -8,7 +8,9 @@ Semantic versioning: `MAJOR.MINOR.PATCH`.
 - **MINOR**: new user-visible functionality, backward compatible.
 - **PATCH**: bug fixes, security fixes, and other backward-compatible corrections.
 
-**Decided** (`docs/rewrite/decisions-register.md`): unlike Waffle Dashboard, Nusszopf starts at `0.x.y` while the rewrite is reaching product parity with historical Nusszopf, so that "1.0 stable" is not implied before parity is proven. All ten feature slices are implemented and the finish-line phases are in progress. **Not yet settled, and owned by P-16:** the number of the first tag. The register says `0.x` until parity, `release-process.md` suggests `0.1.0-rc.1` for the first tag, and roadmap phase P-16 names `1.0.0-rc.N` tags; the maintainer chooses when P-16 starts (`docs/release/parity/README.md`, "Carried forward to later phases").
+**Decided** (`docs/rewrite/decisions-register.md`): unlike Waffle Dashboard, Nusszopf does not claim a stable release before parity is proven. All ten feature slices are implemented and the finish-line phases (P-1…P-16) have produced the evidence.
+
+**Decided by the maintainer at the start of P-16 (2026-09-26): the first tag is `1.0.0-rc.1`.** The sources disagreed: the register said `0.x` until parity, `release-process.md` suggested `0.1.0-rc.1`, and roadmap P-16 names `1.0.0-rc.N`. The maintainer chose the roadmap's number. So the parity claim is carried by the release-candidate line and by P-17's sign-off, not by a `0.x` number: while `1.0.0` is not tagged, every tag is a pre-release (`1.0.0-rc.N`), published as a GitHub pre-release that does not move `latest`, and `1.0.0` is tagged only after the maintainer's P-17 sign-off, on the commit of the last passing candidate. `0.x` is not used.
 
 ## Tag format
 
@@ -31,4 +33,4 @@ What is defined now, from P-9 and P-10 (`upgrades.md`, "Compatibility rules for 
 
 ## Status
 
-Decided: scheme, tag format, `0.x` until parity, and version exposure (`docs/rewrite/architecture-decisions.md`). The compatibility policy above is the working rule; it has been exercised on populated data (P-9) but not yet across two real tags (P-16).
+Decided: scheme, tag format, the `1.0.0-rc.N` line until P-17 sign-off (amended from `0.x` at P-16), and version exposure (`docs/rewrite/architecture-decisions.md`). The compatibility policy above is the working rule; it has been exercised on populated data (P-9); the first two real tags, `1.0.0-rc.1` and `1.0.0-rc.2`, are the N-1 and N of the first true upgrade test (P-16).
