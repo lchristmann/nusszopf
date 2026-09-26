@@ -84,7 +84,12 @@ test('visitor screens and states', async ({ page, browser }) => {
 
     const search = new SearchPage(page);
     await search.goto();
-    await expect(search.cards.first()).toBeVisible();
+    // The queue worker indexes the new project asynchronously, and the page does not refresh itself: look again
+    // until the card is there, as search.spec.ts does (P-16, P16-02; on an empty database there is no other card).
+    await expect(async () => {
+        await page.reload();
+        await expect(search.cards.first()).toBeVisible({ timeout: 3_000 });
+    }).toPass({ timeout: 60_000 });
     await scan(page, 'search');
     await search.openFilter();
     await scan(page, 'search-filter-open');

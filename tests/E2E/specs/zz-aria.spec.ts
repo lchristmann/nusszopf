@@ -1,5 +1,10 @@
 import { test } from '@playwright/test';
 import { writeFileSync, mkdirSync } from 'node:fs';
+// A developer's dump of the accessibility tree of the visual reference dataset (`tests/Visual/reseed.sh`): it asserts
+// nothing and needs that dataset (the `demo` user, a fixed project id), so it only runs when asked for with
+// `E2E_ARIA_DUMP=1`. On any other stack, CI's included, it would only time out (P-16, P16-01).
+test.skip(!process.env.E2E_ARIA_DUMP, 'Set E2E_ARIA_DUMP=1 on a stack seeded with the visual reference dataset');
+
 test('aria snapshots', async ({ page }) => {
   mkdirSync('test-results/aria', { recursive: true });
   const shots: [string, string][] = [['home','/'],['search','/search'],['detail','/projects/0199a000-0000-7000-8000-000000000001'],['login','/login'],['legal','/legalNotice'],['404','/nix']];

@@ -146,7 +146,8 @@ Test-only settings are appended to the installed `.env`:
 - `SEARCH_PAGE_SIZE=5` for the paging spec.
 
 The aria-snapshot dump (`zz-aria.spec.ts`) is left out: it reads the visual reference dataset, which production refuses to
-seed. `PROD_E2E_KEEP=1` leaves the stack running.
+seed. It is a developer's tool and skips itself unless `E2E_ARIA_DUMP=1` is set on a stack seeded with `tests/Visual/reseed.sh`
+(P-16, P16-01). `PROD_E2E_KEEP=1` leaves the stack running.
 
 The smoke test also checks `install.sh --upgrade` on its own (P-9, finding P9-01). It works on a directory that holds an
 earlier release's compose file and a `.env` with outdated values. It checks that the release's own compose file replaces
