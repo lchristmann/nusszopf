@@ -36,7 +36,7 @@ jobs:
       # The release's own checkout: its compose file, installer and template are what the release attached, and the
       # drills read them. A `verify/<tag>` tag points at that commit; for a manual run, name the tag as `ref`.
       # The previous tag is a second checkout the upgrade and rollback drills make themselves.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.tag || github.ref }}
           fetch-depth: 0
