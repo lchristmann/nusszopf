@@ -2,11 +2,13 @@
 
 Exit evidence (`master-roadmap.md` §4): "Doc review checklist, all 'Proposal' banners resolved."
 
-**Status: Done (automated part), awaiting the maintainer's review.** Every documentation page was checked against the
-implementation and the evidence of P-1…P-13; twelve substantive problems were found and fixed (section 2); no page is
-labelled Proposal any more (section 3); the internal links and the referenced paths resolve. Items that need a release
-or a decision, or that belong to P-15/P-16, are listed in section 5 and were not guessed. The phase is not closed until
-the maintainer says so.
+**Status: Done (closed by the maintainer 2026-09-26, on commit `6eadf42`).** Every documentation page was checked
+against the implementation and the evidence of P-1…P-13; twelve substantive problems were found and fixed (section 2);
+no page is labelled Proposal any more (section 3); the internal links and the referenced paths resolve. Items that need a
+release or a decision, or that belong to P-15/P-16, are listed in section 5 and were not guessed. The maintainer
+approved the phase as satisfying its exit criterion, kept the first tag's number (D2) deferred to P-16, and kept the
+fresh-clone limitation of P14-01 documented as it is: the corrected first-run steps were checked individually, and a
+complete run on a fresh clone was **not** performed.
 
 ## 1. Method
 
@@ -82,9 +84,6 @@ smoke test covers the one script that did.
 | D6 | The historical specification pages (`domain/`, `design/`, `authentication/`, `search/`, `security/`, the historical parts of `email/` and `journeys/`) keep their `Unknown`/`Inferred` markers. They describe the historical system, and each Nusszopf 2 decision is recorded in the register, `open-questions.md` (all resolved, closed or deferred) or the slice pages. They were not rewritten | none |
 | D7 | Who writes changelog entries (register C1) and the breached-password check (C2) stay deferred by decision | later |
 | D8 | Section 7 checklist and the sign-off of the parity report | P-17 |
+| D9 | A complete first-run of `README-DEV.md` on a fresh clone (the steps were checked one by one, P14-01). It needs a host without the running development stack, whose Compose project name it would collide with | P-16 (or any contributor's first onboarding) |
 
-## 6. Can P-14 be closed?
-
-Yes, on the automated evidence: the checklist above is complete and nothing found was left unfixed or guessed. Two
-things are the maintainer's: reading the rewritten operator pages (P14-03, P14-04) and taking the decision in D2 whenever
-it suits, which does not block this phase.
+Closed by the maintainer 2026-09-26. Not started: P-15 and later.
