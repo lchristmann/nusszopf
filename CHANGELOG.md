@@ -6,7 +6,7 @@ inline (`**Breaking:**`, `**Migration required:**`); see `docs/release/changelog
 
 ## [Unreleased]
 
-## [1.0.0-rc.2] - 2026-09-26
+## [1.0.0-rc.2] - 2026-09-27
 
 The second release candidate. `1.0.0-rc.1` was published but cannot be installed with its own `install.sh`: the
 installer asked GitHub for `.env.production.example`, and GitHub serves an asset that starts with a dot under another
