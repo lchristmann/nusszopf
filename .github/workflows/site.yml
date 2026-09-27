@@ -1,0 +1,57 @@
+name: Site
+
+# Builds and deploys the static project site (site/README.md) to GitHub Pages. Entirely independent
+# of ci.yml/release.yml: the site has no PHP, no runtime services, and is not part of the
+# application's Docker images or release process, so it is not gated on the app's own checks and
+# only runs when the site's own files change.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "resources/css/tokens.css"
+      - "resources/css/components.css"
+      - "README.md"
+      - ".github/workflows/site.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one Pages deployment at a time; a newer push should win over one still in flight rather than
+# queue behind it.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+      - working-directory: site
+        run: npm ci
+      - working-directory: site
+        run: npm run build
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site/dist
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
