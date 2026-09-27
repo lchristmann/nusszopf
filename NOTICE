@@ -23,4 +23,9 @@ Google), which belong to their owners. The Google "G" mark (`resources/icons/goo
 reproduced only as the historical, standard "Sign in with Google" affordance for the optional
 Google-login button (App\Http\Controllers\Auth\GoogleController).
 
+The static project site (site/) is a separate build from the application; it ships its own copies of
+Nusszopf's own favicons/logos/OG image and its own copy of the Barlow font (notice generated to
+site/dist/LICENSE-barlow.txt by site/vite.config.js). It does not use the sponsor/partner logos,
+Feather icons, or the Google mark.
+
 Where each file and asset comes from, and how that was checked: docs/legal/provenance.md.

@@ -60,6 +60,13 @@ Tailwind's own `/*! ... MIT License */` banner is kept in the CSS. Both files ar
 The Home copy, the legal-page text and the mail texts are the historical German copy (A-5): derivative works of
 `web-nusszopf` and `emails-nusszopf`, GPL v3.0.
 
+The static project site (`site/`, `site/README.md`) is a separate, independent build from the application and ships
+its own copies of the favicons, header/hero logos and OG image listed above (rights per A-5, same reasoning) and its
+own copy of the Barlow font, for which its `vite.config.js` emits `site/dist/LICENSE-barlow.txt` the same way the
+application's build does (finding P15-03). It does not use the sponsor/partner logos, the Feather icons, or the
+Google mark; its own text is newly authored project-marketing copy, not reproduced historical product content (marked
+as such in `site/index.html`'s header comment), and has not been through this document's historical-fidelity review.
+
 ## 4. Personal data in the repository
 
 **Confirmed, decided 2026-09-26.** `docs/deployment/legal-examples/` reproduced the original operators' legal texts
