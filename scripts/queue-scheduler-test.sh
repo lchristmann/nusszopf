@@ -417,19 +417,26 @@ step_7() {
         sleep 30
         on 'docker compose logs --no-log-prefix scheduler 2>&1' | grep 'Running \[' | awk -v f="$from" '$1" "$2 >= f' \
             | python3 -c '
-    import collections, datetime, sys
-    c = collections.Counter()
-    for line in sys.stdin:
-        p = line.split()
-        c[(p[0] + " " + p[1][:5], p[3])] += 1
-    minutes = sorted({k[0] for k in c})
-    stamps = [datetime.datetime.strptime(m, "%Y-%m-%d %H:%M") for m in minutes]
-    dup = [(k, v) for k, v in sorted(c.items()) if v > 1]
-    gaps = [(minutes[i], minutes[i + 1]) for i in range(len(stamps) - 1) if (stamps[i + 1] - stamps[i]).seconds != 60]
-    print("     %d minutes, %d runs of scheduler-heartbeat, %d of queue-heartbeat; duplicated: %s; gaps: %s" % (
-        len(minutes), sum(v for k, v in c.items() if k[1] == "[scheduler-heartbeat]"), sum(v for k, v in c.items() if k[1] == "[queue-heartbeat]"), dup or "none", gaps or "none"))
-    sys.exit(1 if dup or gaps or len(minutes) < 8 else 0)' || fail "7a: a run was doubled or skipped"
-        ok "a. every task ran exactly once every minute across the restarts, none twice, none skipped"
+import collections, datetime, sys
+c = collections.Counter()
+for line in sys.stdin:
+    p = line.split()
+    c[(p[0] + " " + p[1][:5], p[3])] += 1
+minutes = sorted({k[0] for k in c})
+stamps = [datetime.datetime.strptime(m, "%Y-%m-%d %H:%M") for m in minutes]
+dup = [(k, v) for k, v in sorted(c.items()) if v > 1]
+# A restart that spans the turn of the minute loses that minute: `schedule:work` starts a minute of tasks only while
+# it is running at :00, and a run that fell into a time the scheduler was down is not made up (operations.md). On
+# a fast host the restart is over before :00 and nothing is lost; on a slow one (P-16: GitHub-hosted runners) it is
+# not. What must never happen is a doubled run, or more than one minute in a row lost (P-16, P16-09).
+every = [stamps[0] + datetime.timedelta(minutes=i) for i in range(int((stamps[-1] - stamps[0]).total_seconds() // 60) + 1)]
+have = set(stamps)
+lost = [s.strftime("%H:%M") for s in every if s not in have]
+in_a_row = any(s not in have and (s + datetime.timedelta(minutes=1)) not in have for s in every)
+print("     %d minutes, %d runs of scheduler-heartbeat, %d of queue-heartbeat; duplicated: %s; minutes without a run: %s" % (
+    len(every), sum(v for k, v in c.items() if k[1] == "[scheduler-heartbeat]"), sum(v for k, v in c.items() if k[1] == "[queue-heartbeat]"), dup or "none", lost or "none"))
+sys.exit(1 if dup or in_a_row or len(lost) > 4 or len(every) < 8 else 0)' || fail "7a: a run was doubled, or the scheduler lost more than one minute per restart"
+        ok "a. across four restarts no run was doubled, and each restart lost at most the minute it spanned"
     fi
 
     echo "   b. The purge at 03:30 UTC, through the scheduler itself (the clock is set, the rest is the production image):"

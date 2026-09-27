@@ -12,7 +12,7 @@ if [ ! -f "$log" ]; then
 fi
 text="$(
     {
-        grep -E '✘|^ +[0-9]+\) \[|^ +Error:|[0-9]+ (failed|flaky)|^FAIL:|FAILED' "$log" | head -n 20
+        grep -E '✘|^ +[0-9]+\) \[|^ +Error:|[0-9]+ (failed|flaky)|^FAIL:|FAILED|minutes, ' "$log" | head -n 20
         echo '--- errors:'
         grep -E 'production\.ERROR|Exception|SQLSTATE|Connection refused|timed out' "$log" | cut -c1-240 | head -n 12
         echo '--- end of the log:'
