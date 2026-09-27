@@ -29,17 +29,17 @@ State values: **Done**, **Open** (named with what it waits for), **Deferred** (o
 | 4 | The real download path: `install.sh` from `releases/download/<tag>/` without `NUSSZOPF_BASE_URL`, the GHCR pull and its time | P-8, P8-01 | **Done** on `rc.2` (section 5): pull 26 s, healthy 60 s later. Found and fixed P16-04 |
 | 4b | `releases/latest/download/install.sh` and `--upgrade` without a version | P-8, P-9 | **Open, cannot be checked before a stable tag**: GitHub's "latest" never is a pre-release (P16-05). To do when `1.0.0` is tagged. Not waived |
 | 5 | Production startup from the published images | P-7 | **Done** (section 5): `release-check.sh` and every drill, natively on amd64 and arm64 |
-| 6 | arm64: the images run, the drills pass | P-8…P-12 | **Done except one drill step** (section 5): install, real upgrade, upgrade with the browser suite, restore and rollback, search recovery all pass natively on arm64; the queue/scheduler drill's step 5 does not (P16-11) |
+| 6 | arm64: the images run, the drills pass | P-8…P-12 | **Done** (section 5): every drill passes natively on arm64 in the final complete run `36289083141`: install, real upgrade, upgrade with the browser suite, restore and rollback, search recovery, and all nine steps of the queue/scheduler drill. One step needed the worker's whole retry schedule there (P16-11, tracked) |
 | 7 | The true N-1 → N upgrade | P-9 | **Done** (section 5): `1.0.0-rc.1` → `1.0.0-rc.2`, both from GHCR, populated data, the whole browser suite after, amd64 (here and on GitHub) and arm64; `install.sh --upgrade` from the real URL |
 | 8 | Rollback and restore | P-10 | **Done** for the rollback from `rc.1` and the restore onto an empty host (GitHub, amd64 and arm64). **Open**: the restore on a physically separate machine, which every drill so far replaced with a Docker-in-Docker host on one kernel; it belongs to the second person's real host (item 14) |
 | 9 | Search-recovery drill on the RC | P-11 | **Done** (section 5), amd64 and arm64 |
-| 10 | Queue/scheduler drill on the RC, and the Redis AOF caveat of an upgrade | P-12 | **Done on amd64** (all nine steps, on GitHub). **arm64: open** (P16-11). The AOF caveat is **closed**: the session and the queued jobs of `rc.1` survived the upgrade |
+| 10 | Queue/scheduler drill on the RC, and the Redis AOF caveat of an upgrade | P-12 | **Done**, amd64 and arm64, all nine steps (`36289083141`). The AOF caveat is **closed**: the session and the queued jobs of `rc.1` survived the upgrade |
 | 11 | Real iPhone (iOS Safari): the eight steps of `P-05-browsers-devices.md`, DEV-01 included | P-5 | **Open: needs a person and a device** (section 6) |
 | 12 | Real Android (Chrome): the same eight steps | P-5 | **Open: needs a person and a device** (section 6) |
 | 13 | The seven mails in Gmail, Outlook (desktop and web) and Apple Mail, the inline SVG logo and the self-hosted Barlow included | P-13, P-15 | **Open: needs the maintainer's mailboxes** (section 6) |
 | 14 | The RC installed from the documentation by a second person, on a real host with an ACME certificate | P-8, roadmap P-16 | **Open: needs a second person and a host** (section 6) |
 | 15 | `search.spec.ts`'s recovery test wipes the one shared index | P-11 | **Open, not a blocker**: the gate passed six times; kept as a known limitation (section 7) |
-| 16 | No open Blocker | roadmap P-16 | Two blockers were found and fixed (P16-04, P16-07). **None is open**, unless P16-11 or the open items above turn out to be one |
+| 16 | No open Blocker | roadmap P-16 | Two blockers were found and fixed (P16-04, P16-07). **None is open.** What is open is listed in items 4b, 11–15 and section 7 |
 
 ## 1. Version and changelog (Done)
 
@@ -136,7 +136,7 @@ Everything the previous phases could only do on locally built images now has a w
 
 All on the published images and the published files; nothing built or faked. "GitHub" means `release-verify.yml` on
 GitHub-hosted runners (amd64: `ubuntu-24.04`; arm64: `ubuntu-24.04-arm`, native). "Here" is this workstation (amd64,
-Docker 29.8). The last complete run of all drills on both architectures is named in the table of section 8.
+Docker 29.8). The last complete run of all drills on both architectures is `36289083141` on commit `8e575da` (12 jobs, all passed).
 
 | Check | What it proves | Where | Result |
 |---|---|---|---|
@@ -145,7 +145,7 @@ Docker 29.8). The last complete run of all drills on both architectures is named
 | `upgrade-test.sh 1.0.0-rc.1 --suite` (`RELEASE_TAG=1.0.0-rc.2`) | the true N-1 → N upgrade on populated data (41 users, 80 projects, 198 requests, 15 leads), a browser signed in and 5 jobs queued before it, the documented procedure, then the whole Playwright suite (desktop browsers) | here; GitHub amd64 and arm64 | **passed**. Here: healthy 14 s after the upgrade started, tables, files, search documents and settings intact, the session from before still signed in, the 5 queued jobs ran, sign-in with the old passwords and the old reset link work, private projects stay hidden, 174 browser tests passed, 6 skipped. GitHub: passed on both, after the retry policy of P16-08 |
 | `restore-test.sh --rollback-from 1.0.0-rc.1` | the backup, the restore onto an empty Docker host, the rollback of an upgrade from `rc.1` and a second upgrade | GitHub amd64 and arm64 | **passed** in every run (not run here on the published images) |
 | `search-recovery-test.sh` | four ways to lose the search index, each recovered by the documented block to identical answers, privacy intact, normal indexing afterwards | GitHub amd64 and arm64; here on the `rc.1` images | **passed** |
-| `queue-scheduler-test.sh` | the worker, Redis and the scheduler under failure (nine steps, about 40 minutes) | GitHub amd64: all nine steps in one run; GitHub arm64: steps 1–4 and 6–9 in one run, step 5 in another (P16-11) | **passed**; here on the `rc.2` images, steps 1–6 passed, step 7c failed for a reason of the drill (P16-10, fixed) |
+| `queue-scheduler-test.sh` | the worker, Redis and the scheduler under failure (nine steps, about 40 minutes) | GitHub amd64 and arm64, all nine steps in the final run; here on the `rc.2` images steps 1–6 passed and step 7c failed for a reason of the drill (P16-10, fixed) | **passed** on both architectures. arm64 needed the worker's whole retry schedule in step 5 (P16-11) |
 
 The Redis append-only file, which P-12 said the N-1 upgrade must confirm: **closed.** `rc.1` runs it, so the browser session
 and the five queued jobs survived the upgrade (the stand-in builds of P-9 lost them once).
@@ -236,7 +236,7 @@ Nothing here is waived.
 | Gmail, Outlook (desktop and web), Apple Mail not checked; the inline SVG logo is at risk there | item 13; section 6 |
 | No install by a second person on a real host with an ACME certificate; no restore on a physically separate machine | item 14, 8; section 6 |
 | `releases/latest/download/install.sh` and `install.sh --upgrade` without a version cannot be tried while only pre-releases exist | item 4b: to do when `1.0.0` is tagged |
-| arm64: the queue drill's step 5 needed the worker's whole retry schedule on the GitHub runner, cause not established | P16-11 |
+| arm64: the queue drill's step 5 needed the worker's whole retry schedule on the GitHub runner (the drill passes with it), cause not established | P16-11 |
 | `search.spec.ts`'s recovery test wipes the one shared index, so it can race another engine's search spec when several engines share one stack. The gate passed six times and the CI jobs use one stack per engine; the production-image job does share one (three desktop engines, two workers) | item 15; `docs/testing/README.md`. Fix if it ever shows: run that spec alone, last |
 | Mail through a generic SMTP relay with real TLS was not tested (Resend was); rate limiting (429), greylisting and outages are unmeasured | P-13, unchanged |
 | Queue jobs are delivered at least once: a mail queued at the moment of a worker crash can be sent twice | P-12, unchanged |
@@ -256,5 +256,6 @@ vulnerability reporting and Dependabot alerts before the phase began (P-15).
 | Release candidates | `1.0.0-rc.1` (`138e63e`) and `1.0.0-rc.2` (`c3af7e3`), both GitHub pre-releases with `docker-compose.yaml`, `env.production.example` and `install.sh` attached, notes from `CHANGELOG.md` |
 | Images | `ghcr.io/lchristmann/nusszopf-php-fpm` and `…/nusszopf-web`, tags `1.0.0-rc.1` and `1.0.0-rc.2`, `linux/amd64` and `linux/arm64`, pullable without login; `latest` does not exist |
 | Verification tags | `verify/1.0.0-rc.2` and two with a `+QS_STEPS=…` suffix, which only trigger `release-verify.yml`; they publish nothing |
-| Gate | CI on `main` is green; the release gate passed for both candidates |
+| Gate | CI on `main` is green (last: `8e575da`); the release gate passed for both candidates |
+| Final verification | `release-verify.yml` run `36289083141` on `8e575da`, tag `verify/1.0.0-rc.2`: install, real-URL upgrade, upgrade with the browser suite, restore and rollback, search recovery and the queue/scheduler drill, each on amd64 and on native arm64: **12 of 12 passed** |
 | Can P-16 be closed? | **No.** Items 11, 12, 13 and 14 are open and need a person; item 4b waits for `1.0.0`; P16-11 stays a tracked limitation. No blocker is open |
