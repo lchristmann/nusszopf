@@ -5,9 +5,11 @@
 > change). Evidence: the whole Playwright suite on these images (P-7), a fresh install on a clean host from this page
 > alone (P-8), upgrades on populated installations (P-9), the backup script and the restore onto an empty host, also as the
 > rollback of an upgrade (P-10), the search index recovery (P-11), the queue, Redis and scheduler under failure (P-12) and
-> real mail delivery through Resend (P-13). Not yet done, by roadmap: a real tag has never been published, so the release
-> workflow, the GitHub download, the GHCR pull and arm64 are untested until the first one (P-16; the repository is public
-> since P-15).
+> real mail delivery through Resend (P-13). In P-16 the release workflow ran on real tags (`1.0.0-rc.1`, `1.0.0-rc.2`); the
+> install from the published files, the GHCR pull, the upgrade from one published release to the next and the drills were
+> then repeated on the published images, on amd64 and, natively, on arm64 (`docs/release/parity/P-16-release.md`). Still
+> open there: an install by a second person on a real host with an ACME certificate, and the check of the mails in Gmail,
+> Outlook and Apple Mail.
 
 ## Table of contents
 
@@ -320,4 +322,4 @@ Nusszopf v1 uses tier 1 (decision B2): the script in `operations.md`, "Backups",
 Decided (`docs/rewrite/architecture-decisions.md`, `docs/rewrite/decisions-register.md`): container registry (GHCR, `ghcr.io/lchristmann/nusszopf-*`), reverse proxy (operator-owned), health depth
 (own checks, no extra dependency), environment variables (`.env.production.example`), first administrator (none exists), mail (Laravel's abstraction; Resend recommended, SMTP supported), the search index is rebuilt and never backed up (`search:reindex`), and the backup script is the tier-1 script in `operations.md`, "Backups".
 
-Still open, and owned by later phases: everything that needs a published release (the GitHub download, the GHCR pull, arm64, an install by a second person on a real host with an ACME certificate — P-16), and the rendering of the mails in Gmail, Outlook and Apple Mail (P-16). The parity report tracks them (`docs/release/parity/README.md`, "Carried forward to later phases").
+Still open in P-16, and tracked there: an install by a second person on a real host with an ACME certificate, and the rendering of the mails in Gmail, Outlook and Apple Mail (`docs/release/parity/P-16-release.md`). The GitHub download, the GHCR pull and arm64 were verified on `1.0.0-rc.2`.

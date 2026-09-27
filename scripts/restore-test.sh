@@ -325,7 +325,7 @@ if [ "$SUITE" -eq 1 ]; then
     docker run --rm --network host --ipc host \
         -v "$ROOT:/var/www" -v nusszopf-prod-e2e-node-modules:/var/www/node_modules -w /var/www \
         -e PLAYWRIGHT_BASE_URL="$BASE" -e E2E_MAILPIT_URL="http://127.0.0.1:$MAILPIT_PORT" -e E2E_SEARCH_PAGE_SIZE=5 \
-        "$PLAYWRIGHT_IMAGE" sh -c "npm ci --no-audit --no-fund >/dev/null && npx playwright test --reporter=line --workers=4 \
+        "$PLAYWRIGHT_IMAGE" sh -c "npm ci --no-audit --no-fund >/dev/null && npx playwright test --reporter=line --retries=2 --workers=4 \
             --output=test-results/restore --project=chromium --grep-invert 'aria snapshots'; \
             status=\$?; chown -R $(id -u):$(id -g) test-results playwright-report 2>/dev/null; exit \$status" \
         || fail "the Playwright suite failed on the restored installation"

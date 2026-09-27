@@ -58,6 +58,10 @@ populated data, and changed the procedure:
 ## Status
 
 Confirmed: the reference upgrade mechanics (edit the tag, `down`/`up`, the volumes persist). Confirmed by P-9 on
-populated installations, which were release-equivalent builds, because no release has been published yet: Nusszopf's
-own procedure, `docs/deployment/operations.md`, "Upgrades" and "Rollback". Repeating it from the first real tag to the
-next is part of P-16. The "Recommendation" section above is kept as the reasoning that led to it.
+populated installations, then in P-16 between two published releases: `1.0.0-rc.1` to `1.0.0-rc.2`, both pulled from GHCR,
+on populated data with a signed-in session and queued work (they survived), the whole browser suite afterwards, on amd64
+and natively on arm64, and `install.sh --upgrade` fetched from `releases/download/<version>/`
+(`scripts/upgrade-test.sh` and `scripts/release-upgrade-check.sh`, with `RELEASE_TAG`). Nusszopf's own procedure is
+`docs/deployment/operations.md`, "Upgrades" and "Rollback". `--upgrade` without a version asks for GitHub's "latest",
+which never is a pre-release: until `1.0.0` exists, name the version. The "Recommendation" section above is kept as the
+reasoning that led to it.

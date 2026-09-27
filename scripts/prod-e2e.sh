@@ -78,10 +78,12 @@ playwright() {
         -e E2E_MEILISEARCH_URL="http://127.0.0.1:${E2E_MEILISEARCH_PORT:-17700}" \
         -e E2E_MEILISEARCH_KEY="$MEILI_KEY" \
         -e E2E_REINDEX_COMMAND="docker exec $PHP_CONTAINER php artisan search:reindex" \
-        "$PLAYWRIGHT_IMAGE" sh -c "npm ci --no-audit --no-fund >/dev/null && npx playwright test --reporter=list --workers=${PROD_E2E_WORKERS:-4} --output=test-results/prod-e2e $*; status=\$?; chown -R $(id -u):$(id -g) test-results playwright-report 2>/dev/null; exit \$status"
+        "$PLAYWRIGHT_IMAGE" sh -c "npm ci --no-audit --no-fund >/dev/null && npx playwright test --reporter=list --retries=2 --workers=${PROD_E2E_WORKERS:-4} --output=test-results/prod-e2e $*; status=\$?; chown -R $(id -u):$(id -g) test-results playwright-report 2>/dev/null; exit \$status"
 }
 
-# The aria-snapshot dump reads the visual reference dataset, which only development seeds; it is not a test.
+# Two retries, as the CI jobs on the dev stack have (playwright.config.ts, `CI`): a test that passes on its retry is
+# listed as "flaky" in the output, not hidden (P-16, P16-08). The aria-snapshot dump reads the visual reference dataset,
+# which only development seeds; it is not a test.
 if [ "$#" -gt 0 ]; then
     step "Playwright: $*"
     playwright --grep-invert "'aria snapshots'" "$@"

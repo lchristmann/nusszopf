@@ -192,7 +192,7 @@ if [ "$SUITE" -eq 1 ]; then
         -e PLAYWRIGHT_BASE_URL="$BASE" -e E2E_MAILPIT_URL="http://127.0.0.1:${E2E_MAILPIT_PORT:-18025}" -e E2E_SEARCH_PAGE_SIZE=5 \
         -e E2E_MEILISEARCH_URL="http://127.0.0.1:${E2E_MEILISEARCH_PORT:-17700}" -e E2E_MEILISEARCH_KEY="$MEILI_KEY" \
         -e E2E_REINDEX_COMMAND="docker exec $(docker compose ps -q php-fpm) php artisan search:reindex" \
-        "$PLAYWRIGHT_IMAGE" sh -c "npm ci --no-audit --no-fund >/dev/null && npx playwright test --reporter=list --workers=4 \
+        "$PLAYWRIGHT_IMAGE" sh -c "npm ci --no-audit --no-fund >/dev/null && npx playwright test --reporter=list --retries=2 --workers=4 \
             --output=test-results/upgrade --project=chromium --project=firefox --project=webkit --grep-invert 'aria snapshots'; \
             status=\$?; chown -R $(id -u):$(id -g) test-results playwright-report 2>/dev/null; exit \$status" \
         || fail "the Playwright suite failed on the upgraded installation"
