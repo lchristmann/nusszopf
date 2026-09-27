@@ -20,8 +20,9 @@ permissions:
   pages: write
   id-token: write
 
-# Only one Pages deployment at a time; a newer push should win over one still in flight rather than
-# queue behind it.
+# Only one Pages deployment at a time. An in-flight deployment is allowed to finish (cancelling it
+# midway can leave Pages half-published); a newer push waiting behind it replaces any older one still
+# queued, so the latest commit is always what ends up deployed.
 concurrency:
   group: pages
   cancel-in-progress: false

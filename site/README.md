@@ -1,6 +1,7 @@
 # Nusszopf project site
 
-The static, single-page public site: what Nusszopf is, a self-hosting quick start, the technology
+The static, single-page public site: what Nusszopf is, a link to the public demo
+(<https://nusszopf.org>, the hero's primary button), a self-hosting quick start, the technology
 stack, releases, and licensing. This is **not** the application — it has no PHP, no database, no
 Livewire, and is not part of the Docker images or the release process. It is deployed separately to
 GitHub Pages by `.github/workflows/site.yml`.
