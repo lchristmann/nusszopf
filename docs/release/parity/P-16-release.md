@@ -297,6 +297,13 @@ the frontend build is unchanged in shape (`cropper-*.js` still built from `cropp
 pulled in transitively); the Chromium E2E suite passes (59 passed, 2 skipped — the developer-only aria dump and the
 index-recovery spec, which needs a `docker` binary this manual run's container does not have); the search Feature
 tests against the real Meilisearch engine pass (35 passed, 158 assertions); `scripts/smoke-test.sh` passes against the
-production images built from the updated dependencies. The four PRs merged in substance are left open on GitHub (their
-branches are stale against `main` and would show no diff once GitHub notices; Dependabot closes a PR itself once its
-change is already on the base branch). PR 4 is left open as the tracking issue for the cropper migration.
+production images built from the updated dependencies.
+
+CI on `main` at `14b1f9e` (the dependency commit): green, all job groups (Pint, Larastan, Pest, frontend build,
+production stack, all six Playwright projects, visual comparison). Security workflow: green. Dependabot's own metadata
+checks for the four applied updates completed successfully once they saw `main` move.
+
+The four PRs applied in substance are left open on GitHub rather than merged through the PR UI (their branches are
+stale against `main`; Dependabot typically closes a PR itself, marked superseded, once it next scans and finds the
+same change already on the base branch — not observed synchronously here). PR 4 is left open as the tracking issue for
+the cropper migration.
