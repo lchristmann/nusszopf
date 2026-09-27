@@ -59,10 +59,10 @@ jobs:
           INPUT_FROM: ${{ inputs.from }}
           DRILL: ${{ matrix.drill }}
         run: |
-          # `verify/<tag>` verifies everything; `verify/<tag>+QS_STEPS=5` also limits the queue drill to those steps.
+          # `verify/<tag>` verifies everything; `verify/<tag>+QS_STEPS=5` (or `=1,2,3`) also limits the queue drill to those steps.
           NAME="${INPUT_TAG:-${GITHUB_REF_NAME#verify/}}"
           TAG="${NAME%%+*}"
-          case "$NAME" in *+QS_STEPS=*) export QS_STEPS="${NAME##*+QS_STEPS=}" ;; esac
+          case "$NAME" in *+QS_STEPS=*) export QS_STEPS="$(echo "${NAME##*+QS_STEPS=}" | tr , ' ')" ;; esac
           FROM="$INPUT_FROM"
           if [ -z "$FROM" ]; then
             FROM="$(git -c versionsort.suffix=-rc tag -l '[0-9]*' --sort=v:refname | grep -x -B1 "$TAG" | head -n 1)"

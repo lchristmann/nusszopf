@@ -48,6 +48,7 @@ fail() {
     echo "FAIL: $1" >&2
     # The last errors first, without their stack traces: the trace is what fills a log's end (P-16, P16-11).
     on 'docker compose logs --no-log-prefix queue-worker 2>&1 | grep "production.ERROR" | tail -4 | cut -c1-420' || true
+    on 'for s in queue-worker php-fpm; do printf "%s resolves meilisearch as: " "$s"; docker compose exec -T "$s" php -r "echo gethostbyname(\"meilisearch\"), PHP_EOL;" 2>&1; done' || true
     on 'docker compose ps 2>&1; docker compose logs --tail 25 queue-worker scheduler 2>&1 | tail -60' || true
     exit 1
 }
