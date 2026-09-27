@@ -307,3 +307,16 @@ The four PRs applied in substance are left open on GitHub rather than merged thr
 stale against `main`; Dependabot typically closes a PR itself, marked superseded, once it next scans and finds the
 same change already on the base branch — not observed synchronously here). PR 4 is left open as the tracking issue for
 the cropper migration.
+
+**Cropper.js 1.6.3, investigated separately (2026-09-27), kept for `1.0`:** beyond the per-PR check above, `cropperjs`
+was queried on its own, at every version, not just 1.6.3 vs. 2.2.0: [osv.dev](https://osv.dev)'s package-level query
+(no version filter) and the [GitHub Advisory Database](https://github.com/advisories?query=cropperjs) both return zero
+advisories for `cropperjs` at any released version, ever — there is no known vulnerability to weigh against staying on
+1.x. `npm audit` against the current lock file also reports zero vulnerabilities. `1.6.3` is npm's own `latest-1`
+dist-tag: the newest release in the 1.x line, not one patch behind it, so there is no newer 1.x to move to instead.
+2.2.0 remains, as PR 4's row above documents, a Web Components rewrite the app's `new Cropper(element, options)`
+constructor usage (`resources/js/avatar-cropper.js:60`, `.rotate()`, `.zoom()`, `.getCroppedCanvas()`, the `ready`
+option) cannot absorb as a version bump. **Recommendation:** keep `cropperjs` pinned at `^1.6.2` (resolving `1.6.3`)
+for the `1.0` release; leave Dependabot PR 4 open, relabelled in intent from "routine update" to the tracking issue for
+a dedicated future migration task (rewrite the avatar cropper against the v2 API, full regression and visual-regression
+coverage) rather than something to merge as-is.
