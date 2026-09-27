@@ -44,7 +44,13 @@ cleanup() {
 trap cleanup EXIT
 
 step() { printf '\n== %s\n' "$1"; }
-fail() { echo "FAIL: $1" >&2; on 'docker compose ps 2>&1; docker compose logs --tail 25 queue-worker scheduler 2>&1 | tail -60' || true; exit 1; }
+fail() {
+    echo "FAIL: $1" >&2
+    # The last errors first, without their stack traces: the trace is what fills a log's end (P-16, P16-11).
+    on 'docker compose logs --no-log-prefix queue-worker 2>&1 | grep "production.ERROR" | tail -4 | cut -c1-420' || true
+    on 'docker compose ps 2>&1; docker compose logs --tail 25 queue-worker scheduler 2>&1 | tail -60' || true
+    exit 1
+}
 ok() { echo "OK   $1"; }
 # on <script>: runs a shell script as root in the host's installation directory.
 on() { docker exec -i -w /opt/nusszopf "$HOST" sh -eu -c "$1"; }

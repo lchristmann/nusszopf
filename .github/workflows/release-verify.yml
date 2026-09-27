@@ -47,7 +47,8 @@ jobs:
         env:
           INPUT_TAG: ${{ inputs.tag }}
         run: |
-          TAG="${INPUT_TAG:-${GITHUB_REF_NAME#verify/}}"
+          NAME="${INPUT_TAG:-${GITHUB_REF_NAME#verify/}}"
+          TAG="${NAME%%+*}"
           git rev-parse -q --verify "refs/tags/$TAG" >/dev/null || { echo "::error::no release tag $TAG"; exit 1; }
           git diff --exit-code "$TAG" -- docker-compose.yaml scripts/install.sh .env.production.example docker \
             || { echo "::error::this checkout differs from $TAG in the files the release ships"; exit 1; }
@@ -58,7 +59,10 @@ jobs:
           INPUT_FROM: ${{ inputs.from }}
           DRILL: ${{ matrix.drill }}
         run: |
-          TAG="${INPUT_TAG:-${GITHUB_REF_NAME#verify/}}"
+          # `verify/<tag>` verifies everything; `verify/<tag>+QS_STEPS=5` also limits the queue drill to those steps.
+          NAME="${INPUT_TAG:-${GITHUB_REF_NAME#verify/}}"
+          TAG="${NAME%%+*}"
+          case "$NAME" in *+QS_STEPS=*) export QS_STEPS="${NAME##*+QS_STEPS=}" ;; esac
           FROM="$INPUT_FROM"
           if [ -z "$FROM" ]; then
             FROM="$(git -c versionsort.suffix=-rc tag -l '[0-9]*' --sort=v:refname | grep -x -B1 "$TAG" | head -n 1)"
