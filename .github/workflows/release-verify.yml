@@ -40,6 +40,17 @@ jobs:
         with:
           ref: ${{ inputs.tag || github.ref }}
           fetch-depth: 0
+      # The drills read the release's compose file, installer and template from this checkout. If the checkout is newer
+      # than the tag (a later commit fixed a script), those files must still be the release's.
+      - name: The release's own files are unchanged in this checkout
+        shell: bash
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          TAG="${INPUT_TAG:-${GITHUB_REF_NAME#verify/}}"
+          git rev-parse -q --verify "refs/tags/$TAG" >/dev/null || { echo "::error::no release tag $TAG"; exit 1; }
+          git diff --exit-code "$TAG" -- docker-compose.yaml scripts/install.sh .env.production.example docker \
+            || { echo "::error::this checkout differs from $TAG in the files the release ships"; exit 1; }
       - name: Run the drill
         shell: bash
         env:

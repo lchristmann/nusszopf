@@ -12,7 +12,7 @@ if [ ! -f "$log" ]; then
 fi
 text="$(
     {
-        grep -E '✘|^ +[0-9]+\) \[|^ +Error:|[0-9]+ (failed|flaky)' "$log" | head -n 20
+        grep -E '✘|^ +[0-9]+\) \[|^ +Error:|[0-9]+ (failed|flaky)|^FAIL:|FAILED' "$log" | head -n 20
         echo '...'
         tail -n 12 "$log"
     } | sed 's/\x1b\[[0-9;]*m//g' | cut -c1-260 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}'
