@@ -1,0 +1,134 @@
+/*
+ * Nusszopf's historical Tailwind config (`tailwind.config.js`) replaces the
+ * entire default color palette rather than extending it — `bg-blue-500`
+ * does not mean stock Tailwind blue in this product. See
+ * docs/design/visual-language.md for the evidence and the full hex table.
+ * `--color-*: initial` clears Tailwind's built-in scales so only the
+ * palette below exists.
+ *
+ * Extracted verbatim from app.css so the static project site (site/, see
+ * docs/rewrite/decisions-register.md) can import the exact same tokens by
+ * relative path instead of re-declaring them. This file changes nothing
+ * about the application's compiled output — app.css imports it back.
+ */
+@theme {
+    --color-*: initial;
+    --color-transparent: transparent;
+    --color-current: currentColor;
+    --color-black: #000;
+    --color-white: #fff;
+
+    --color-warning-100: #ffeee5;
+    --color-warning-200: #fdd1b9;
+    --color-warning-300: #f8a87c;
+    --color-warning-700: #b84405;
+    /*
+     * Not historical: darker shades of warning-700's own hue, approved by the maintainer for contrast
+     * (docs/rewrite/bugs.md BUG-042, BUG-044). warning-750 = the lightest shade reaching 4.6:1 on lilac-200;
+     * warning-900 = the same on steel-400.
+     */
+    --color-warning-750: #ae4005;
+    --color-warning-900: #612403;
+
+    --color-steel-50: #f1f6f9;
+    --color-steel-100: #eceff1;
+    --color-steel-200: #cfd8dc;
+    --color-steel-300: #afbec5;
+    --color-steel-400: #90a4ae;
+    --color-steel-500: #546e7a;
+    --color-steel-600: #455963;
+    --color-steel-700: #37474f;
+    --color-steel-800: #263238;
+
+    --color-stone-200: #f2f2f2;
+    --color-stone-300: #e0e0e0;
+    --color-stone-400: #c7c7c7;
+    --color-stone-600: #828282;
+    --color-stone-800: #404040;
+
+    --color-livid-100: #eef5f7;
+    --color-livid-200: #cbe1e6;
+    --color-livid-300: #bad7de;
+    --color-livid-500: #64a6b4;
+    --color-livid-800: #213e45;
+
+    --color-lilac-100: #f4f2f6;
+    --color-lilac-150: #f2f0f4;
+    --color-lilac-200: #e5e1e9;
+    --color-lilac-300: #cbc3d3;
+    --color-lilac-400: #b1a6bc;
+    --color-lilac-500: #89799a;
+    --color-lilac-600: #645673;
+    --color-lilac-800: #403749;
+
+    --color-moss-200: #eaf0a8;
+    --color-moss-300: #e0e97c;
+    --color-moss-400: #d5e151;
+    --color-moss-450: #c0ca33;
+    --color-moss-800: #3e410b;
+
+    --color-yellow-100: #fffff0;
+    --color-yellow-200: #fcfdb5;
+    --color-yellow-250: #f7f97b;
+    --color-yellow-300: #f6f151;
+    --color-yellow-400: #ead706;
+    --color-yellow-500: #d6b300;
+    --color-yellow-800: #574800;
+
+    --color-red-100: #ffe9e5;
+    --color-red-200: #ffcdc6;
+    --color-red-300: #fca99c;
+    --color-red-500: #f5624d;
+    --color-red-600: #d51407;
+
+    --color-turquoise-100: #e5fff5;
+    --color-turquoise-200: #c9f7e6;
+    --color-turquoise-300: #9be9cb;
+    --color-turquoise-500: #4dcbae;
+    --color-turquoise-700: #005c4c;
+
+    --color-blue-100: #eaf3ff;
+    --color-blue-200: #d1e3fc;
+    --color-blue-300: #abcbf8;
+    --color-blue-400: #87b2ed;
+    --color-blue-500: #6395dc;
+    --color-blue-700: #00378a;
+
+    --color-pink-100: #ffeef1;
+    --color-pink-200: #ffccd5;
+    --color-pink-300: #ff99aa;
+    --color-pink-500: #f1507e;
+    --color-pink-700: #c20a5d;
+
+    --font-sans: 'Barlow', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+
+    --spacing-18: 4.75rem;
+    --spacing-84: 21rem;
+    --spacing-128: 32rem;
+
+    --shadow-lg-dark: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
+    --animate-opacity-fade: opacityFade 200ms cubic-bezier(0.08, 0.82, 0.17, 1);
+    --animate-scale-fade: scaleFade 200ms cubic-bezier(0.08, 0.82, 0.17, 1);
+
+    @keyframes opacityFade {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes scaleFade {
+        from {
+            opacity: 0;
+            transform: scale(0.85);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+}
