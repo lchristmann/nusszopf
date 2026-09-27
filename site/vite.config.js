@@ -71,6 +71,11 @@ function barlowLicense() {
 }
 
 export default defineConfig({
+    // GitHub Pages serves a project site (as opposed to a user/org root site) from a subpath —
+    // https://lchristmann.github.io/nusszopf/, not the domain root — so an absolute base ('/')
+    // would 404 every asset. A relative base works unconditionally for this single-page site: every
+    // asset it references is served from the same directory as index.html, at any depth.
+    base: './',
     plugins: [tailwindcss(), quickstart(), barlowLicense()],
     build: {
         outDir: 'dist',
