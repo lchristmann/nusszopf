@@ -25,21 +25,6 @@ Nusszopf is a free and open-source, self-hostable application.
 
 The Nusszopf 2 rewrite aims to preserve the historical Nusszopf product — its functionality, domain, workflows, information architecture, and visual design — while replacing its obsolete implementation and infrastructure.
 
-## Technology
-
-- PHP 8.5
-- Laravel 13
-- PostgreSQL
-- Blade
-- Livewire 4
-- Tailwind CSS 4
-- Redis
-- Meilisearch
-- Pest
-- Playwright
-- Docker Compose
-- GitHub Actions
-
 ## Quick start
 
 See `README-DEV.md` for development setup.
