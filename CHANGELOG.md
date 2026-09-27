@@ -6,6 +6,16 @@ inline (`**Breaking:**`, `**Migration required:**`); see `docs/release/changelog
 
 ## [Unreleased]
 
+### Changed
+
+- Dependency updates reviewed from Dependabot (`laravel/framework` 13.32.0→13.33.0, `livewire/livewire` 4.4.5→4.4.6,
+  `larastan/larastan` 3.12.1→3.12.2, `laravel/scout` 10.25.0→11.8.0, `@laravel/multiplex` 0.4.3→0.4.4, and the
+  `github-actions` group's nine version bumps). None carries a known vulnerability at the previous versions; Scout's
+  11.0 breaking changes (custom-engine `wheres` shape, `scout:delete-all-indexes` scope) do not apply here, since
+  search bypasses the Scout query builder entirely (`App\Services\Search\ProjectSearch`) and no custom engine or that
+  command is used. `cropperjs` 1.6.3→2.2.0 (also open from Dependabot) is deliberately **not** applied: v2 replaces the
+  constructor API this app uses with a Web Components rewrite and needs a dedicated migration, not a version bump.
+
 ## [1.0.0-rc.2] - 2026-09-27
 
 The second release candidate. `1.0.0-rc.1` was published but cannot be installed with its own `install.sh`: the

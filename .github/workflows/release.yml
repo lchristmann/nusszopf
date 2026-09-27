@@ -28,10 +28,10 @@ jobs:
       REGISTRY: ghcr.io
       NAMESPACE: lchristmann
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/login-action@v3
+      - uses: actions/checkout@v7
+      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -48,7 +48,7 @@ jobs:
 
       - name: Tags and labels (php-fpm)
         id: fpm
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ghcr.io/${{ env.NAMESPACE }}/nusszopf-php-fpm
           tags: |
@@ -57,7 +57,7 @@ jobs:
 
       - name: Tags and labels (web)
         id: web
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ghcr.io/${{ env.NAMESPACE }}/nusszopf-web
           tags: |
@@ -65,7 +65,7 @@ jobs:
             type=raw,value=latest,enable=${{ steps.meta.outputs.latest }}
 
       - name: Build and push php-fpm
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: docker/php/Dockerfile
@@ -79,7 +79,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=php-fpm
 
       - name: Build and push web
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: docker/php/Dockerfile
@@ -99,7 +99,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # The release notes are the tag's section of CHANGELOG.md; a release without one is not published.
       - name: Release notes from CHANGELOG.md

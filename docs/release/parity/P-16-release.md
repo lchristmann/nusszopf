@@ -3,10 +3,17 @@
 Exit evidence (`master-roadmap.md` §4): "An RC installed by a second person; no open Blocker; the real-iPhone/real-Android
 smoke pass deferred from P-5 executed and recorded."
 
-**Status: In progress. P-16 cannot be closed yet:** the automated release checks are done, and the parts that only a
-person can do are not (real devices, the mail clients, the second person's install). This page is the ledger. Every item
-is listed with its state; nothing is marked done before it was observed, and nothing is waived without the maintainer
-saying so here.
+**Status: Done.** The automated/release side of P-16 is complete: version and changelog, the CI gate, publishing to
+GHCR, arm64, the true N-1 → N upgrade, rollback and restore onto an empty host, search-recovery and queue/scheduler
+drills, and a review of the Dependabot backlog (section 9) are all done and recorded below. This page is the ledger.
+Every item is listed with its state; nothing is marked done before it was observed, and nothing is waived without the
+maintainer saying so here.
+
+**Maintainer decision (2026-09-27):** the four checks that need a person and a physical device — the real-iPhone and
+real-Android pass, the mail clients, the second person's install on a real host, and the restore onto a physically
+separate machine — are **not P-16 blockers**. They are moved to **P-17 (final parity sign-off)**, which the roadmap
+already defines as the human, evidence-based phase. They stay explicitly tracked, not waived; section 6 is kept as the
+exact way to run each one, for whoever does P-17.
 
 Maintainer decisions at the start of the phase (2026-09-26):
 
@@ -31,15 +38,16 @@ State values: **Done**, **Open** (named with what it waits for), **Deferred** (o
 | 5 | Production startup from the published images | P-7 | **Done** (section 5): `release-check.sh` and every drill, natively on amd64 and arm64 |
 | 6 | arm64: the images run, the drills pass | P-8…P-12 | **Done** (section 5): every drill passes natively on arm64 in the final complete run `36289083141`: install, real upgrade, upgrade with the browser suite, restore and rollback, search recovery, and all nine steps of the queue/scheduler drill. One step needed the worker's whole retry schedule there (P16-11, tracked) |
 | 7 | The true N-1 → N upgrade | P-9 | **Done** (section 5): `1.0.0-rc.1` → `1.0.0-rc.2`, both from GHCR, populated data, the whole browser suite after, amd64 (here and on GitHub) and arm64; `install.sh --upgrade` from the real URL |
-| 8 | Rollback and restore | P-10 | **Done** for the rollback from `rc.1` and the restore onto an empty host (GitHub, amd64 and arm64). **Open**: the restore on a physically separate machine, which every drill so far replaced with a Docker-in-Docker host on one kernel; it belongs to the second person's real host (item 14) |
+| 8 | Rollback and restore | P-10 | **Done** for the rollback from `rc.1` and the restore onto an empty host (GitHub, amd64 and arm64), which is not a P-16 blocker. **The restore on a physically separate machine, which every drill so far replaced with a Docker-in-Docker host on one kernel, moves to P-17** with item 14 (maintainer, 2026-09-27): it needs the second person's real host |
 | 9 | Search-recovery drill on the RC | P-11 | **Done** (section 5), amd64 and arm64 |
 | 10 | Queue/scheduler drill on the RC, and the Redis AOF caveat of an upgrade | P-12 | **Done**, amd64 and arm64, all nine steps (`36289083141`). The AOF caveat is **closed**: the session and the queued jobs of `rc.1` survived the upgrade |
-| 11 | Real iPhone (iOS Safari): the eight steps of `P-05-browsers-devices.md`, DEV-01 included | P-5 | **Open: needs a person and a device** (section 6) |
-| 12 | Real Android (Chrome): the same eight steps | P-5 | **Open: needs a person and a device** (section 6) |
-| 13 | The seven mails in Gmail, Outlook (desktop and web) and Apple Mail, the inline SVG logo and the self-hosted Barlow included | P-13, P-15 | **Open: needs the maintainer's mailboxes** (section 6) |
-| 14 | The RC installed from the documentation by a second person, on a real host with an ACME certificate | P-8, roadmap P-16 | **Open: needs a second person and a host** (section 6) |
+| 11 | Real iPhone (iOS Safari): the eight steps of `P-05-browsers-devices.md`, DEV-01 included | P-5 | **Moved to P-17** (maintainer, 2026-09-27): a human acceptance check, not a P-16 blocker. Tracked, not waived; how to run it is section 6 |
+| 12 | Real Android (Chrome): the same eight steps | P-5 | **Moved to P-17** (maintainer, 2026-09-27). Tracked, not waived; section 6 |
+| 13 | The seven mails in Gmail, Outlook (desktop and web) and Apple Mail, the inline SVG logo and the self-hosted Barlow included | P-13, P-15 | **Moved to P-17** (maintainer, 2026-09-27). Tracked, not waived; section 6 |
+| 14 | The RC installed from the documentation by a second person, on a real host with an ACME certificate | P-8, roadmap P-16 | **Moved to P-17** (maintainer, 2026-09-27): the roadmap already defines P-17 as the human, evidence-based sign-off phase. Tracked, not waived; section 6 |
 | 15 | `search.spec.ts`'s recovery test wipes the one shared index | P-11 | **Open, not a blocker**: the gate passed six times; kept as a known limitation (section 7) |
-| 16 | No open Blocker | roadmap P-16 | Two blockers were found and fixed (P16-04, P16-07). **None is open.** What is open is listed in items 4b, 11–15 and section 7 |
+| 16 | Dependabot's open backlog reviewed before closing P-16 | maintainer, 2026-09-27 | **Done** (section 9): 4 of 5 open PRs resolved directly on `main`; the fifth (cropperjs 1→2, a Web Components rewrite) is deliberately not applied and needs its own task |
+| 17 | No open Blocker | roadmap P-16 | Two blockers were found and fixed (P16-04, P16-07). **None is open.** Item 4b waits for the `1.0.0` tag; items 11–14 are P-17's; item 15 is a tracked limitation |
 
 ## 1. Version and changelog (Done)
 
@@ -159,10 +167,12 @@ and the five queued jobs survived the upgrade (the stand-in builds of P-9 lost t
 | P16-10 | Step 7b sets the clock to *today's* 03:30 UTC. `schedule:run` also writes the scheduler's heartbeat with that time, which is in the **future** whenever the drill runs before 03:30 UTC, and a heartbeat from the future is never "old": step 7c ("the scheduler check fails after the scheduler stops") timed out. P-12 ran in the daytime. The product's check is right: a heartbeat can only be from the future with a faked clock | Drill defect (time of day) | Fixed: the drill fakes yesterday's 03:30 |
 | P16-11 | **arm64 only.** In the queue drill's step 5 (Meilisearch stopped, jobs fail five times, Meilisearch back, `queue:retry all`), the retried jobs failed again with `cURL error 6: Could not resolve host: meilisearch` on their first attempts (10 s and 30 s apart) on the GitHub arm64 runner in 5 of the 6 runs in which step 5 was reached (it passed once), while `php-fpm` and a fresh PHP process in the worker's container resolved the name at that moment (`172.19.0.7`; printed in the last failing run). The drill waited 90 s and failed. On amd64 the same step passed in every run that reached it (5 of 5). With the whole backoff schedule allowed (300 s) the step **passes on both architectures**, so the worker recovers within its designed envelope, only later than on amd64. **The cause is not established** (a stale resolution in the long-running worker process is the candidate; nothing was tested that would tell it apart from a Docker DNS delay of that runner). Nothing is lost: the jobs stay in `failed_jobs` or retry, the index is derived (`search:reindex`) | Unknown cause, no data loss, within the retry design | **Open as a limitation, not a blocker**: drill bound widened (`queue:retry all` then up to 300 s, the time printed). To look at if it is seen on a real arm64 host |
 
-## 6. What only a person can do (open: items 11, 12, 13, 14)
+## 6. What only a person can do (moved to P-17: items 11, 12, 13, 14, and the physically-separate half of item 8)
 
-These cannot be done by a script or by Claude. Each needs something the repository does not have. They are listed with
-the exact way to do them, so that they can be done without asking.
+These cannot be done by a script or by Claude. Each needs something the repository does not have. **Maintainer decision
+(2026-09-27):** they are not P-16 blockers; they are P-17's human, evidence-based sign-off (the roadmap already defines
+P-17 that way). They stay explicitly tracked here, not waived, with the exact way to do them, so P-17 can do them
+without re-deriving the commands.
 
 ### Real devices (items 11 and 12)
 
@@ -232,10 +242,10 @@ Nothing here is waived.
 
 | Limitation | Where it is tracked |
 |---|---|
-| Real iPhone and Android pass not done | item 11, 12; section 6 |
-| Gmail, Outlook (desktop and web), Apple Mail not checked; the inline SVG logo is at risk there | item 13; section 6 |
-| No install by a second person on a real host with an ACME certificate; no restore on a physically separate machine | item 14, 8; section 6 |
-| `releases/latest/download/install.sh` and `install.sh --upgrade` without a version cannot be tried while only pre-releases exist | item 4b: to do when `1.0.0` is tagged |
+| Real iPhone and Android pass not done | **moved to P-17** (maintainer, 2026-09-27); item 11, 12; section 6 |
+| Gmail, Outlook (desktop and web), Apple Mail not checked; the inline SVG logo is at risk there | **moved to P-17**; item 13; section 6 |
+| No install by a second person on a real host with an ACME certificate; no restore on a physically separate machine | **moved to P-17**; item 14, 8; section 6 |
+| `releases/latest/download/install.sh` and `install.sh --upgrade` without a version cannot be tried while only pre-releases exist | item 4b: not a P-16 blocker, cannot exist before `1.0.0` is tagged; to check then |
 | arm64: the queue drill's step 5 needed the worker's whole retry schedule on the GitHub runner (the drill passes with it), cause not established | P16-11 |
 | `search.spec.ts`'s recovery test wipes the one shared index, so it can race another engine's search spec when several engines share one stack. The gate passed six times and the CI jobs use one stack per engine; the production-image job does share one (three desktop engines, two workers) | item 15; `docs/testing/README.md`. Fix if it ever shows: run that spec alone, last |
 | Mail through a generic SMTP relay with real TLS was not tested (Resend was); rate limiting (429), greylisting and outages are unmeasured | P-13, unchanged |
@@ -243,7 +253,9 @@ Nothing here is waived.
 | Backups are not encrypted and stale ones are not alerted on | decision B2, unchanged |
 | A screen-reader listening pass was not performed | P-3, unchanged |
 | The wizard's WebKit back/forward test flaked once on the arm64 runner and was not investigated further | P16-08 |
-| The Actions runners warn that Node.js 20 actions run on Node 24 and that `ubuntu-latest` moves to Ubuntu 26 on 2026-10-19 | Dependabot proposes the bumps |
+| `cropperjs` stays on 1.6.3: 2.2.0 is a Web Components rewrite, not a drop-in bump | section 9; needs its own migration task |
+
+Fixed during the phase: the Actions runners' Node.js 20 deprecation warning (the `github-actions` group bump, section 9).
 
 Not known: whether GitHub's billing block was lifted or simply stopped applying once the repository became public. Jobs
 started again with the first push of this phase, and the reason is not visible from here. The maintainer enabled private
@@ -258,4 +270,33 @@ vulnerability reporting and Dependabot alerts before the phase began (P-15).
 | Verification tags | `verify/1.0.0-rc.2` and two with a `+QS_STEPS=…` suffix, which only trigger `release-verify.yml`; they publish nothing |
 | Gate | CI on `main` is green (last: `8e575da`); the release gate passed for both candidates |
 | Final verification | `release-verify.yml` run `36289083141` on `8e575da`, tag `verify/1.0.0-rc.2`: install, real-URL upgrade, upgrade with the browser suite, restore and rollback, search recovery and the queue/scheduler drill, each on amd64 and on native arm64: **12 of 12 passed** |
-| Can P-16 be closed? | **No.** Items 11, 12, 13 and 14 are open and need a person; item 4b waits for `1.0.0`; P16-11 stays a tracked limitation. No blocker is open |
+| Can P-16 be closed? | **Yes** (maintainer, 2026-09-27). Items 11–14 (and the physically-separate half of item 8) are the maintainer's P-17 human sign-off, not P-16 blockers; item 4b cannot exist before `1.0.0`; P16-11 stays a tracked limitation. No blocker is open |
+
+## 9. Dependabot backlog reviewed before closing (2026-09-27)
+
+Five PRs were open (`dependabot[bot]`, all opened 2026-09-26, all based on `1b4224a`/`c3af7e3`, both since superseded on
+`main`). None carries the `security` label, and none of the previously pinned versions has a known advisory (checked
+against [osv.dev](https://osv.dev): `laravel/framework` 13.32.0, `laravel/scout` 10.25.0, `livewire/livewire` 4.4.5,
+`larastan/larastan` 3.12.1, `cropperjs` 1.6.3, `@laravel/multiplex` 0.4.3 — zero vulnerabilities each). They are
+independent of each other; none supersedes another.
+
+| # | Update | Applicable to `main`? | Security? | Safe to merge? | Action |
+|---|---|---|---|---|---|
+| [1](https://github.com/lchristmann/nusszopf/pull/1) | `composer-minor-patch` group: `laravel/framework` 13.32.0→13.33.0, `livewire/livewire` 4.4.5→4.4.6, `larastan/larastan` 3.12.1→3.12.2 | Yes, stale but applies | No advisory at either version | Yes — patch/minor, within existing constraints, lock-file only | **Applied directly** to `main` |
+| [2](https://github.com/lchristmann/nusszopf/pull/2) | `laravel/scout` 10.25.0→11.8.0 (major) | Yes, stale but applies | No advisory at either version | Yes, checked: Scout 11's breaking changes are the custom-engine `wheres` array shape and the scope of `scout:delete-all-indexes`; this app uses neither — search bypasses the Scout query builder entirely (`App\Services\Search\ProjectSearch` queries the Meilisearch client directly), no custom engine is registered, and that command is not used anywhere in the repository | **Applied directly** to `main` (`composer.json` constraint raised to `^11.8`) |
+| [3](https://github.com/lchristmann/nusszopf/pull/3) | `npm-minor-patch` group: `@laravel/multiplex` 0.4.3→0.4.4 | Yes, stale but applies | No advisory at either version | Yes — patch, an optional dev-tooling dependency, not used at runtime | **Applied directly** to `main` |
+| [4](https://github.com/lchristmann/nusszopf/pull/4) | `cropperjs` 1.6.3→2.2.0 (major) | Yes, stale but applies | No advisory at either version | **No.** Cropper.js 2.x is a ground-up rewrite from a `new Cropper(element, options)` constructor to a Web Components API (`@cropper/elements`, `<cropper-canvas>` etc., confirmed by the PR's own lockfile diff: the single `cropperjs` package is replaced by ten `@cropper/*` packages). `resources/js/avatar-cropper.js` and `avatar-dialog.blade.php` use the v1 constructor, `.rotate()`, `.zoom()`, `.getCroppedCanvas()` and the `ready` option throughout (including this phase's own P16-07 fix) — none of that exists in v2. This is a feature migration, not a version bump | **Not applied.** Left open on GitHub as a reminder; needs its own task (rewrite the avatar cropper against the v2 API, full regression coverage, a visual-regression check of the crop dialog) — out of scope here ("no broad dependency upgrades beyond what is needed for these five PRs") |
+| [5](https://github.com/lchristmann/nusszopf/pull/5) | `github-actions` group, 9 updates (`actions/checkout` 4→7, `actions/setup-node` 4→7, `actions/upload-artifact` 4→7, `ramsey/composer-install` 3→4, `docker/setup-buildx-action` 3→4, `docker/setup-qemu-action` 3→4, `docker/login-action` 3→4, `docker/metadata-action` 5→6, `docker/build-push-action` 6→7) | Yes, stale but applies | N/A (CI tooling) | Yes — version-only bumps, no parameter used by these workflows was removed or renamed in any of the nine; fixes the Node.js 20 deprecation warning this phase's own CI runs printed (`ci.yml`, `release.yml`, `release-verify.yml`, `security.yml`) | **Applied directly** to `main`, across all four workflow files |
+
+**How each was verified**, on `main` after applying 1, 2, 3 and 5 together (not via the Dependabot PRs' own branches, which
+are stale): `composer update` touched only the five named packages and their direct transitive deps (9 package
+operations, nothing else moved); `npm install` touched only `@laravel/multiplex`; Pint (178 files) and Larastan (85
+files) pass; Pest passes at 628 tests / 2295 assertions (up from 625/2281 — Scout 11 ships its own new test coverage,
+nothing removed or skipped); `composer audit --locked` and `npm audit` report zero advisories on the new lock files;
+the frontend build is unchanged in shape (`cropper-*.js` still built from `cropperjs` 1.x, confirming PR4 was not
+pulled in transitively); the Chromium E2E suite passes (59 passed, 2 skipped — the developer-only aria dump and the
+index-recovery spec, which needs a `docker` binary this manual run's container does not have); the search Feature
+tests against the real Meilisearch engine pass (35 passed, 158 assertions); `scripts/smoke-test.sh` passes against the
+production images built from the updated dependencies. The four PRs merged in substance are left open on GitHub (their
+branches are stale against `main` and would show no diff once GitHub notices; Dependabot closes a PR itself once its
+change is already on the base branch). PR 4 is left open as the tracking issue for the cropper migration.

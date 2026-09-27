@@ -26,7 +26,7 @@ person is listed as pending), **In progress**, **Not started**.
 | P-13 E-mail delivery | [`P-13-email-delivery.md`](P-13-email-delivery.md) | Done (closed by the maintainer 2026-09-26; all seven mail types delivered through Resend on the production stack and inspected in Proton Mail; P13-01 fixed, P13-03 (HTML-only) accepted as the intended format; Gmail, Outlook and Apple Mail unverified and deferred to P-16, not waived; a generic SMTP relay with real TLS not tested) |
 | P-14 Documentation completion | [`P-14-documentation.md`](P-14-documentation.md) | Done (closed by the maintainer 2026-09-26; the docs were audited against the code and P-1…P-13, twelve findings fixed, among them a dev first-run sequence that left the containers without an `APP_KEY`; no Proposal banner left; the P-13 mail decision recorded everywhere; the first tag's number, the changelog and the release-only checks deferred to P-16, repository hygiene to P-15; a complete fresh-clone run of the dev setup was not performed, the steps were checked individually) |
 | P-15 FOSS repository hygiene | [`P-15-foss-hygiene.md`](P-15-foss-hygiene.md) | Done (closed by the maintainer 2026-09-26; CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, issue and PR templates, Dependabot and a weekly advisory/secret workflow, license notices in the build, asset provenance, `.env.example` audit, README badges; the whole Git history scanned with gitleaks, no secret; no known dependency vulnerability; on the maintainer's decisions the repository is public, the legal examples carry placeholders instead of the original operators' personal details, GitHub's private vulnerability reporting is the only security contact, there is no `FUNDING.yml`, and the mail layout serves Barlow itself instead of Google Fonts; enabling private vulnerability reporting and Dependabot alerts/security updates on GitHub is a maintainer action, not done, and the docs-link CI check is a non-blocking future improvement) |
-| P-16 Release preparation and RC | [`P-16-release.md`](P-16-release.md) | In progress (started 2026-09-26; `1.0.0-rc.1` and `1.0.0-rc.2` published; the release checks passed on amd64 and arm64 apart from a tracked limitation; two blockers found and fixed (P16-04, P16-07); open and needing a person: the real iPhone/Android pass, Gmail/Outlook/Apple Mail, the second person's install on a real host; the `latest` URLs wait for a stable tag) |
+| P-16 Release preparation and RC | [`P-16-release.md`](P-16-release.md) | Done (closed by the maintainer 2026-09-27; `1.0.0-rc.1` and `1.0.0-rc.2` published; the release checks passed on amd64 and arm64 apart from one tracked limitation (P16-11); two blockers found and fixed (P16-04, P16-07); the Dependabot backlog reviewed, 4 of 5 open updates applied, the fifth (cropperjs 1→2) deliberately left for its own migration task; moved to P-17 as human sign-off, not waived: the real iPhone/Android pass, Gmail/Outlook/Apple Mail, the second person's install on a real host with ACME, and the physically-separate restore; the `latest` URLs wait for the stable `1.0.0` tag) |
 | P-17 Final sign-off | this page, below | Maintainer only |
 
 ## Carried forward to later phases
@@ -35,10 +35,11 @@ person is listed as pending), **In progress**, **Not started**.
 [`P-16-release.md`](P-16-release.md), which is the ledger. Done there, on `1.0.0-rc.2`: the real download path, the
 GHCR pull, arm64, the true N-1 upgrade and the rollback, the search-recovery and queue drills on the published images
 (one arm64 step tracked as a limitation), the first `CHANGELOG.md` section, the number of the first tag (`1.0.0-rc.1`),
-and the Redis append-only file caveat. **Still open there and needing a person:** the real-iPhone/real-Android pass, the
-mails in Gmail/Outlook/Apple Mail, the install by a second person on a real host with an ACME certificate, and the
-restore on a physically separate machine. `releases/latest/download/…` waits for a stable tag. The entries below are
-kept as written by the phases that carried them forward.
+and the Redis append-only file caveat. **Moved to P-17 by the maintainer (2026-09-27), not waived:** the real-iPhone/
+real-Android pass, the mails in Gmail/Outlook/Apple Mail, the install by a second person on a real host with an ACME
+certificate, and the restore on a physically separate machine — P-17 is already the roadmap's human, evidence-based
+sign-off phase. `releases/latest/download/…` waits for the stable `1.0.0` tag, which is not a P-16 blocker either. The
+entries below are kept as written by the phases that carried them forward.
 
 - **P-7 (production Compose verification):** re-measure the search round trip and the render cost per card on the
   production images (P-6, recommendation 4). Done in P-7. The other three P-6 recommendations stay open and
