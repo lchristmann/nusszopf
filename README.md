@@ -46,6 +46,8 @@ See `README-DEV.md` for development setup.
 
 Self-hosting (Docker and a domain name; nothing else to install):
 
+<!-- quickstart:start -->
+<!-- Transcluded verbatim into site/index.html at build time (site/vite.config.js) — edit only here. -->
 ```sh
 mkdir /opt/nusszopf && cd /opt/nusszopf
 curl -fsSLO https://github.com/lchristmann/nusszopf/releases/latest/download/install.sh
@@ -54,6 +56,7 @@ sh install.sh https://nusszopf.example.org
 # recommended, or your own SMTP relay (MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD)
 docker compose up -d
 ```
+<!-- quickstart:end -->
 
 Until `1.0.0` is tagged, only release candidates exist, and GitHub's `releases/latest` does not point at a pre-release.
 Install a candidate by naming it: `curl -fsSLO https://github.com/lchristmann/nusszopf/releases/download/1.0.0-rc.2/install.sh`,

@@ -1,0 +1,36 @@
+@import 'tailwindcss';
+
+/*
+ * tokens.css sets --font-sans to 'Barlow', but only declares the token — it doesn't load the font
+ * files (the application's app.css does that itself, separately). This page needs its own copy of
+ * the same four weights for the shared type scale to actually render in Barlow instead of silently
+ * falling back to the next font in the stack.
+ */
+@import '@fontsource/barlow/400.css';
+@import '@fontsource/barlow/500.css';
+@import '@fontsource/barlow/600.css';
+@import '@fontsource/barlow/700.css';
+
+/*
+ * Same design tokens and nz-title/nz-text/nz-link/nz-btn component classes the application uses
+ * (../../resources/css/{tokens,components}.css), imported by relative path rather than copied, so
+ * this page always matches the app's visual language. Do not fork these files here — change them
+ * once, in the application's own resources/css/, and both builds pick it up.
+ */
+@import '../../resources/css/tokens.css';
+@import '../../resources/css/components.css';
+
+/*
+ * The only site-only styling: everything else on this page is Tailwind utilities plus the shared
+ * nz-* classes above, kept deliberately small (site/README.md).
+ */
+html {
+    scroll-behavior: smooth;
+}
+
+/* A small, readable code block for the quick-start snippet — no historical equivalent exists. */
+.nz-code {
+    @apply overflow-x-auto rounded-lg bg-steel-800 p-5 text-left text-base leading-relaxed text-stone-200;
+    font-family:
+        ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}

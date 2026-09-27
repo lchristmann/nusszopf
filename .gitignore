@@ -43,3 +43,7 @@ playwright-report-visual/
 # Visual-regression reference harness work folder (tests/Visual/historical-harness/run.sh)
 /.historical-harness
 junit.xml
+
+# The static project site (site/README.md) — its own, independent Node project and build output.
+/site/node_modules
+/site/dist

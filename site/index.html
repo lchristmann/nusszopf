@@ -1,0 +1,276 @@
+<!doctype html>
+<!--
+    Nusszopf project site — a static, single-page project site (not the application). See
+    site/README.md for what this is and how it's built.
+
+    Provenance of this page's text, so a reader auditing it against docs/rewrite/decisions-register.md
+    and docs/legal/provenance.md can tell the two apart at a glance:
+
+    - Established facts, sourced from and kept in sync with the repository: the "Self-hosting quick
+      start" code block (transcluded from README.md's Quick start section at build time, see
+      vite.config.js), the technology list (README.md, "Technology"), the license/ownership
+      paragraph (NOTICE, docs/legal/provenance.md, LICENSE), and every link target.
+    - Newly authored public-facing copy, written for this site and not present in any historical
+      Nusszopf source: the hero tagline and the "What is Nusszopf?" section's prose. This is
+      software-project marketing copy, not reproduced historical product content, and has not been
+      through the historical-fidelity review the application's own Home page (resources/views/home.blade.php)
+      has — a maintainer should read it before the site goes live.
+-->
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Nusszopf — self-hosted, open source</title>
+        <meta
+            name="description"
+            content="Nusszopf is a free, self-hostable revival of the historical Nusszopf project. Get the source, a Docker quick start, and the releases."
+        />
+
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicons/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicons/favicon-16x16.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/favicons/apple-touch-icon.png" />
+        <link rel="mask-icon" href="/favicons/safari-pinned-tab.svg" color="#37474f" />
+        <link rel="manifest" href="/favicons/site.webmanifest" />
+        <meta name="theme-color" content="#ffffff" />
+
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Nusszopf — self-hosted, open source" />
+        <meta
+            property="og:description"
+            content="A free, self-hostable revival of the historical Nusszopf project."
+        />
+        <meta property="og:image" content="/images/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+
+        <link rel="stylesheet" href="./src/main.css" />
+    </head>
+    <body class="bg-white text-steel-700">
+        <a
+            href="#main"
+            class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-white focus:px-4 focus:py-2 focus:nz-text-sm"
+            >Skip to content</a
+        >
+
+        <!-- Nav -->
+        <header class="px-6 py-4 sm:px-16 lg:px-24 xl:px-32">
+            <div class="lg:container sm:mx-auto flex items-center justify-between">
+                <a href="#" class="flex items-center gap-2 text-steel-700" aria-label="Nusszopf">
+                    <img src="./src/assets/icons/nusszopf-header-logo.svg" alt="" class="h-8 w-8" width="32" height="32" />
+                    <span class="nz-title-sm-semi">Nusszopf</span>
+                </a>
+                <a
+                    href="https://github.com/lchristmann/nusszopf"
+                    class="nz-btn-steel inline-block cursor-pointer py-2 px-4 font-medium text-lg outline-none focus:outline-none"
+                    >GitHub</a
+                >
+            </div>
+        </header>
+
+        <main id="main">
+            <!-- 1. Hero -->
+            <section class="bg-steel-50 px-6 sm:px-16 lg:px-24 xl:px-32" data-section="hero">
+                <div class="lg:container sm:mx-auto py-16 sm:py-20 xl:py-28 text-center">
+                    <img
+                        src="./src/assets/icons/nusszopf-logo-big.svg"
+                        alt="Nusszopf"
+                        class="mx-auto w-48 sm:w-56 xl:w-64"
+                        width="1354"
+                        height="839"
+                    />
+                    <h1 class="nz-title-lg mt-8">Nusszopf</h1>
+                    <p class="nz-text-lg mx-auto mt-4 max-w-xl">
+                        A free, self-hostable revival of the historical Nusszopf project — the same product,
+                        rebuilt on a modern, open-source foundation you can run yourself.
+                    </p>
+                    <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
+                        <a
+                            href="#quick-start"
+                            class="nz-btn-lilac inline-block bg-lilac-200 cursor-pointer py-3 px-6 font-medium text-lg outline-none focus:outline-none"
+                            >Get started</a
+                        >
+                        <a
+                            href="https://github.com/lchristmann/nusszopf"
+                            class="nz-btn-steel inline-block bg-steel-100 cursor-pointer py-3 px-6 font-medium text-lg outline-none focus:outline-none"
+                            >View source on GitHub</a
+                        >
+                    </div>
+                    <p class="nz-text-xs mt-6 text-steel-500">GPL-3.0-or-later · Docker Compose · Self-hosted</p>
+                </div>
+            </section>
+
+            <!-- 2. What is Nusszopf? -->
+            <section class="bg-turquoise-300 px-6 py-12 sm:px-16 sm:py-16 lg:px-24 xl:px-32 xl:py-18" data-section="about">
+                <div class="lg:container sm:mx-auto sm:max-w-2xl">
+                    <h2 class="nz-title-md mb-8 xl:mb-10">What is Nusszopf?</h2>
+                    <div class="space-y-4">
+                        <p class="nz-text-md">
+                            Nusszopf started in 2019 as a community platform for people who want to turn their
+                            ideas into projects together, and find others to build them with. Nusszopf 2 is a
+                            complete rewrite of that original product: the same functionality, design and
+                            workflows, rebuilt from the ground up so it can be self-hosted by anyone.
+                        </p>
+                        <p class="nz-text-md">
+                            This is a revival, not a redesign. Every screen and flow is reproduced from the
+                            historical application — what changed is the code and infrastructure underneath it.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. Self-hosting quick start -->
+            <section
+                id="quick-start"
+                class="bg-yellow-250 px-6 py-12 sm:px-16 sm:py-16 lg:px-24 xl:px-32 xl:py-18"
+                data-section="quick-start"
+            >
+                <div class="lg:container sm:mx-auto sm:max-w-2xl">
+                    <h2 class="nz-title-md mb-8 xl:mb-10">Self-host it in minutes</h2>
+                    <p class="nz-text-md mb-5">
+                        All you need is Docker and a domain name — nothing else to install.
+                    </p>
+                    <pre class="nz-code"><code><!--QUICKSTART--></code></pre>
+                    <p class="nz-text-sm mt-5">
+                        See the
+                        <a
+                            href="https://github.com/lchristmann/nusszopf/blob/main/docs/deployment/README.md"
+                            class="border-b-2 cursor-pointer nz-link-current"
+                            >full deployment guide</a
+                        >
+                        for reverse proxies, mail configuration and options, and
+                        <a
+                            href="https://github.com/lchristmann/nusszopf/blob/main/docs/deployment/operations.md"
+                            class="border-b-2 cursor-pointer nz-link-current"
+                            >operations</a
+                        >
+                        for health checks, backups, and upgrades.
+                    </p>
+                </div>
+            </section>
+
+            <!-- 4. Technology stack -->
+            <section class="bg-livid-100 px-6 py-12 sm:px-16 sm:py-16 lg:px-24 xl:px-32 xl:py-18" data-section="stack">
+                <div class="lg:container sm:mx-auto sm:max-w-2xl">
+                    <h2 class="nz-title-md mb-8 xl:mb-10">Built with</h2>
+                    <ul class="flex flex-wrap gap-3" aria-label="Technology stack">
+                        <li class="nz-link-livid nz-text-sm rounded-full border-2 px-4 py-1">PHP 8.5</li>
+                        <li class="nz-link-livid nz-text-sm rounded-full border-2 px-4 py-1">Laravel 13</li>
+                        <li class="nz-link-livid nz-text-sm rounded-full border-2 px-4 py-1">PostgreSQL</li>
+                        <li class="nz-link-livid nz-text-sm rounded-full border-2 px-4 py-1">Blade</li>
+                        <li class="nz-link-livid nz-text-sm rounded-full border-2 px-4 py-1">Livewire 4</li>
+                        <li class="nz-link-livid nz-text-sm rounded-full border-2 px-4 py-1">Tailwind CSS 4</li>
+                        <li class="nz-link-livid nz-text-sm rounded-full border-2 px-4 py-1">Redis</li>
+                        <li class="nz-link-livid nz-text-sm rounded-full border-2 px-4 py-1">Meilisearch</li>
+                        <li class="nz-link-livid nz-text-sm rounded-full border-2 px-4 py-1">Pest</li>
+                        <li class="nz-link-livid nz-text-sm rounded-full border-2 px-4 py-1">Playwright</li>
+                        <li class="nz-link-livid nz-text-sm rounded-full border-2 px-4 py-1">Docker Compose</li>
+                        <li class="nz-link-livid nz-text-sm rounded-full border-2 px-4 py-1">GitHub Actions</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 5. Releases -->
+            <section class="bg-pink-200 px-6 py-12 sm:px-16 sm:py-16 lg:px-24 xl:px-32 xl:py-18" data-section="releases">
+                <div class="lg:container sm:mx-auto sm:max-w-2xl">
+                    <h2 class="nz-title-md mb-8 xl:mb-10">Releases</h2>
+                    <p class="nz-text-md mb-5">
+                        Nusszopf ships as versioned Docker images published on GitHub. Every release lists what
+                        changed and how to upgrade.
+                    </p>
+                    <p class="mb-5">
+                        <a href="https://github.com/lchristmann/nusszopf/releases">
+                            <img
+                                src="https://img.shields.io/github/v/release/lchristmann/nusszopf?include_prereleases&label=latest%20release"
+                                alt="Latest release"
+                                loading="lazy"
+                                width="140"
+                                height="20"
+                            />
+                        </a>
+                    </p>
+                    <div class="flex flex-wrap gap-4">
+                        <a
+                            href="https://github.com/lchristmann/nusszopf/releases"
+                            class="nz-btn-lilac inline-block bg-pink-300 cursor-pointer py-2 px-4 font-medium text-lg outline-none focus:outline-none"
+                            >All releases</a
+                        >
+                        <a
+                            href="https://github.com/lchristmann/nusszopf/blob/main/CHANGELOG.md"
+                            class="nz-btn-lilac inline-block bg-pink-300 cursor-pointer py-2 px-4 font-medium text-lg outline-none focus:outline-none"
+                            >Changelog</a
+                        >
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. FOSS / license / ownership -->
+            <section class="bg-blue-300 px-6 py-12 sm:px-16 sm:py-16 lg:px-24 xl:px-32 xl:py-18" data-section="license">
+                <div class="lg:container sm:mx-auto sm:max-w-2xl">
+                    <h2 class="nz-title-md mb-8 xl:mb-10">Free and open source</h2>
+                    <div class="space-y-4">
+                        <p class="nz-text-md">
+                            Nusszopf is free software, licensed under the
+                            <strong>GNU General Public License v3.0 or later</strong>. The source code, issue
+                            tracker and discussions are public on GitHub, and contributions are welcome.
+                        </p>
+                        <p class="nz-text-md">
+                            Nusszopf 2 is a reimplementation of the historical Nusszopf (<code>web-nusszopf</code>,
+                            <code>be-nusszopf</code>, <code>emails-nusszopf</code>), also licensed under the GPL
+                            v3.0. Its design, copy and email templates are reproduced here as derivative works
+                            under the same license; the original authors retain their copyright in that material.
+                        </p>
+                    </div>
+                    <div class="mt-5 flex flex-wrap gap-4">
+                        <a
+                            href="https://github.com/lchristmann/nusszopf/blob/main/LICENSE"
+                            class="border-b-2 cursor-pointer nz-link-current"
+                            >License</a
+                        >
+                        <a
+                            href="https://github.com/lchristmann/nusszopf/blob/main/NOTICE"
+                            class="border-b-2 cursor-pointer nz-link-current"
+                            >Notice &amp; third-party components</a
+                        >
+                        <a
+                            href="https://github.com/lchristmann/nusszopf/blob/main/docs/legal/provenance.md"
+                            class="border-b-2 cursor-pointer nz-link-current"
+                            >Provenance</a
+                        >
+                        <a
+                            href="https://github.com/lchristmann/nusszopf/blob/main/CONTRIBUTING.md"
+                            class="border-b-2 cursor-pointer nz-link-current"
+                            >Contributing</a
+                        >
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- 7. Footer -->
+        <footer class="bg-steel-200 px-6 py-10 sm:px-16 lg:px-24 xl:px-32">
+            <div class="lg:container sm:mx-auto flex flex-col items-center gap-4 text-center sm:flex-row sm:justify-between sm:text-left">
+                <p class="nz-text-sm">© Nusszopf contributors. Licensed under GPL-3.0-or-later.</p>
+                <nav class="flex flex-wrap justify-center gap-4" aria-label="Footer">
+                    <a href="https://github.com/lchristmann/nusszopf" class="border-b-2 cursor-pointer nz-link-current nz-text-sm"
+                        >GitHub</a
+                    >
+                    <a
+                        href="https://github.com/lchristmann/nusszopf/issues"
+                        class="border-b-2 cursor-pointer nz-link-current nz-text-sm"
+                        >Issues</a
+                    >
+                    <a
+                        href="https://github.com/lchristmann/nusszopf/releases"
+                        class="border-b-2 cursor-pointer nz-link-current nz-text-sm"
+                        >Releases</a
+                    >
+                    <a
+                        href="https://github.com/lchristmann/nusszopf/blob/main/docs/README.md"
+                        class="border-b-2 cursor-pointer nz-link-current nz-text-sm"
+                        >Docs</a
+                    >
+                </nav>
+            </div>
+        </footer>
+    </body>
+</html>
