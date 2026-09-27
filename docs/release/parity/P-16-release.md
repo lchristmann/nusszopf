@@ -3,39 +3,43 @@
 Exit evidence (`master-roadmap.md` §4): "An RC installed by a second person; no open Blocker; the real-iPhone/real-Android
 smoke pass deferred from P-5 executed and recorded."
 
-**Status: In progress.** This page is the ledger. Every item is listed with its state; nothing is marked done before it
-was observed, and nothing is waived without the maintainer saying so here.
+**Status: In progress. P-16 cannot be closed yet:** the automated release checks are done, and the parts that only a
+person can do are not (real devices, the mail clients, the second person's install). This page is the ledger. Every item
+is listed with its state; nothing is marked done before it was observed, and nothing is waived without the maintainer
+saying so here.
 
 Maintainer decisions at the start of the phase (2026-09-26):
 
 - The first tag is **`1.0.0-rc.1`** (`docs/release/versioning.md`).
 - A second candidate, **`1.0.0-rc.2`**, is published so that `rc.1` is the N-1 of the first real upgrade test.
 
+**The release candidate under test is `1.0.0-rc.2`** (commit `c3af7e3`, tag `1.0.0-rc.2`, GHCR images
+`ghcr.io/lchristmann/nusszopf-php-fpm:1.0.0-rc.2` and `…/nusszopf-web:1.0.0-rc.2`, both `linux/amd64` and `linux/arm64`).
+`1.0.0-rc.1` is published too but cannot be installed with its own installer (P16-04). Neither is `latest`.
+
 ## Checklist
 
-State values: **Done**, **Blocked** (waiting for something outside the repository, named), **Open**, **Deferred by the
-maintainer** (only with the maintainer's word, dated).
+State values: **Done**, **Open** (named with what it waits for), **Deferred** (only with the maintainer's word, dated).
 
 | # | Item | Source of the obligation | State |
 |---|---|---|---|
-| 1 | First-release version and changelog: number decided, `CHANGELOG.md` consolidated, the release workflow's notes extraction verified | P-14, `versioning.md`, `changelog.md` | Done (section 1) |
-| 2 | The CI gate is green on the commit that is tagged | `release.yml` runs the whole CI as its gate | Done for `1.0.0-rc.1` (sections 2, 3) |
-| 2b | The intermittent Pest failure of the gate (`ReindexSearchTest`, BUG-047) | section 3 | Done: a test defect, found and fixed (P16-06) |
-| 3 | Build and publish `1.0.0-rc.1` to GHCR by the release workflow; both packages pullable without login | `release-process.md` | Done (section 3) |
-| 4 | `install.sh` without `NUSSZOPF_BASE_URL` from the real release, and the pull from GHCR (with its time) | P-8, P8-01 | Pull done (38 s); the install from the real release is blocked by P16-04 until `rc.2` |
-| 4b | `releases/latest/download/install.sh` and `--upgrade` without a version | P-8, P-9 | Deferred to the stable `1.0.0` tag (GitHub's "latest" excludes pre-releases, P16-05), not waived |
-| 5 | Production startup from the published images (`smoke-test.sh`-equivalent checks against the pulled images) | P-7 | Open |
-| 6 | arm64: the images run, the drills pass | P-8…P-11 | Open |
-| 7 | True N-1 → N upgrade: `upgrade-test.sh 1.0.0-rc.1 --suite` to `rc.2`, `install.sh --upgrade` from `releases/download/<version>/`, `--upgrade` without a version | P-9 | Open |
-| 8 | Rollback and restore: `restore-test.sh --rollback-from 1.0.0-rc.1`; restore on a physically separate machine | P-10 | Open |
-| 9 | Search-recovery drill on the RC, images from GHCR, and on arm64 | P-11 | Open |
-| 10 | Queue/scheduler drill on the RC, images from GHCR, and on arm64; the Redis AOF caveat of the upgrade | P-12 | Open |
-| 11 | Real iPhone (iOS Safari) checklist, including DEV-01 on a real iPhone | P-5 | Open |
-| 12 | Real Android (Chrome) checklist | P-5 | Open |
-| 13 | The seven mails in Gmail, Outlook (desktop and web) and Apple Mail, including whether the inline SVG logo shows and how the self-hosted Barlow renders | P-13, P-15 | Open |
-| 14 | The RC installed from the documentation by a second person, on a real host with an ACME certificate | P-8, roadmap P-16 | Open |
-| 15 | `search.spec.ts`'s recovery test wipes the shared index (race between parallel engines) | P-11 | Open |
-| 16 | No open Blocker | roadmap P-16 | Open |
+| 1 | First-release version and changelog: number decided, `CHANGELOG.md` consolidated, the notes extraction verified | P-14, `versioning.md`, `changelog.md` | **Done** (section 1) |
+| 2 | The CI gate is green on the commit that is tagged; the gate's flakes found and fixed | `release.yml` runs the whole CI as its gate | **Done** (sections 2, 3: P16-01…03, 06, 07) |
+| 3 | Build and publish the RC to GHCR by the release workflow; both packages pullable without login | `release-process.md` | **Done** (`rc.1`, `rc.2`; section 3) |
+| 4 | The real download path: `install.sh` from `releases/download/<tag>/` without `NUSSZOPF_BASE_URL`, the GHCR pull and its time | P-8, P8-01 | **Done** on `rc.2` (section 5): pull 26 s, healthy 60 s later. Found and fixed P16-04 |
+| 4b | `releases/latest/download/install.sh` and `--upgrade` without a version | P-8, P-9 | **Open, cannot be checked before a stable tag**: GitHub's "latest" never is a pre-release (P16-05). To do when `1.0.0` is tagged. Not waived |
+| 5 | Production startup from the published images | P-7 | **Done** (section 5): `release-check.sh` and every drill, natively on amd64 and arm64 |
+| 6 | arm64: the images run, the drills pass | P-8…P-12 | **Done except one drill step** (section 5): install, real upgrade, upgrade with the browser suite, restore and rollback, search recovery all pass natively on arm64; the queue/scheduler drill's step 5 does not (P16-11) |
+| 7 | The true N-1 → N upgrade | P-9 | **Done** (section 5): `1.0.0-rc.1` → `1.0.0-rc.2`, both from GHCR, populated data, the whole browser suite after, amd64 (here and on GitHub) and arm64; `install.sh --upgrade` from the real URL |
+| 8 | Rollback and restore | P-10 | **Done** for the rollback from `rc.1` and the restore onto an empty host (GitHub, amd64 and arm64). **Open**: the restore on a physically separate machine, which every drill so far replaced with a Docker-in-Docker host on one kernel; it belongs to the second person's real host (item 14) |
+| 9 | Search-recovery drill on the RC | P-11 | **Done** (section 5), amd64 and arm64 |
+| 10 | Queue/scheduler drill on the RC, and the Redis AOF caveat of an upgrade | P-12 | **Done on amd64** (all nine steps, on GitHub). **arm64: open** (P16-11). The AOF caveat is **closed**: the session and the queued jobs of `rc.1` survived the upgrade |
+| 11 | Real iPhone (iOS Safari): the eight steps of `P-05-browsers-devices.md`, DEV-01 included | P-5 | **Open: needs a person and a device** (section 6) |
+| 12 | Real Android (Chrome): the same eight steps | P-5 | **Open: needs a person and a device** (section 6) |
+| 13 | The seven mails in Gmail, Outlook (desktop and web) and Apple Mail, the inline SVG logo and the self-hosted Barlow included | P-13, P-15 | **Open: needs the maintainer's mailboxes** (section 6) |
+| 14 | The RC installed from the documentation by a second person, on a real host with an ACME certificate | P-8, roadmap P-16 | **Open: needs a second person and a host** (section 6) |
+| 15 | `search.spec.ts`'s recovery test wipes the one shared index | P-11 | **Open, not a blocker**: the gate passed six times; kept as a known limitation (section 7) |
+| 16 | No open Blocker | roadmap P-16 | Two blockers were found and fixed (P16-04, P16-07). **None is open**, unless P16-11 or the open items above turn out to be one |
 
 ## 1. Version and changelog (Done)
 

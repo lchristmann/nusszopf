@@ -347,7 +347,12 @@ step_5() {
     [ "$(health_status)" = "503" ] || fail "5: /health does not report the failed jobs"
     [ "$(state queue-worker)" = "running/healthy" ] || fail "5: the worker container is not healthy although it works"
     on 'docker compose exec -T php-fpm php artisan queue:retry all' | tail -2 | sed 's/^/     /'
-    await "the queue idle again" 90 'queue_idle'
+    # The retried jobs run with the same backoff again (10, 30, 60, 120 s). If the worker still cannot reach a
+    # Meilisearch that has just come back (P-16, P16-11: the worker of an arm64 runner failed to resolve its name for a
+    # while), they are given the whole schedule, about 220 s, and the time it took is printed.
+    t3="$(now)"
+    await "the queue idle again" 300 'queue_idle'
+    echo "     the retried jobs were done $(($(now) - t3)) s after queue:retry all"
     await "the edit to be searchable" 60 'test "$(marker_hits "$marker")" -ge 1'
     [ "$(failed_jobs)" = "0" ] || fail "5: queue:retry all left a job in failed_jobs"
     await "health ok again" 120 'health_ok'
