@@ -131,3 +131,130 @@ Everything the previous phases could only do on locally built images now has a w
 - The arm64 evidence therefore comes from a native runner, not from this machine, which has only amd64 and no QEMU.
   `docker run --platform linux/arm64` here fails with `exec format error`; installing emulation would change the host
   and is not needed.
+
+## 5. Results on `1.0.0-rc.2`
+
+All on the published images and the published files; nothing built or faked. "GitHub" means `release-verify.yml` on
+GitHub-hosted runners (amd64: `ubuntu-24.04`; arm64: `ubuntu-24.04-arm`, native). "Here" is this workstation (amd64,
+Docker 29.8). The last complete run of all drills on both architectures is named in the table of section 8.
+
+| Check | What it proves | Where | Result |
+|---|---|---|---|
+| `release-check.sh 1.0.0-rc.2` | `install.sh` from `releases/download/1.0.0-rc.2/`, no `NUSSZOPF_BASE_URL`, the GHCR pull, start, `nusszopf:health` (all six checks `ok`, version `1.0.0-rc.2`), `/up`, `/login`, `/search`, `/legalNotice` 200, a 404 page, the CSP header, the scheduler | here; GitHub amd64 and arm64 | **passed**. Here: pull 26 s, healthy 60 s later, 86 s in all, images `amd64` |
+| `release-upgrade-check.sh 1.0.0-rc.1 1.0.0-rc.2` | `rc.1` installed from its published files, then `install.sh --upgrade 1.0.0-rc.2` **downloaded from the real release**, images pulled from GHCR, a marker written before survives, `.previous` files kept | here; GitHub amd64 and arm64 | **passed**; healthy 15 s after the upgrade started (here) |
+| `upgrade-test.sh 1.0.0-rc.1 --suite` (`RELEASE_TAG=1.0.0-rc.2`) | the true N-1 → N upgrade on populated data (41 users, 80 projects, 198 requests, 15 leads), a browser signed in and 5 jobs queued before it, the documented procedure, then the whole Playwright suite (desktop browsers) | here; GitHub amd64 and arm64 | **passed**. Here: healthy 14 s after the upgrade started, tables, files, search documents and settings intact, the session from before still signed in, the 5 queued jobs ran, sign-in with the old passwords and the old reset link work, private projects stay hidden, 174 browser tests passed, 6 skipped. GitHub: passed on both, after the retry policy of P16-08 |
+| `restore-test.sh --rollback-from 1.0.0-rc.1` | the backup, the restore onto an empty Docker host, the rollback of an upgrade from `rc.1` and a second upgrade | GitHub amd64 and arm64 | **passed** in every run (not run here on the published images) |
+| `search-recovery-test.sh` | four ways to lose the search index, each recovered by the documented block to identical answers, privacy intact, normal indexing afterwards | GitHub amd64 and arm64; here on the `rc.1` images | **passed** |
+| `queue-scheduler-test.sh` | the worker, Redis and the scheduler under failure (nine steps, about 40 minutes) | GitHub amd64: all nine steps in one run; GitHub arm64: steps 1–4 and 6–9 in one run, step 5 in another (P16-11) | **passed**; here on the `rc.2` images, steps 1–6 passed, step 7c failed for a reason of the drill (P16-10, fixed) |
+
+The Redis append-only file, which P-12 said the N-1 upgrade must confirm: **closed.** `rc.1` runs it, so the browser session
+and the five queued jobs survived the upgrade (the stand-in builds of P-9 lost them once).
+
+### Findings after the rc.2 tag
+
+| ID | Finding | Kind | State |
+|---|---|---|---|
+| P16-08 | The drill harnesses ran the browser suite in a bare Playwright container, where `CI` is not set: **no retries**, unlike the dev-stack CI jobs (two). On the arm64 runner one WebKit test of the upgrade drill (`project-wizard.spec.ts › follows browser back and forward…`, `toHaveURL`) failed once, and passed in the run before and after. It also explains the first rc.2 gate failure of the production-image job. A retried test is listed as "flaky" in the output, not hidden | Test harness, flaky test | Fixed in the harness (`--retries=2` in `prod-e2e.sh`, `upgrade-test.sh`, `restore-test.sh`). The wizard test itself was not investigated further |
+| P16-09 | The queue/scheduler drill failed at step 7a on **every** GitHub run and never here. Cause: the step embeds a Python block indented at the top level; Python 3.14 (here) accepts it, the runners' 3.12 raises `IndentationError`, so the step failed whatever the scheduler did. Separately, the step asserted that no minute is ever lost across a restart. Measured with the host slowed to 0.15 CPU: a restart then takes 7–15 s and the run of a minute it spans is not made up (`schedule:work` starts a minute's tasks only while it is running at :00), and nothing is ever doubled. P-12's "none missing" holds when the restart ends before :00 | Drill defect (script) and a too strong assertion | Fixed: the block is dedented (checked under 3.12 with a clean log, one lost minute, a doubled run, two lost in a row); the step demands no doubled run and at most the spanned minute lost per restart. **Correction to `P-12-queue-scheduler.md`, section 7a** (noted there) |
+| P16-10 | Step 7b sets the clock to *today's* 03:30 UTC. `schedule:run` also writes the scheduler's heartbeat with that time, which is in the **future** whenever the drill runs before 03:30 UTC, and a heartbeat from the future is never "old": step 7c ("the scheduler check fails after the scheduler stops") timed out. P-12 ran in the daytime. The product's check is right: a heartbeat can only be from the future with a faked clock | Drill defect (time of day) | Fixed: the drill fakes yesterday's 03:30 |
+| P16-11 | **arm64 only.** In the queue drill's step 5 (Meilisearch stopped, jobs fail five times, Meilisearch back, `queue:retry all`), the retried jobs failed again with `cURL error 6: Could not resolve host: meilisearch` on their first attempts (10 s and 30 s apart) on the GitHub arm64 runner in 5 of the 6 runs in which step 5 was reached (it passed once), while `php-fpm` and a fresh PHP process in the worker's container resolved the name at that moment (`172.19.0.7`; printed in the last failing run). The drill waited 90 s and failed. On amd64 the same step passed in every run that reached it (5 of 5). With the whole backoff schedule allowed (300 s) the step **passes on both architectures**, so the worker recovers within its designed envelope, only later than on amd64. **The cause is not established** (a stale resolution in the long-running worker process is the candidate; nothing was tested that would tell it apart from a Docker DNS delay of that runner). Nothing is lost: the jobs stay in `failed_jobs` or retry, the index is derived (`search:reindex`) | Unknown cause, no data loss, within the retry design | **Open as a limitation, not a blocker**: drill bound widened (`queue:retry all` then up to 300 s, the time printed). To look at if it is seen on a real arm64 host |
+
+## 6. What only a person can do (open: items 11, 12, 13, 14)
+
+These cannot be done by a script or by Claude. Each needs something the repository does not have. They are listed with
+the exact way to do them, so that they can be done without asking.
+
+### Real devices (items 11 and 12)
+
+Run the eight steps of [`P-05-browsers-devices.md`](P-05-browsers-devices.md#real-device-pass-not-performed-deferred-to-p-16)
+("Real-device pass") on a real iPhone (iOS Safari) and a real Android phone (Chrome), and write the device, OS version and
+browser version for each tick into that page. DEV-01 is step 3.
+
+An installation of the release candidate that a phone on the same network can reach, with a mail inbox and the place
+suggestions working without any account:
+
+```sh
+# On a machine with Docker, in a clone of this repository (any commit from ba5719a on; the release's own files are
+# downloaded). Use the address the phone can reach:
+RELEASE_CHECK_KEEP=1 RELEASE_CHECK_DOUBLES=1 RELEASE_CHECK_URL=http://<this machine's LAN address>:18130 \
+    sh scripts/release-check.sh 1.0.0-rc.2
+# The phone opens http://<LAN address>:18130 ; the mails the app sends are at http://<LAN address>:18131 (Mailpit).
+# Remove it afterwards: cd <the directory the script printed> && docker compose -p nusszopf-release-check down -v
+```
+
+**A limit of this setup, not of the release:** the address is plain `http` on a LAN address, which browsers do not treat
+as a secure context. The share sheet of step 6 (`navigator.share`) and the clipboard need one, so on this instance
+"Teilen" falls back to copying the link. To see the real share sheet, run the same steps against an installation with
+HTTPS, which is what item 14's real host is. The recommended way is to combine items 11, 12 and 14: install `rc.2` on
+the real host (item 14), and do the phone checklist against it.
+
+The instance the phase left running on this workstation for that purpose (`http://192.168.178.72:18130`) is a test
+instance only; remove it with the last command above.
+
+### The seven mails in Gmail, Outlook and Apple Mail (item 13)
+
+The maintainer's mailboxes and the Resend key in the untracked `.env` are needed, which Claude does not have. For each
+mailbox (Gmail, Outlook desktop, Outlook web, Apple Mail):
+
+```sh
+RELEASE_TAG=1.0.0-rc.2 P13_RECIPIENT=<the mailbox> sh scripts/mail-delivery-test.sh    # seven real messages
+```
+
+This sends the seven mail types through the production queue of the published images. Then look at each message and
+record in [`P-13-email-delivery.md`](P-13-email-delivery.md), section 9: does it arrive (inbox or spam), do the layout and
+the buttons hold, **does the inline SVG logo show**, and does Barlow render (P-15 self-hosts it in the mail layout).
+
+Expect the logo to be the finding. Gmail and Outlook are widely reported not to render inline `<svg>`, and the
+historical logo was a hosted image (`docs/email/README.md`). If it does not show, the fix is a design question inside
+the fidelity rules (the historical logo image, served from the instance's own address or attached), and it would go
+into a `1.0.0-rc.3`.
+
+### The install by a second person (item 14)
+
+Someone who has not seen the code installs `1.0.0-rc.2` on a real host with a domain name, from
+[`docs/deployment/README.md`](../../deployment/README.md) and the README alone:
+
+```sh
+mkdir /opt/nusszopf && cd /opt/nusszopf
+curl -fsSLO https://github.com/lchristmann/nusszopf/releases/download/1.0.0-rc.2/install.sh
+sh install.sh https://nusszopf.example.org 1.0.0-rc.2
+```
+
+What to record here: who, on what host, the time from the first command to a healthy stack, every place they got stuck
+(each is a documentation fix), whether the ACME certificate was issued (`docs/deployment/README.md`, "Reverse proxy and
+TLS"), and whether `nusszopf:health` was all `ok`. The same host closes the rest of item 8: back it up
+(`docs/deployment/operations.md`, "Backups") and restore that backup onto a **second, different machine**, which is the
+"physically separate host" that every drill so far replaced with a Docker-in-Docker host on one kernel.
+
+## 7. Remaining limitations, all tracked
+
+Nothing here is waived.
+
+| Limitation | Where it is tracked |
+|---|---|
+| Real iPhone and Android pass not done | item 11, 12; section 6 |
+| Gmail, Outlook (desktop and web), Apple Mail not checked; the inline SVG logo is at risk there | item 13; section 6 |
+| No install by a second person on a real host with an ACME certificate; no restore on a physically separate machine | item 14, 8; section 6 |
+| `releases/latest/download/install.sh` and `install.sh --upgrade` without a version cannot be tried while only pre-releases exist | item 4b: to do when `1.0.0` is tagged |
+| arm64: the queue drill's step 5 needed the worker's whole retry schedule on the GitHub runner, cause not established | P16-11 |
+| `search.spec.ts`'s recovery test wipes the one shared index, so it can race another engine's search spec when several engines share one stack. The gate passed six times and the CI jobs use one stack per engine; the production-image job does share one (three desktop engines, two workers) | item 15; `docs/testing/README.md`. Fix if it ever shows: run that spec alone, last |
+| Mail through a generic SMTP relay with real TLS was not tested (Resend was); rate limiting (429), greylisting and outages are unmeasured | P-13, unchanged |
+| Queue jobs are delivered at least once: a mail queued at the moment of a worker crash can be sent twice | P-12, unchanged |
+| Backups are not encrypted and stale ones are not alerted on | decision B2, unchanged |
+| A screen-reader listening pass was not performed | P-3, unchanged |
+| The wizard's WebKit back/forward test flaked once on the arm64 runner and was not investigated further | P16-08 |
+| The Actions runners warn that Node.js 20 actions run on Node 24 and that `ubuntu-latest` moves to Ubuntu 26 on 2026-10-19 | Dependabot proposes the bumps |
+
+Not known: whether GitHub's billing block was lifted or simply stopped applying once the repository became public. Jobs
+started again with the first push of this phase, and the reason is not visible from here. The maintainer enabled private
+vulnerability reporting and Dependabot alerts before the phase began (P-15).
+
+## 8. State at the end of this stage of the phase
+
+| | |
+|---|---|
+| Release candidates | `1.0.0-rc.1` (`138e63e`) and `1.0.0-rc.2` (`c3af7e3`), both GitHub pre-releases with `docker-compose.yaml`, `env.production.example` and `install.sh` attached, notes from `CHANGELOG.md` |
+| Images | `ghcr.io/lchristmann/nusszopf-php-fpm` and `…/nusszopf-web`, tags `1.0.0-rc.1` and `1.0.0-rc.2`, `linux/amd64` and `linux/arm64`, pullable without login; `latest` does not exist |
+| Verification tags | `verify/1.0.0-rc.2` and two with a `+QS_STEPS=…` suffix, which only trigger `release-verify.yml`; they publish nothing |
+| Gate | CI on `main` is green; the release gate passed for both candidates |
+| Can P-16 be closed? | **No.** Items 11, 12, 13 and 14 are open and need a person; item 4b waits for `1.0.0`; P16-11 stays a tracked limitation. No blocker is open |

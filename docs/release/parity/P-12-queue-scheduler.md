@@ -108,6 +108,9 @@ with no warning, and b dropped every document first and only then failed.
 ### 7. The scheduler
 - **a. Restarted and killed at the turn of the minute**, four times (`docker compose restart` and `kill -9` + start,
   each started at :58/:59). The logs show 9 minutes, and 9 runs of each heartbeat: **none twice, none missing**.
+  **Correction (P-16, P16-09):** "none missing" holds only when the restart ends before :00. With the host slowed, a restart
+  takes 7–15 s and the run of the minute it spans is not made up; nothing is ever doubled. Step 7a now asserts that.
+  Step 7b/7c also depended on the time of day (P16-10): they passed only when the drill ran after 03:30 UTC.
 - **b. The purge at 03:30 UTC through the scheduler itself.** A script sets the clock and runs `schedule:run` in the
   production image, as the container does every minute. At 03:29 the scheduler starts the two heartbeats. At 03:30 it
   also starts `newsletter:purge-unconfirmed`, which deleted the two 15-day-old unconfirmed subscriptions. The same
