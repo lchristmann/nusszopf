@@ -231,8 +231,8 @@ curl -fsSLO https://github.com/lchristmann/nusszopf/releases/latest/download/ins
 sh install.sh https://nusszopf.example.org          # or: sh install.sh https://nusszopf.example.org 1.0.0
 ```
 
-**Release candidates.** GitHub's `releases/latest` never points at a pre-release, so until a stable release exists that
-URL is a 404. To install a candidate, name it in both places (`1.0.0-rc.2` is an example; the releases page lists them):
+**Release candidates.** GitHub's `releases/latest` never points at a pre-release, so it always means the newest stable
+release (`1.0.0` or later). To install a candidate instead, name it in both places (`1.0.0-rc.2` is an example; the releases page lists them):
 
 ```sh
 curl -fsSLO https://github.com/lchristmann/nusszopf/releases/download/1.0.0-rc.2/install.sh

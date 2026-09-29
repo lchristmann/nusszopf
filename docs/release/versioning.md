@@ -33,4 +33,6 @@ What is defined now, from P-9 and P-10 (`upgrades.md`, "Compatibility rules for 
 
 ## Status
 
+**Update 2026-09-29:** the maintainer tagged `1.0.0` as the first stable release (see `CHANGELOG.md`), ahead of the P-17 sign-off this page had planned as the gate; the P-17 checks remain open and are tracked as before.
+
 Decided: scheme, tag format, the `1.0.0-rc.N` line until P-17 sign-off (amended from `0.x` at P-16), and version exposure (`docs/rewrite/architecture-decisions.md`). The compatibility policy above is the working rule; it has been exercised on populated data (P-9); the first two real tags, `1.0.0-rc.1` and `1.0.0-rc.2`, are the N-1 and N of the first true upgrade test (P-16).

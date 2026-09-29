@@ -43,8 +43,8 @@ docker compose up -d
 ```
 <!-- quickstart:end -->
 
-Until `1.0.0` is tagged, only release candidates exist, and GitHub's `releases/latest` does not point at a pre-release.
-Install a candidate by naming it: `curl -fsSLO https://github.com/lchristmann/nusszopf/releases/download/1.0.0-rc.2/install.sh`,
+`releases/latest` points at the newest stable release (`1.0.0` or later). GitHub's `latest` never points at a pre-release, so to install a
+release candidate, name it: `curl -fsSLO https://github.com/lchristmann/nusszopf/releases/download/1.0.0-rc.2/install.sh`,
 then `sh install.sh https://nusszopf.example.org 1.0.0-rc.2` (`docs/deployment/README.md`).
 
 See `docs/deployment/README.md` for the details (reverse proxy, mail, configuration) and `docs/deployment/operations.md` for running it (health, backups, upgrades, recovery, troubleshooting).

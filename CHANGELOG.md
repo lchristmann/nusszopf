@@ -6,6 +6,13 @@ inline (`**Breaking:**`, `**Migration required:**`); see `docs/release/changelog
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-09-29
+
+The first stable release. It is `1.0.0-rc.2` plus the changes below; there is no migration, no new required setting and
+nothing to do for an ordinary installation beyond the usual upgrade (`docs/deployment/operations.md`, "Upgrades"). The
+maintainer tagged it as stable ahead of the P-17 sign-off that `docs/release/versioning.md` had planned; the checks
+that sign-off was to cover stay open and are listed under "Known limitations" of `1.0.0-rc.1` below.
+
 ### Added
 
 - **Public demo mode** (`NUSSZOPF_DEMO=true`, off by default): a shared, password-less demo account with fictional sample
@@ -17,7 +24,7 @@ inline (`**Breaking:**`, `**Migration required:**`); see `docs/release/changelog
 ### Changed
 
 - **Home describes the current Nusszopf.** The 2021 rework announcement, the sponsor row and the "Werde
-  Fördermitglied!"/"Werde Partner:in!" options are gone; the how-to is "How To Nusszopf" with "Projekte entdecken"; a
+  Fördermitglied!"/"Werde Partner:in!" options are gone; the how-to is "How To Nusszopf" with four numbered steps and "Projekte entdecken"; Profile's "Fördermitgliedschaft" (Steady) block is removed; a
   new section explains who the software is for; the Zukunftspreis 2021 is reported as received; the newsletter section
   is neutral (the Nusszopf project runs no newsletter — the feature is for each installation's operator). The project
   site (`site/`) says the same, in German throughout. Recorded in `docs/rewrite/intentional-changes.md`.
