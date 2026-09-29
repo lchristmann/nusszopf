@@ -250,7 +250,10 @@ jobs:
           E2E_MAILPIT_URL: http://localhost:8025
       # The demo spec needs demo mode, which the specs above must not see (their Home has the newsletter form): flip the
       # switch, recreate the app containers so they pick it up, build the sample data and run only that spec.
+      # Not on the tablet: that Playwright project only matches the touch specs (playwright.config.ts, DEVICE_ONLY), so the
+      # demo spec finds no test there and the run would exit 1 ("No tests found").
       - name: Browser tests of the public demo and its tour
+        if: matrix.project != 'tablet-safari'
         shell: bash
         run: |
           echo "NUSSZOPF_DEMO=true" >> .env
