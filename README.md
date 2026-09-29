@@ -37,8 +37,8 @@ Self-hosting (Docker and a domain name; nothing else to install):
 mkdir /opt/nusszopf && cd /opt/nusszopf
 curl -fsSLO https://github.com/lchristmann/nusszopf/releases/latest/download/install.sh
 sh install.sh https://nusszopf.example.org
-# edit .env: MAIL_FROM_ADDRESS (required) and how mail is sent: Resend (MAIL_MAILER=resend, RESEND_API_KEY),
-# recommended, or your own SMTP relay (MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD)
+# .env bearbeiten: MAIL_FROM_ADDRESS (erforderlich) und den Mailversand: Resend (MAIL_MAILER=resend, RESEND_API_KEY),
+# empfohlen, oder ein eigenes SMTP-Relay (MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD)
 docker compose up -d
 ```
 <!-- quickstart:end -->
