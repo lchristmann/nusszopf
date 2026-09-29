@@ -5,6 +5,7 @@ namespace App\Livewire\Projects;
 use App\Mail\ContactMail;
 use App\Models\Project;
 use App\Models\ProjectAnalytics;
+use App\Support\Demo;
 use App\Support\Operator;
 use App\Support\ProjectDate;
 use App\Support\RichText;
@@ -156,6 +157,13 @@ class ProjectDetail extends Component
      */
     public function submitContact(): void
     {
+        // The public demo sends no messages, so it collects no visitor addresses (docs/deployment/demo.md).
+        if (Demo::enabled()) {
+            $this->dispatch('toast', type: 'error', message: 'In der Demo werden keine Nachrichten verschickt.');
+
+            return;
+        }
+
         $this->validate([
             'contactEmail' => ['required', 'email', 'max:100'],
             'contactMsg' => ['required', 'string', 'max:2000'],

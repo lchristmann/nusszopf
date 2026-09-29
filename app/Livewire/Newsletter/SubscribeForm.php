@@ -4,6 +4,7 @@ namespace App\Livewire\Newsletter;
 
 use App\Livewire\Newsletter\Concerns\ThrottlesNewsletter;
 use App\Models\Lead;
+use App\Support\Demo;
 use App\Support\Newsletter;
 use App\Support\Operator;
 use Illuminate\Contracts\View\View;
@@ -34,6 +35,13 @@ class SubscribeForm extends Component
 
     public function subscribe(): void
     {
+        // Defence in depth: Home shows no form on the public demo, and the demo must not collect addresses anyway.
+        if (Demo::enabled()) {
+            $this->dispatch('toast', type: 'error', message: 'In der Demo ist die Newsletter-Anmeldung deaktiviert.');
+
+            return;
+        }
+
         $this->validate([
             'name' => ['required', 'string', 'max:50'],
             'email' => ['required', 'email', 'max:255'],

@@ -850,6 +850,22 @@ Every deliberate difference from historical Nusszopf, per `CLAUDE.md`'s bug-fix 
 
 ---
 
+### Home describes the current Nusszopf (demo, audiences, newsletter wording)
+
+- Status: **Approved by the maintainer on 2026-09-29** (explicit instruction) and implemented the same day. Not a bug fix: decision A-5 chose verbatim Home copy and recorded that it would be dated ("revisit before release candidate if it reads as stale or inaccurate"); this is that revisit.
+- Date: 2026-09-29
+- Historical behavior: Home announced a 2021 rework ("Wir sind am Kneten…", "den veralteten ersten Prototyp"), titled the how-to "How To Nusszopf (Alte Version)" with the CTA "Alte Version entdecken", described the Zukunftspreis as a pending submission ("wir sind fest am Daumen drücken"), showed four sponsor logos ("Wir werden unterstützt von"), offered "Werde Fördermitglied!" (Steady) and "Werde Partner:in!", and presented the newsletter as one the Nusszopf sends ("Nussiger Newsletter … Wir versorgen euch …").
+- Why it changes: every one of those statements is untrue of the project today. The software is the current Nusszopf, not a prototype awaiting a rework; the award was received (verified 2026-09-29: the City of Augsburg's release "Augsburger Zukunftspreise 2021 verliehen", published 17.05.2022, lists "Nusszopf – Netzwerk für gemeinsame Ideen und Projekte" as a prize of the Schülerinnen- und Schülerjury and dates the ceremony 16 May 2022; the hallo-augsburg.de report of the same event gives "Montag, den 16. Mai" without a year and agrees); the project has no funding programme, no sponsors it uses (the rewrite uses none of Vercel, Auth0, Sanity) and no partner programme; and the project runs no newsletter and plans none.
+- New behavior: the "Kneten" card is gone; the how-to is "How To Nusszopf" with the CTA "Projekte entdecken" (→ `/search`); a new "Wofür ist der Nusszopf gut?" section names four audiences using only what the application does; the Contest section reports the award with a link to the report; the sponsor row and both funding/partner options are removed and the "Zopfstarke Mitstreiter:innen" section keeps its design and "Gib uns Feedback!" and adds "Betreibe Deinen eigenen Nusszopf!" and "Mach mit!" (installation guide, `CONTRIBUTING.md`; `NUSSZOPF_SOURCE_URL`); the newsletter section is "Newsletter für Deine Community" with neutral copy, and on a demo instance shows the explanation that the project runs no newsletter instead of the form. In demo mode a card in the hero slot the "Kneten" card occupied offers "Demo ausprobieren" and "Geführte Tour starten" (`docs/deployment/demo.md`). The application's newsletter feature (sign-up, double opt-in, export, Profile and registration checkbox) is unchanged.
+- Also: how-to step 3 ("Gesuche") shows the number 3 like the other steps instead of the historical `Request` icon (maintainer, 2026-09-29). The audience card for Vereine & Organisationen names members, places and periods; it does not advertise legal texts.
+- Visible change: Home copy and the sections above; colours, layout and components are the historical ones.
+- Also removed (maintainer, 2026-09-29): Profile's "Fördermitgliedschaft" / "Steady öffnen" block — the same stale funding story. The Instagram footer link and the newsletter e-mail subjects ("Nussiger Newsletter – …") keep the historical wording.
+- Affected screens: Home; Profile (the Steady block is removed for everyone; the demo account also loses account deletion and avatar editing); the login/register screen and the project contact form (demo mode only, below). Domain and migrations: none.
+- Tests: `tests/Feature/Home/HomePageTest.php`, `tests/Feature/Demo/DemoTest.php`, `tests/E2E/specs/demo/demo-tour.spec.ts`.
+- Approval: Approved (maintainer, 2026-09-29).
+
+---
+
 ## Explicitly deferred (not proposed here, need a product decision first — see `docs/rewrite/open-questions.md` / `docs/rewrite/architecture-decisions.md`)
 
 The following were identified during archaeology as *possible* candidates for change but are deliberately **not** proposed above, because reasonable product intent could explain the historical behavior as-is:

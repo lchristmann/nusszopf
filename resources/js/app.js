@@ -1,5 +1,6 @@
 import './rich-text-editor';
 import './avatar-cropper';
+import './tour';
 
 /**
  * Toast notifications — the app-wide async-feedback mechanism

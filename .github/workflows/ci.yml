@@ -248,6 +248,20 @@ jobs:
           E2E_REINDEX_COMMAND: docker compose -f compose.dev.yaml exec -T php-fpm php artisan search:reindex
           # The contact-mail journey checks the message actually arrived, via Mailpit's own JSON API.
           E2E_MAILPIT_URL: http://localhost:8025
+      # The demo spec needs demo mode, which the specs above must not see (their Home has the newsletter form): flip the
+      # switch, recreate the app containers so they pick it up, build the sample data and run only that spec.
+      - name: Browser tests of the public demo and its tour
+        shell: bash
+        run: |
+          echo "NUSSZOPF_DEMO=true" >> .env
+          docker compose -f compose.dev.yaml up -d php-fpm queue-worker scheduler
+          docker compose -f compose.dev.yaml restart web
+          timeout 120 sh -c 'until docker compose -f compose.dev.yaml ps php-fpm | grep -q healthy; do sleep 2; done'
+          docker compose -f compose.dev.yaml exec -T php-fpm php artisan demo:reset
+          npx playwright test specs/demo --project=${{ matrix.project }} --reporter=list,html 2>&1 | tee e2e-demo.log
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:8080
+          E2E_DEMO: 1
       - name: Annotate a failure (the job log needs a GitHub login, annotations do not)
         if: failure()
         run: sh scripts/ci-annotate.sh "Browser tests (${{ matrix.project }})" e2e.log

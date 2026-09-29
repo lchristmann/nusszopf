@@ -97,4 +97,33 @@ return [
 
     'register_limit' => (int) (env('NUSSZOPF_REGISTER_LIMIT') ?: 10),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Public demo mode
+    |--------------------------------------------------------------------------
+    |
+    | Off by default; only a public demonstration instance (such as nusszopf.org)
+    | turns it on. It offers one shared demo account with fictional sample data
+    | that anyone can enter with one button (no password exists), guarded against
+    | destructive changes, and reset by `demo:reset` every hour
+    | (docs/deployment/demo.md). It also swaps Home's newsletter form for an
+    | explanation, so the demo never collects real addresses from Home.
+    |
+    */
+
+    'demo' => (bool) env('NUSSZOPF_DEMO', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Source repository
+    |--------------------------------------------------------------------------
+    |
+    | Where Home points people who want to contribute, report an issue or
+    | self-host: the upstream project. An operator who maintains a fork may
+    | point it elsewhere.
+    |
+    */
+
+    'source_url' => env('NUSSZOPF_SOURCE_URL', 'https://github.com/lchristmann/nusszopf'),
+
 ];

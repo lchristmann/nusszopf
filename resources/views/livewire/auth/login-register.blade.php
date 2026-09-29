@@ -81,6 +81,15 @@
                 </div>
             </div>
         @endif
+    @elseif ($this->demo())
+        {{-- Public demo: no registration, so no real address is ever collected (docs/deployment/demo.md). --}}
+        <div class="w-full mt-5 text-center text-steel-700" data-test="demo-register-note">
+            <x-text variant="textSm">In der Demo ist die Registrierung abgeschaltet – so werden keine echten E-Mail-Adressen gesammelt. Probiere den Nusszopf stattdessen mit dem Demo-Account aus.</x-text>
+            <form method="POST" action="{{ route('demo.login') }}" class="mt-6">
+                @csrf
+                <x-button type="submit" data-test="btn_demo-login_register" class="bg-steel-100">Demo ausprobieren</x-button>
+            </form>
+        </div>
     @else
         <form wire:submit="register" class="w-full mt-5 text-steel-700">
             <div>

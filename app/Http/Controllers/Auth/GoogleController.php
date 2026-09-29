@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Mail\WelcomeMail;
 use App\Models\User;
+use App\Support\Demo;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
@@ -97,7 +98,9 @@ class GoogleController extends Controller
 
     public static function configured(): bool
     {
-        return filled(config('services.google.client_id')) && filled(config('services.google.client_secret'));
+        // Google sign-in creates accounts from real addresses, which a public demo must not (docs/deployment/demo.md).
+        return ! Demo::enabled()
+            && filled(config('services.google.client_id')) && filled(config('services.google.client_secret'));
     }
 
     /**

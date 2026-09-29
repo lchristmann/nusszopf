@@ -6,8 +6,21 @@ inline (`**Breaking:**`, `**Migration required:**`); see `docs/release/changelog
 
 ## [Unreleased]
 
+### Added
+
+- **Public demo mode** (`NUSSZOPF_DEMO=true`, off by default): a shared, password-less demo account with fictional sample
+  projects, one-button entry from Home, a guided tour through the real pages, and an hourly `demo:reset`. Nothing
+  changes on an ordinary installation. See `docs/deployment/demo.md`.
+- `NUSSZOPF_SOURCE_URL` (defaults to the upstream repository) for the links Home gives to the contribution and
+  installation guides.
+
 ### Changed
 
+- **Home describes the current Nusszopf.** The 2021 rework announcement, the sponsor row and the "Werde
+  Fördermitglied!"/"Werde Partner:in!" options are gone; the how-to is "How To Nusszopf" with "Projekte entdecken"; a
+  new section explains who the software is for; the Zukunftspreis 2021 is reported as received; the newsletter section
+  is neutral (the Nusszopf project runs no newsletter — the feature is for each installation's operator). The project
+  site (`site/`) says the same, in German throughout. Recorded in `docs/rewrite/intentional-changes.md`.
 - Dependency updates reviewed from Dependabot (`laravel/framework` 13.32.0→13.33.0, `livewire/livewire` 4.4.5→4.4.6,
   `larastan/larastan` 3.12.1→3.12.2, `laravel/scout` 10.25.0→11.8.0, `@laravel/multiplex` 0.4.3→0.4.4, and the
   `github-actions` group's nine version bumps). None carries a known vulnerability at the previous versions; Scout's

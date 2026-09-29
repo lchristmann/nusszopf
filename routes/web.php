@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\ResendVerificationController;
 use App\Http\Controllers\Auth\UnblockLoginController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\Demo\DemoLoginController;
 use App\Http\Controllers\LegalPageController;
 use App\Http\Controllers\Newsletter\ConfirmationController;
 use App\Http\Controllers\Seo\RobotsController;
@@ -77,6 +78,9 @@ Route::get('/contact/nusszopf-vcard.vcf', fn () => response(Operator::vcard(), 2
     'Content-Type' => 'text/vcard; charset=utf-8',
     'Content-Disposition' => 'attachment; filename="nusszopf-vcard.vcf"',
 ]))->name('contact.vcard');
+
+// The public demo's one-button entry (docs/deployment/demo.md); 404 unless NUSSZOPF_DEMO is on.
+Route::post('/demo/login', DemoLoginController::class)->middleware('throttle:60,1')->name('demo.login');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', LoginRegister::class)->name('login');

@@ -33,13 +33,15 @@ Every page renders through the shared `<Page>` component (`src/components/Page/P
 
 Confirmed from `pages/index.js` + `src/assets/data/*.data.js`. No `NavHeader` (`navHeader={{ visible: false }}`) — the landing page has its own header. Sections, top to bottom:
 
-1. **Header** — two-column hero (`bg-steel-50`): Nusszopf logo (`assets/logos/nusszopf-logo-*.svg`) on one side, title/subtitle (`headerData.title/subtitle`) on the other. Below it, a highlighted info card (`bg-livid-300`) with an ordered list explaining how the product works (`headerData.info[2]`, rendered as `<ol>` — Confirmed this is a numbered "how it works" explainer, content itself is CMS data not yet transcribed).
-2. **HowToSection** (`containers/home/HowToSection`, `bg-yellow-250`) — "How To Nusszopf (Alte Version)": four static `StepCard`s (Idee! / Projekt / Gesuche / Umsetzung; step 3 shows the `Request` icon instead of a number) and one CTA "Alte Version entdecken" → `/search`. **Confirmed** (slice 10).
+1. **Header** — two-column hero (`bg-steel-50`): Nusszopf logo (`assets/logos/nusszopf-logo-*.svg`) on one side, title/subtitle (`headerData.title/subtitle`) on the other. Below it, a highlighted info card (`bg-livid-300`). Historically that card was the 2021 "Wir sind am Kneten" rework announcement with an `<ol>` (`headerData.info[2]`); since 2026-09-29 it is the demo card ("Probier den Nusszopf aus!", demo mode only) — `docs/rewrite/intentional-changes.md`, "Home describes the current Nusszopf".
+2. **HowToSection** (`containers/home/HowToSection`, `bg-yellow-250`) — "How To Nusszopf" (historically "(Alte Version)"): four static `StepCard`s (Idee! / Projekt / Gesuche / Umsetzung; step 3 historically showed the `Request` icon instead of a number; all four are numbered since 2026-09-29) and one CTA "Projekte entdecken" (historically "Alte Version entdecken") → `/search`. New since 2026-09-29: a "Wofür ist der Nusszopf gut?" section (`bg-white`, four audience cards) follows it. **Confirmed** (slice 10).
 3. **CarouselSection** — present in code but **commented out** in `pages/index.js` (`{/* <CarouselSection /> */}`). **Confirmed dead/disabled section** — historical page does not render it even though the component and its container still exist. Candidate for `docs/rewrite/open-questions.md` (not populated by this pass — flag for the synthesis step).
 4. **About** section (`bg-turquoise-300`) — 3-column feature list (`homeData.about.list`).
 5. **Contest** section (`bg-red-300`) — heading/description/link plus a sponsor/partner logo (`contestData.host`).
 6. **Fellows** section (`bg-pink-200`) — sponsor/fellow logos row plus a 3-column options list, each with its own CTA button.
 7. **NewsletterSection** (`containers/home/NewsletterSection`) — newsletter subscribe form, styled section.
+
+Contest reports the received Zukunftspreis 2021; Fellows no longer shows sponsor logos or the Fördermitglied/Partner:in options; the newsletter section is instance-neutral (all in the same intentional-changes entry).
 
 Footer variant: `classy` (legal links + Instagram + Vercel badge — see `docs/design/navigation.md`). Implemented in slice 10 (`docs/rewrite/tenth-slice.md`), copy verbatim; the Vercel badge is not reproduced (decision 5).
 
@@ -113,7 +115,7 @@ Confirmed from `pages/user/profile.js`. Auth required. A `FramedGridCard` with:
 
 - **Header**: title + `<Avatar variant="settings">` with an edit affordance that opens `<AvatarDialog>`.
 - **Newsletter** subsection: if the user's `lead` record has not confirmed (`!user.data.lead?.hasConfirmed`), shows a subscribe form (privacy-consent checkbox, required) with a Formik-validated checkbox; if already confirmed, shows an unsubscribe button (native `confirm()` prompt).
-- **Sponsoring** subsection: static text + button linking out (`cms.sponsoring.action.href`) — likely a donation/support link (**Inferred**, exact target Unknown without reading `assets/data/profile.data.js`).
+- ~~**Sponsoring** subsection~~ (removed 2026-09-29, `intentional-changes.md`, "Home describes the current Nusszopf"): static text + button linking out (`cms.sponsoring.action.href`) — likely a donation/support link (**Inferred**, exact target Unknown without reading `assets/data/profile.data.js`).
 - **Delete account** subsection (in a second column): destructive action, native `confirm()` prompt, then GraphQL `deleteUser` mutation, then `logout()`, then a success toast. E2E selector `btn_delete-account_settings-page` confirms this exact flow (`_settings.spec.js`).
 - Two `<InfoCard>` blocks: a link to a contact document/file, and a `mailto:` support link.
 

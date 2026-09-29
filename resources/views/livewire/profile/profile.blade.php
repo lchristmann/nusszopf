@@ -53,28 +53,16 @@
                             </form>
                         @endif
                     </div>
-
-                    {{--
-                        Sponsoring: the historical Steady funding page
-                        stays the literal historical brand URL, like the
-                        Instagram link and Home's own "Werde
-                        Fördermitglied!" button (decision A-5).
-                    --}}
-                    <div id="sponsoring" class="mt-12 text-center sm:text-left">
-                        <x-text as="h2" variant="textMd" class="mb-2 text-left">Fördermitgliedschaft</x-text>
-                        <x-text variant="textSm" class="text-left">Passe deine Mitgliedschaft auf unserer Steady-Förderungswebseite an.</x-text>
-                        <x-button
-                            as="a"
-                            href="https://steadyhq.com/de/nusszopf"
-                            target="_blank"
-                            rel="noopener"
-                            title="Zur Steady-Förderungswebseite"
-                            class="block mt-6 sm:mt-4 bg-steel-100"
-                        >Steady öffnen</x-button>
-                    </div>
                 </x-framed-grid-card.body-col>
 
                 <x-framed-grid-card.body-col variant="twoCols">
+                    @if (\App\Support\Demo::isDemoUser(auth()->user()))
+                        {{-- The shared demo account cannot be deleted or edited (docs/deployment/demo.md). --}}
+                        <div id="delete" class="mt-10 lg:ml-16 lg:mt-0" data-test="demo-account-note">
+                            <x-text as="h2" variant="textMd" class="mb-2">Demo-Account</x-text>
+                            <x-text variant="textSm">Das ist ein gemeinsamer Demo-Account mit erfundenen Beispieldaten. Er kann weder gelöscht noch geändert werden, und alle Änderungen werden stündlich zurückgesetzt.</x-text>
+                        </div>
+                    @else
                     <div id="delete" class="mt-10 text-warning-700 lg:ml-16 lg:mt-0">
                         <x-text as="h2" variant="textMd" class="mb-2">Account löschen</x-text>
                         <x-text variant="textSm">Nach dem Löschen können deine Daten nicht wieder hergestellt werden.</x-text>
@@ -88,6 +76,8 @@
                             x-on:click="if (confirm('Willst du deinen Account wirklich löschen?')) { nzToast('loading', 'Dein Account wird gelöscht.'); $wire.deleteAccount(); }"
                         >Löschen</x-button>
                     </div>
+
+                    @endif
 
                     {{-- `profile.data.js` `info.contact`/`info.support`: two `InfoCard`s with `livid` links. --}}
                     <x-info-card class="text-gray-700 bg-gray-200 mt-14 lg:ml-16">

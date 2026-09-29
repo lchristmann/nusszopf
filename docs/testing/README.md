@@ -18,6 +18,7 @@ A small number of important user journeys through the real UI, per role/actor, t
 
 - **Page Object Model** under `tests/E2E/pages/`, specs under `tests/E2E/specs/<actor>/`.
 - **One fixture/env-constants file** (`tests/E2E/support/env.ts`) declaring the constants specs import (password, unique-name helpers), so drift is caught in one place instead of scattered magic strings.
+- **The demo spec** (`tests/E2E/specs/demo/`) needs a stack started with `NUSSZOPF_DEMO=true` and `E2E_DEMO=1`; it is skipped otherwise. CI runs it in its own step after the main run, once per Playwright project (`docs/deployment/demo.md`).
 - **`data-testid` attributes** on interactive elements Playwright needs to target reliably, matched onto the historical UI structure (`docs/design/components.md`) rather than invented ad hoc.
 - **No shared seeded accounts and no `global-setup`.** Every spec registers its own account through the real registration screen (`tests/E2E/support/session.ts`, `registerFreshUser`) with names made unique per run, so specs never collide and registration itself is exercised. This deliberately differs from LCxHolz's seeded-role `storageState` pattern: Nusszopf has no roles to seed, and the development index and database outlive every test.
 - Run against every browser engine Playwright supports in CI as separate parallel jobs (mirroring LCxHolz's per-engine matrix), not one job looping serially over engines.

@@ -17,7 +17,7 @@
 --}}
 @php
     $avatarUrl = $user->avatarUrl();
-    $editable = $variant === 'settings' && ! $user->isSocialAccount();
+    $editable = $variant === 'settings' && ! $user->isSocialAccount() && ! \App\Support\Demo::isDemoUser($user);
 @endphp
 <div {{ $attributes->class(['flex items-center']) }}>
     {{-- The 56px image sits inside the 2px border, so the circle is 60px across. --}}

@@ -14,16 +14,18 @@
       Nusszopf source: the hero tagline and the "What is Nusszopf?" section's prose. This is
       software-project marketing copy, not reproduced historical product content, and has not been
       through the historical-fidelity review the application's own Home page (resources/views/home.blade.php)
-      has — a maintainer should read it before the site goes live.
+      has — a maintainer should read it before the site goes live. The audiences, the newsletter
+      distinction (the project runs none; the software provides the feature) and the Zukunftspreis sentence
+      (verified against the City of Augsburg's own release of 17.05.2022, which names the ceremony date 16 May 2022) are stated in the same way as on the app's Home.
 -->
 <html lang="de">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Nusszopf — selbst gehostet, Open Source</title>
+        <title>Nusszopf — selbst gehostet, quelloffen</title>
         <meta
             name="description"
-            content="Nusszopf ist eine Community-Plattform für Ideen und Projekte, quelloffen und selbst hostbar. Quellcode, Docker-Schnellstart und Releases findest Du hier."
+            content="Nusszopf ist eine Community-Plattform für Ideen und Projekte, quelloffen und selbst hostbar. Probiere die Demo aus oder finde Quellcode, Docker-Schnellstart und Versionen hier."
         />
 
         <!--
@@ -40,7 +42,7 @@
         <meta name="theme-color" content="#ffffff" />
 
         <meta property="og:type" content="website" />
-        <meta property="og:title" content="Nusszopf — selbst gehostet, Open Source" />
+        <meta property="og:title" content="Nusszopf — selbst gehostet, quelloffen" />
         <meta
             property="og:description"
             content="Die quelloffene, selbst hostbare Community-Plattform für Ideen und Projekte."
@@ -91,7 +93,7 @@
                     <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
                         <a
                             href="https://nusszopf.org"
-                            class="nz-btn-lilac inline-block bg-lilac-200 cursor-pointer py-3 px-6 font-medium text-lg outline-none focus:outline-none"
+                            class="nz-btn-rainbow inline-block cursor-pointer py-3 px-6 font-medium text-lg outline-none focus:outline-none"
                             >Demo ausprobieren</a
                         >
                         <a
@@ -100,6 +102,10 @@
                             >Loslegen</a
                         >
                     </div>
+                    <p class="nz-text-sm mx-auto mt-4 max-w-md">
+                        Die Demo ist der echte Nusszopf mit erfundenen Beispielprojekten – ohne Anmeldung, mit
+                        geführter Tour.
+                    </p>
                     <p class="nz-text-xs mt-6 text-steel-500">GPL-3.0-or-later · Docker Compose · Selbst gehostet</p>
                 </div>
             </section>
@@ -111,8 +117,28 @@
                     <div class="space-y-4">
                         <p class="nz-text-md">
                             Nusszopf ist eine Community-Plattform für Menschen, die ihre Ideen gemeinsam in Projekte
-                            verwandeln und andere finden möchten, um sie umzusetzen. Nusszopf ist freie Software und
-                            lässt sich von jeder und jedem selbst hosten.
+                            verwandeln und andere finden möchten, um sie umzusetzen. Wer ein Projekt einstellt,
+                            benennt, was noch fehlt – Mitstreiter:innen, Räume, Materialien, Finanzielles oder
+                            Sonstiges –, und andere finden es über die Suche.
+                        </p>
+                        <p class="nz-text-md">
+                            Nusszopf ist freie Software und lässt sich von jeder und jedem selbst hosten. Das
+                            eignet sich für Communities und Initiativen, Schulen und Hochschulen, Unternehmen und
+                            Teams sowie Vereine und Organisationen, die ein eigenes schwarzes Brett für Ideen und
+                            Projekte betreiben möchten.
+                        </p>
+                        <p class="nz-text-md">
+                            Das Nusszopf-Projekt selbst betreibt keinen Newsletter. Die Newsletter-Funktion ist
+                            Teil der Software und wird von den Betreiber:innen einer Installation genutzt.
+                        </p>
+                        <p class="nz-text-md">
+                            Der Nusszopf wurde von der SchülerInnenjury mit einem Zukunftspreis der Stadt
+                            Augsburg (2021) ausgezeichnet
+                            (<a
+                                href="https://www.augsburg.de/aktuelles-aus-der-stadt/detail/augsburger-zukunftspreise-2021-verliehen"
+                                class="border-b-2 cursor-pointer nz-link-current"
+                                >Mitteilung der Stadt</a
+                            >).
                         </p>
                     </div>
                 </div>
@@ -172,16 +198,16 @@
             <!-- 5. Releases -->
             <section class="bg-pink-200 px-6 py-12 sm:px-16 sm:py-16 lg:px-24 xl:px-32 xl:py-18" data-section="releases">
                 <div class="lg:container sm:mx-auto sm:max-w-2xl">
-                    <h2 class="nz-title-md mb-8 xl:mb-10">Releases</h2>
+                    <h2 class="nz-title-md mb-8 xl:mb-10">Versionen</h2>
                     <p class="nz-text-md mb-5">
-                        Nusszopf wird als versionierte Docker-Images auf GitHub veröffentlicht. Jedes Release
+                        Nusszopf wird als versionierte Docker-Images auf GitHub veröffentlicht. Jede Version
                         beschreibt, was sich geändert hat und wie Du upgradest.
                     </p>
                     <p class="mb-5">
                         <a href="https://github.com/lchristmann/nusszopf/releases">
                             <img
-                                src="https://img.shields.io/github/v/release/lchristmann/nusszopf?include_prereleases&label=neuestes%20Release"
-                                alt="Neuestes Release"
+                                src="https://img.shields.io/github/v/release/lchristmann/nusszopf?include_prereleases&label=neueste%20Version"
+                                alt="Neueste Version"
                                 loading="lazy"
                                 width="140"
                                 height="20"
@@ -192,7 +218,7 @@
                         <a
                             href="https://github.com/lchristmann/nusszopf/releases"
                             class="nz-btn-lilac inline-block bg-pink-300 cursor-pointer py-2 px-4 font-medium text-lg outline-none focus:outline-none"
-                            >Alle Releases</a
+                            >Alle Versionen</a
                         >
                         <a
                             href="https://github.com/lchristmann/nusszopf/blob/main/CHANGELOG.md"
@@ -206,11 +232,11 @@
             <!-- 6. FOSS / license / ownership -->
             <section class="bg-blue-300 px-6 py-12 sm:px-16 sm:py-16 lg:px-24 xl:px-32 xl:py-18" data-section="license">
                 <div class="lg:container sm:mx-auto sm:max-w-2xl">
-                    <h2 class="nz-title-md mb-8 xl:mb-10">Frei und Open Source</h2>
+                    <h2 class="nz-title-md mb-8 xl:mb-10">Freie Software</h2>
                     <div class="space-y-4">
                         <p class="nz-text-md">
                             Nusszopf ist freie Software und steht unter der
-                            <strong>GNU General Public License v3.0 oder später</strong>. Quellcode, Issue-Tracker
+                            <strong>GNU General Public License v3.0 oder später</strong>. Quellcode, Fehlerverfolgung
                             und Diskussionen sind öffentlich auf GitHub einsehbar, und Beiträge sind willkommen.
                         </p>
                         <p class="nz-text-md">
@@ -262,12 +288,12 @@
                     <a
                         href="https://github.com/lchristmann/nusszopf/issues"
                         class="border-b-2 cursor-pointer nz-link-current nz-text-sm"
-                        >Issues</a
+                        >Fehler melden</a
                     >
                     <a
                         href="https://github.com/lchristmann/nusszopf/releases"
                         class="border-b-2 cursor-pointer nz-link-current nz-text-sm"
-                        >Releases</a
+                        >Versionen</a
                     >
                     <a
                         href="https://github.com/lchristmann/nusszopf/blob/main/docs/README.md"

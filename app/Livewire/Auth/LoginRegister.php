@@ -8,6 +8,7 @@ use App\Mail\WelcomeMail;
 use App\Models\Lead;
 use App\Models\User;
 use App\Rules\PasswordPolicy;
+use App\Support\Demo;
 use App\Support\Newsletter;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
@@ -134,6 +135,13 @@ class LoginRegister extends Component
 
     public function register(): void
     {
+        // A public demo must not collect real addresses (docs/deployment/demo.md); the form is not shown either.
+        if (Demo::enabled()) {
+            $this->dispatch('toast', type: 'error', message: 'In der Demo ist die Registrierung abgeschaltet.');
+
+            return;
+        }
+
         // Replaces Auth0's invisible bot-detection captcha (docs/authentication/README.md §7,
         // docs/rewrite/intentional-changes.md): each IP may create `nusszopf.register_limit`
         // (10) accounts per 15 minutes — the historical budget of the other public forms.
@@ -214,6 +222,11 @@ class LoginRegister extends Component
         session()->regenerate();
 
         $this->redirectRoute('projects.mine', navigate: false);
+    }
+
+    public function demo(): bool
+    {
+        return Demo::enabled();
     }
 
     public function googleConfigured(): bool

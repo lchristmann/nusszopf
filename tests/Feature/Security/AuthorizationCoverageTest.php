@@ -146,6 +146,7 @@ it('exposes exactly the known HTTP entry points, each behind its documented gate
         'GET user/project/create' => 'auth',
         'GET user/project/{project}/edit' => 'auth',
         'GET user/projects' => 'auth',
+        'POST demo/login' => 'throttle',
         'POST email/verification-notification' => 'auth,throttle',
         'POST logout' => 'auth',
     ]);

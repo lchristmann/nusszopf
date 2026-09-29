@@ -7,6 +7,7 @@ use App\Models\Lead;
 use App\Models\User;
 use App\Support\AccountDeleter;
 use App\Support\AvatarUploader;
+use App\Support\Demo;
 use App\Support\Newsletter;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\UploadedFile;
@@ -20,7 +21,7 @@ use Throwable;
 /**
  * The historical `/user/profile` (`pages/user/profile.js`, docs/design/
  * screen-specs.md "Profile / account settings"): avatar upload/crop, the
- * sponsoring link, the two info cards, and account deletion
+ * two info cards, and account deletion
  * (docs/rewrite/master-roadmap.md, "Slice 8"), and the newsletter subsection
  * (slice 9).
  *
@@ -55,6 +56,13 @@ class Profile extends Component
         );
 
         $user = Auth::user();
+
+        // The shared demo account has no real mailbox (docs/deployment/demo.md).
+        if (Demo::isDemoUser($user)) {
+            $this->dispatch('toast', type: 'error', message: 'In der Demo ist die Newsletter-Anmeldung deaktiviert.');
+
+            return;
+        }
 
         if (! $this->attemptNewsletterAction()) {
             $this->dispatch('toast', type: 'error', message: 'Sorry, da lief etwas schief.');

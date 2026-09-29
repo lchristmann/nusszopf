@@ -113,6 +113,8 @@ Every setting in `.env.production.example`, in the order of the file. **Bold** o
 | `NUSSZOPF_CONTACT_EMAIL` | empty (uses `MAIL_FROM_ADDRESS`) | The address shown wherever the app says "write to us" |
 | `NUSSZOPF_LEGAL_PATH` | empty (uses `./legal`) | The folder of the three legal texts |
 | `NUSSZOPF_REGISTER_LIMIT` | empty (10) | New accounts one IP address may create per 15 minutes |
+| `NUSSZOPF_DEMO` | `false` | Public demo mode: a shared demo account with fictional data, a guided tour, hourly reset. Only for a demonstration instance — see [demo.md](demo.md) |
+| `NUSSZOPF_SOURCE_URL` | the upstream GitHub repository | Where Home links to the contribution and installation guides |
 | `NEWSLETTER_CONSENT_VERSION` | `1` | Version of your Datenschutz text, stored with each consent |
 | `HEALTH_TOKEN` | generated | Bearer token that makes `/health` show version and check details |
 
@@ -186,12 +188,12 @@ tell people to write to the no-reply address. The contact form's mails carry the
 
 ### Your identity (`NUSSZOPF_CONTACT_EMAIL`)
 
-The address shown wherever Nusszopf says "write to us": the error page, Home's "Partner:in werden"/"Feedback
-senden" buttons, the newsletter and Profile pages, every e-mail's footer, the "Projekt melden" link and the
+The address shown wherever Nusszopf says "write to us": the error page, Home's "Feedback
+senden" button, the newsletter and Profile pages, every e-mail's footer, the "Projekt melden" link and the
 downloadable contact card (`/contact/nusszopf-vcard.vcf`, built from this address, `MAIL_FROM_ADDRESS` and
 `APP_URL`). Empty means `MAIL_FROM_ADDRESS`. Historically this was `mail@nusszopf.org`; it is your mailbox now
-(decision A-5). Home's copy, logos and the Instagram/Steady links are the historical Nusszopf's, reproduced
-verbatim (decision A-5).
+(decision A-5). The Instagram link in the footer is the historical Nusszopf's brand URL (decision A-5); Home's copy describes the current
+project (`docs/rewrite/intentional-changes.md`, "Home describes the current Nusszopf").
 
 ### Legal pages (`./legal`, `NUSSZOPF_LEGAL_PATH`)
 

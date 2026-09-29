@@ -80,7 +80,7 @@ error pages at 375 and 1440 px.
 
 - **Pixel comparison against the running historical Home was not possible**: no historical deployment or build exists
   here, so parity was checked against the source's classes/copy and by screenshots of the rewrite, not side by side.
-- **Home content is dated by design** (A-5): "Wir sind am Kneten…" (a 2021 rework announcement), the 2022 Contest date,
+- **Superseded 2026-09-29** (`intentional-changes.md`, "Home describes the current Nusszopf"): the "Kneten" card, the sponsor row, the Fördermitglied/Partner:in options and the dated contest text are gone. Kept for the record — **Home content was dated by design** (A-5): "Wir sind am Kneten…" (a 2021 rework announcement), the 2022 Contest date,
   and sponsors the rewrite does not use. The roadmap asks for a re-read before the release candidate.
 - **Legal pages are only as good as the operator's files**: the app cannot check them. The historical footer links the
   legal pages only from Home (Preserve), so other pages have no Impressum link — a legal question for operators, not

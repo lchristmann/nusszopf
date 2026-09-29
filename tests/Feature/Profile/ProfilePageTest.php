@@ -22,11 +22,14 @@ it('shows the profile page to the owner only, always "me"', function () {
         ->assertSee($user->email);
 });
 
-it('shows the sponsoring link and both info cards', function () {
+it('shows both info cards and no funding or membership block', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user)->get(route('profile'))
-        ->assertSee('https://steadyhq.com/de/nusszopf', false)
+        ->assertDontSee('steadyhq.com')
+        ->assertDontSee('Fördermitgliedschaft')
+        ->assertDontSee('Steady')
+        ->assertDontSee('id="sponsoring"', false)
         ->assertSee('mail@nusszopf.org')
         ->assertSee('href="'.route('contact.vcard').'"', false)
         ->assertSee('Füge den Nusszopf zu deinen Kontakten hinzu, damit unsere E-Mails dich sicher erreichen:');

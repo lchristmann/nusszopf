@@ -24,7 +24,7 @@ The historical E2E suite runs at a fixed **1440×800** viewport (`cypress.json`:
 | Home 3-column feature sections (About / Fellows options) | Stack to full-width single column below `lg`; at `lg`+ become 3 columns with asymmetric padding per column (first column gets right-padding only, middle gets both sides, last gets left-padding only) to create even gutters. |
 | Dialog | Full-viewport height sheet, top-padded (`pt-10`), no rounding, no cap on width below `sm`; becomes a centered `max-w-xl` rounded card with vertical margin (`sm:my-12`) at `sm`+. Scale-in entrance animation (`scaleFade`) is **only applied at `sm`+** — on mobile the dialog only fades (`animate-opacityFade` on the overlay), it doesn't scale in. |
 | `SkeletonHits` | Three skeleton columns exist in the markup at all times, but the 2nd is `hidden` below `sm` and the 3rd is `hidden` below `lg` — matching the real masonry's column-count breakpoints so the loading state's shape matches the eventual content's shape at every breakpoint. |
-| Profile page | Two-column `FramedGridCard.Body.Col` layout (newsletter/sponsoring vs. delete-account/support) stacks to one column below `lg`; text alignment also flips (`text-center sm:text-left` in one subsection) between mobile and `sm`+. |
+| Profile page | Two-column `FramedGridCard.Body.Col` layout (newsletter vs. delete-account/support) stacks to one column below `lg`; text alignment also flips (`text-center sm:text-left` in one subsection) between mobile and `sm`+. |
 
 ## Not covered by this pass
 

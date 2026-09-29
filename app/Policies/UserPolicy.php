@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Models\User;
+use App\Support\Demo;
 
 /**
  * `docs/security/authorization-matrix.md`, "User (account / profile)": every
@@ -12,18 +13,19 @@ use App\Models\User;
 class UserPolicy
 {
     /**
-     * Upload/replace own avatar: self-only.
+     * Upload/replace own avatar: self-only. The shared demo account is the one exception: it belongs to every
+     * visitor at once, so nobody may change it (docs/deployment/demo.md).
      */
     public function update(User $user, User $target): bool
     {
-        return $user->is($target);
+        return $user->is($target) && ! Demo::isDemoUser($target);
     }
 
     /**
-     * Delete own account: self-only.
+     * Delete own account: self-only, and never the shared demo account.
      */
     public function delete(User $user, User $target): bool
     {
-        return $user->is($target);
+        return $user->is($target) && ! Demo::isDemoUser($target);
     }
 }

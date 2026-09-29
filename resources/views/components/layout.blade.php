@@ -59,7 +59,19 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
-<body class="flex flex-col min-h-screen antialiased bg-white text-steel-800 font-sans">
+@php
+    // The guided tour belongs to the shared demo account only (docs/deployment/demo.md).
+    $tour = \App\Support\Demo::enabled() && \App\Support\Demo::isDemoUser(auth()->user());
+    $tourProject = $tour ? \App\Support\Demo::featuredProject() : null;
+@endphp
+<body
+    class="flex flex-col min-h-screen antialiased bg-white text-steel-800 font-sans"
+    @if ($tourProject)
+        data-tour-enabled
+        data-tour-project="{{ route('projects.show', $tourProject, false) }}"
+        data-tour-install="{{ rtrim((string) config('nusszopf.source_url'), '/') }}/blob/main/docs/deployment/README.md"
+    @endif
+>
     {{--
         Route-change loading bar (docs/design/visual-language.md,
         "Animation & motion") — a fixed 2px rainbow gradient bar, shown only
@@ -83,6 +95,15 @@
     <x-footer :bg="$footerBg" :variant="$footerVariant" />
 
     <x-toast-container />
+
+    @if ($tourProject)
+        <button
+            type="button"
+            data-tour-start
+            data-test="btn_tour-start"
+            class="fixed z-40 bottom-4 left-4 nz-btn-lilac bg-lilac-200 cursor-pointer py-1 px-3 font-medium text-lg outline-none focus:outline-none"
+        >Geführte Tour</button>
+    @endif
 
     @livewireScripts
 </body>

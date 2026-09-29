@@ -39,6 +39,7 @@
         <env name="SEARCH_PAGE_SIZE" value="50" force="true"/>
         <env name="SCOUT_DRIVER" value="null" force="true"/>
         <env name="SCOUT_PREFIX" value="testing_" force="true"/>
+        <env name="NUSSZOPF_DEMO" value="false" force="true"/>
         <env name="PULSE_ENABLED" value="false" force="true"/>
         <env name="TELESCOPE_ENABLED" value="false" force="true"/>
         <env name="NIGHTWATCH_ENABLED" value="false" force="true"/>

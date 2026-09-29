@@ -27,3 +27,9 @@ Schedule::job(new QueueHeartbeat)->name('queue-heartbeat')->everyMinute();
 
 // Decision A-1: unconfirmed newsletter subscriptions are deleted 14 days after their latest request.
 Schedule::command('newsletter:purge-unconfirmed')->name('newsletter-purge-unconfirmed')->dailyAt('03:30');
+
+// The public demo's fictional data is rebuilt hourly, so nothing a visitor changes outlives the hour. Registered only
+// in demo mode (docs/deployment/demo.md); an ordinary installation has no such task.
+if (config('nusszopf.demo')) {
+    Schedule::command('demo:reset')->name('demo-reset')->hourly();
+}
