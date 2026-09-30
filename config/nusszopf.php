@@ -126,4 +126,17 @@ return [
 
     'source_url' => env('NUSSZOPF_SOURCE_URL', 'https://github.com/lchristmann/nusszopf'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Handbuch (documentation website)
+    |--------------------------------------------------------------------------
+    |
+    | The rendered German Handbuch that Home and the guided tour link to
+    | (docs/handbuch/, published by .github/workflows/site.yml). No trailing
+    | slash. A fork that publishes its own site points it there.
+    |
+    */
+
+    'docs_url' => env('NUSSZOPF_DOCS_URL', 'https://lchristmann.github.io/nusszopf/handbuch'),
+
 ];

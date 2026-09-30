@@ -142,7 +142,8 @@ berührt. `GOOGLE_REDIRECT_URI` brauchst Du nur, wenn die Instanz unter einer an
 | `NUSSZOPF_LEGAL_PATH` | leer (nimmt `./legal`) | Ordner der Rechtstexte. Nur nötig, wenn Du ihn woanders einbindest. |
 | `NUSSZOPF_REGISTER_LIMIT` | leer (10) | Neue Konten pro IP-Adresse und 15 Minuten. |
 | `NUSSZOPF_DEMO` | `false` | [Demo-Modus](demo.md), nur für Vorführ-Instanzen. |
-| `NUSSZOPF_SOURCE_URL` | das Upstream-Repository | Wohin die Startseite bei „Mitmachen“ und „Installationsanleitung“ verlinkt. Nützlich bei einem Fork. |
+| `NUSSZOPF_SOURCE_URL` | das Upstream-Repository | Wohin die Startseite bei „Mitmachen“ verlinkt. Nützlich bei einem Fork. |
+| `NUSSZOPF_DOCS_URL` | `https://lchristmann.github.io/nusszopf/handbuch` | Die Handbuch-Website, auf die Startseite und geführte Tour verlinken (ohne abschließenden Schrägstrich). Nützlich, wenn ein Fork sein eigenes Handbuch veröffentlicht. |
 | `NEWSLETTER_CONSENT_VERSION` | `1` | Version Deines Datenschutztextes; wird bei jeder Newsletter-Einwilligung gespeichert. |
 | `HEALTH_TOKEN` | erzeugt | Bearer-Token, mit dem `/health` Version und Details verrät. |
 

@@ -28,7 +28,7 @@ betreiben, für eine Community, eine Schule, eine Firma oder einen Verein.
 Diese Fassung ist die Neuimplementierung des ursprünglichen Nusszopf mit moderner Technik. Funktionen, Abläufe und Aussehen
 sind bewusst dieselben geblieben.
 
-**[Demo ausprobieren](https://nusszopf.org)** · **[Handbuch](docs/handbuch/README.md)** · **[Projektseite](https://lchristmann.github.io/nusszopf/)**
+**[Demo ausprobieren](https://nusszopf.org)** · **[Handbuch](https://lchristmann.github.io/nusszopf/handbuch/)** · **[Projektseite](https://lchristmann.github.io/nusszopf/)**
 
 ## Selbst hosten
 

@@ -114,11 +114,11 @@ it('keeps the Zopfstarke Mitstreiter:innen section without any funding or sponso
 });
 
 it('links the contribution and installation guides of the configured source repository', function () {
-    config(['nusszopf.source_url' => 'https://git.example/fork/nusszopf/']);
+    config(['nusszopf.source_url' => 'https://git.example/fork/nusszopf/', 'nusszopf.docs_url' => 'https://docs.example/fork/handbuch/']);
 
     $this->get('/')
         ->assertSee('href="https://git.example/fork/nusszopf/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer"', false)
-        ->assertSee('href="https://git.example/fork/nusszopf/blob/main/docs/handbuch/installation.md" target="_blank" rel="noopener noreferrer"', false);
+        ->assertSee('href="https://docs.example/fork/handbuch/installation.html" target="_blank" rel="noopener noreferrer"', false);
 });
 
 it('points the feedback button at the operator mailbox', function () {
@@ -167,8 +167,8 @@ it('shows the demo card above the how-to only in demo mode, for visitors and the
 });
 
 it('links the German Handbuch below the demo actions, not as a third button', function () {
-    config(['nusszopf.demo' => true, 'nusszopf.source_url' => 'https://git.example/fork/nusszopf/']);
+    config(['nusszopf.demo' => true, 'nusszopf.docs_url' => 'https://docs.example/fork/handbuch']);
 
     $this->get('/')
-        ->assertSeeInOrder(['Geführte Tour starten', 'data-test="home-demo-handbook"', 'href="https://git.example/fork/nusszopf/blob/main/docs/handbuch/README.md"', 'Zum Handbuch', 'data-test="home-how-to"'], false);
+        ->assertSeeInOrder(['Geführte Tour starten', 'data-test="home-demo-handbook"', 'href="https://docs.example/fork/handbuch/index.html"', 'Zum Handbuch', 'data-test="home-how-to"'], false);
 });

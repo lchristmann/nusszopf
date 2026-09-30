@@ -69,7 +69,7 @@
     @if ($tourProject)
         data-tour-enabled
         data-tour-project="{{ route('projects.show', $tourProject, false) }}"
-        data-tour-install="{{ rtrim((string) config('nusszopf.source_url'), '/') }}/blob/main/docs/handbuch/installation.md"
+        data-tour-install="{{ rtrim((string) config('nusszopf.docs_url'), '/') }}/installation.html"
     @endif
 >
     {{--
