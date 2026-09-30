@@ -81,7 +81,7 @@ test('the guided tour walks the real pages from start to end', async ({ page }) 
     }
 
     await expect(card).toContainText('Das war die Tour');
-    await expect(card.getByRole('link', { name: 'Selbst betreiben' })).toHaveAttribute('href', /docs\/deployment\/README\.md$/);
+    await expect(card.getByRole('link', { name: 'Selbst betreiben' })).toHaveAttribute('href', /docs\/handbuch\/installation\.md$/);
     await page.getByTestId('tour-next').click();
     await expect(card).toHaveCount(0);
 });
