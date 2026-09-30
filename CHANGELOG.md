@@ -6,6 +6,15 @@ inline (`**Breaking:**`, `**Migration required:**`); see `docs/release/changelog
 
 ## [Unreleased]
 
+### Changed
+
+- **The documentation for operators and developers is now a German Handbuch** (`docs/handbuch/`, also published on the
+  project site under `/handbuch/`). It replaces `docs/deployment/`, `docs/development/` and `README-DEV.md`, which are now short
+  pointers. `README.md` and `CONTRIBUTING.md` are in German. No behaviour of the application changes; nothing to do for an
+  ordinary installation beyond the usual upgrade (`docs/handbuch/deployment.md`).
+- The Home page's demo card links to the Handbuch, and the installation links on Home, in the guided tour and in
+  `install.sh`'s output point to the Handbuch pages.
+
 ## [1.0.0] - 2026-09-29
 
 The first stable release. It is `1.0.0-rc.2` plus the changes below; there is no migration, no new required setting and
