@@ -6,14 +6,24 @@ inline (`**Breaking:**`, `**Migration required:**`); see `docs/release/changelog
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-09-30
+
+Documentation and links only: there is no migration, no new required setting and nothing to do for an ordinary installation
+beyond the usual upgrade (`docs/handbuch/deployment.md`).
+
+### Added
+
+- `NUSSZOPF_DOCS_URL` (optional, defaults to the upstream GitHub Pages `…/nusszopf/handbuch`): the Handbuch website that Home
+  and the guided tour link to. A fork that publishes its own Handbuch points it there.
+
 ### Changed
 
 - **The documentation for operators and developers is now a German Handbuch** (`docs/handbuch/`, also published on the
   project site under `/handbuch/`). It replaces `docs/deployment/`, `docs/development/` and `README-DEV.md`, which are now short
-  pointers. `README.md` and `CONTRIBUTING.md` are in German. No behaviour of the application changes; nothing to do for an
-  ordinary installation beyond the usual upgrade (`docs/handbuch/deployment.md`).
-- The Home page's demo card links to the Handbuch, and the installation links on Home, in the guided tour and in
-  `install.sh`'s output point to the Handbuch pages.
+  pointers. `README.md` and `CONTRIBUTING.md` are in German.
+- The Home page's demo card links to the Handbuch, and the installation links on Home and in the guided tour point to the
+  rendered Handbuch pages instead of Markdown on GitHub. `install.sh` and the shipped templates name the Handbuch pages.
+- Dependency update: `vite` 8.3.0→8.3.1.
 
 ## [1.0.0] - 2026-09-29
 
