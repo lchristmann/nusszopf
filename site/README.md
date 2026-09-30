@@ -1,9 +1,8 @@
 # Nusszopf project site
 
-The static, single-page public site: what Nusszopf is and who it is for, a link to the public demo
-(<https://nusszopf.org>, the hero's primary button; the demo and its guided tour live in the application,
-`docs/deployment/demo.md`), a self-hosting quick start, the technology
-stack, releases, and licensing. This is **not** the application — it has no PHP, no database, no
+The static public site: a single landing page (what Nusszopf is and who it is for, a link to the public demo
+<https://nusszopf.org>, a self-hosting quick start, the technology stack, releases, licensing) and the **Handbuch**, the
+German documentation, rendered from `docs/handbuch/*.md` into `handbuch/*.html`. This is **not** the application — it has no PHP, no database, no
 Livewire, and is not part of the Docker images or the release process. It is deployed separately to
 GitHub Pages by `.github/workflows/site.yml`.
 
@@ -14,6 +13,18 @@ original Nusszopf community platform's landing page — it is not, and should no
 discovering and installing the FOSS software project. This site is that page instead, kept
 deliberately small and separate from the application.
 
+## The Handbuch
+
+The Markdown files in `docs/handbuch/` are the only source: they read the same on GitHub and here. `scripts/build-docs.mjs`
+renders them at build time (`markdown-it`) into `site/handbuch/*.html` (generated, git-ignored), adds the navigation, the table of
+contents on each page, the callout cards (`> [!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]`) and the copy buttons on
+code blocks, and **fails the build on a broken link or a missing anchor**. `vite.config.js` calls it before it collects the pages as
+entry points, and re-renders on a change to a Markdown file in the dev server. Front matter (`titel`, `beschreibung`, `gruppe`,
+`reihenfolge`) decides the title, the intro band, the navigation group and the order. How to write a page:
+`docs/handbuch/dokumentation.md`.
+
+The styling is `.doc-*` and `.doc` in `src/main.css`, built on the same tokens as the rest of the site.
+
 ## How it stays in sync with the app
 
 - **Visual language**: `src/main.css` imports `../resources/css/tokens.css` and
@@ -22,8 +33,8 @@ deliberately small and separate from the application.
   both builds compile from the exact same source. Do not fork or duplicate them here; change the
   shared files once.
 - **Self-hosting quick start**: the code block in `index.html` is transcluded from the repository
-  root `README.md` at build time (see the `quickstart` plugin in `vite.config.js`), from between the
-  `<!-- quickstart:start -->` / `<!-- quickstart:end -->` markers there. Edit the snippet only in
+  root `README.md` at build time (see the `quickstart` plugin in `vite.config.js`, which only touches the landing page), from
+  between the `<!-- quickstart:start -->` / `<!-- quickstart:end -->` markers there. Edit the snippet only in
   `README.md`; the build fails if the markers go missing, rather than silently shipping a stale copy.
 - **Current release**: deliberately not hardcoded anywhere. The Releases section links to GitHub's
   own Releases and Changelog pages, and shows a live `shields.io` badge (the same technique
@@ -37,10 +48,13 @@ deliberately small and separate from the application.
 ```sh
 cd site
 npm install
-npm run dev      # http://localhost:5173
+npm run dev      # http://localhost:5173, http://localhost:5173/handbuch/
 npm run build    # outputs to site/dist/
 npm run preview  # serve the production build locally
 ```
+
+Vite 8 needs Node 20.19 or newer (CI uses 22). Without a matching Node on the host:
+`docker run --rm -v "$PWD/..:/repo" -w /repo/site node:22-bookworm-slim npm run build` from `site/`.
 
 ## Licensing and provenance
 

@@ -98,7 +98,7 @@ class GoogleController extends Controller
 
     public static function configured(): bool
     {
-        // Google sign-in creates accounts from real addresses, which a public demo must not (docs/deployment/demo.md).
+        // Google sign-in creates accounts from real addresses, which a public demo must not (docs/handbuch/demo.md).
         return ! Demo::enabled()
             && filled(config('services.google.client_id')) && filled(config('services.google.client_secret'));
     }

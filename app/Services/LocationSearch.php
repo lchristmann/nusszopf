@@ -15,7 +15,7 @@ use Throwable;
  * `services.locationiq.url` exists so a self-hoster or the test stack can
  * point at a compatible endpoint; without a key configured no results are
  * returned (the field then cannot be completed for a fixed location — see
- * docs/deployment/README.md).
+ * docs/handbuch/installation.md).
  */
 class LocationSearch
 {

@@ -2,7 +2,7 @@
 # P-9 (docs/release/parity/P-09-upgrade.md): the upgrade test. Builds the release of <from-ref> and installs it the
 # way an operator does (its own install.sh and docker-compose.yaml), fills it with a representative dataset, leaves
 # work queued and a browser signed in, then upgrades it to this working copy with the documented procedure
-# (docs/deployment/operations.md, "Upgrades") and checks that nothing was lost and that everything still works.
+# (docs/handbuch/deployment.md) and checks that nothing was lost and that everything still works.
 #
 #   sh scripts/upgrade-test.sh <from-ref> [--suite]
 #
@@ -130,7 +130,7 @@ QUEUED="$(docker compose exec -T php-fpm php /tmp/inflight.php)" || fail "inflig
 echo "$QUEUED"
 FAILED_BEFORE="$(q "select count(*) from failed_jobs")"
 
-step "Snapshot, and the pre-upgrade backup (operations.md, \"Upgrades\" step 2)"
+step "Snapshot, and the pre-upgrade backup (docs/handbuch/deployment.md, step 1)"
 sh "$ROOT/tests/Upgrade/snapshot.sh" "$WORK/before" >/dev/null
 docker compose exec -T postgres sh -c 'pg_dump --format=custom -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > "$WORK/postgres.dump"
 [ -s "$WORK/postgres.dump" ] || fail "the documented pre-upgrade backup produced nothing"

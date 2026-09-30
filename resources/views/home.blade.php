@@ -35,7 +35,7 @@
         ['Vereine & Organisationen', 'Mitglieder bringen Projektideen ein und finden im eigenen Umfeld Mitstreiter:innen, Räume und Material.'],
     ];
     $options = [
-        ['Betreibe Deinen eigenen Nusszopf!', 'Mit Docker Compose bringst Du den Nusszopf auf Deinen Server – für Deine Community, Schule, Firma oder Organi&shy;sation.', 'Installationsanleitung', $source.'/blob/main/docs/deployment/README.md', 'Zur Installationsanleitung', 'url'],
+        ['Betreibe Deinen eigenen Nusszopf!', 'Mit Docker Compose bringst Du den Nusszopf auf Deinen Server – für Deine Community, Schule, Firma oder Organi&shy;sation.', 'Installationsanleitung', $source.'/blob/main/docs/handbuch/installation.md', 'Zur Installationsanleitung', 'url'],
         ['Mach mit!', 'Der Nusszopf ist freie Software unter der GPL. Melde Fehler, schlage Verbesserungen vor oder entwickle mit.', 'Mitwirken', $source.'/blob/main/CONTRIBUTING.md', 'Zur Mitwirkungsanleitung auf GitHub', 'url'],
         ['Gib uns Feedback!', 'Teile deine Ideen und Wünsche mit uns, damit wir den Nusszopf weiter ver&shy;bessern und an deine Bedürfnisse anpassen können.', 'Feedback senden', 'mailto:'.$contact.'?subject=Nussiges Feedback', 'E-Mail an Nusszopf schreiben', 'mail'],
     ];
@@ -74,6 +74,7 @@
                                 <x-button type="submit" size="large" class="bg-white" data-test="btn_demo-tour_home">Geführte Tour starten</x-button>
                             </form>
                         </div>
+                        <x-text variant="textSm" class="pt-5 mt-8 border-t border-livid-500" data-test="home-demo-handbook">Du willst den Nusszopf selbst betreiben oder mitentwickeln? <a href="{{ $source }}/blob/main/docs/handbuch/README.md" target="_blank" rel="noopener noreferrer" class="border-b-2 cursor-pointer nz-link-current" data-test="link_handbook_home">Zum Handbuch</a></x-text>
                     </div>
                 </div>
             </div>
@@ -122,7 +123,7 @@
         </div>
         <x-text variant="textSm" class="mt-6">
             Alles läuft auf Deinem eigenen Server.
-            <a href="{{ $source }}/blob/main/docs/deployment/README.md" target="_blank" rel="noopener noreferrer" class="border-b-2 cursor-pointer nz-text-sm nz-link-current">So geht die Installation</a>
+            <a href="{{ $source }}/blob/main/docs/handbuch/installation.md" target="_blank" rel="noopener noreferrer" class="border-b-2 cursor-pointer nz-text-sm nz-link-current">So geht die Installation</a>
         </x-text>
     </x-frame>
 

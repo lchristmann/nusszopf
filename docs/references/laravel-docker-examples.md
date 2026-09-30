@@ -1,8 +1,8 @@
 # Laravel Docker Examples — Reference Findings
 
-Source: `../infrastructure-reference/laravel-docker-examples` (upstream: `rw4lll/laravel-docker-examples`).
+Source: the public repository [`rw4lll/laravel-docker-examples`](https://github.com/rw4lll/laravel-docker-examples), read at the revision recorded in `docs/rewrite/source-map.md`. Nusszopf's Docker setup began from this base.
 
-Per `.claude/rules/03-reference-projects.md`, this repository is a **Docker implementation reference only**. It contributes no Nusszopf product/domain behavior. Everything below is either **Confirmed** (directly read from the repository) or explicitly marked **Proposal** (this document's own recommendation for Nusszopf, not yet approved).
+This repository is a **Docker implementation reference only**. It contributes no Nusszopf product/domain behavior. Everything below is either **Confirmed** (directly read from the repository) or explicitly marked **Proposal** (this document's own recommendation for Nusszopf, not yet approved).
 
 ## 1. Repository structure (Confirmed)
 
@@ -51,31 +51,28 @@ Two Compose files, not three: `compose.dev.yaml` for local development, `compose
 
 The problem: Docker only seeds a brand-new named volume from an image's directory the *first* time that volume is created. On every redeploy after that, the volume keeps whatever was in it from the previous image, silently shadowing the new image's freshly built `public/build/` — and neither image here ever writes into that path at runtime to refresh it (`php-fpm`'s image never builds assets at all; `nginx`'s Dockerfile builds them into its own image layer, not into the shared volume). The mount as written will serve stale (or, on the very first `up`, empty) assets on every deploy after the first. This is a defect in the reference project itself, not a Nusszopf historical bug — noted here so Nusszopf's own design (§6) does not reproduce it.
 
-**LCxHolz's fix** (Confirmed, `../development-reference/lcxholz/docker/production/nginx/entrypoint.sh`): the nginx image bakes assets into its own layer as `public-build-src` (not `public/build` directly), and a custom entrypoint unconditionally deletes and re-copies `public-build-src/` into the shared volume on **every** container boot, before handing off to nginx's own entrypoint. This makes every redeploy self-healing but requires a bespoke entrypoint script.
+**Nusszopf's fix.** Avoid the shared-volume mechanism entirely. Asset building happens **once**, inside the `php-fpm` image's own multi-stage build, and the nginx image is built `FROM` that exact application image and simply copies `public/` out of it. Because both images come from the same source tree at the same version tag, their `public/build/manifest.json` is byte-identical by construction: there is no volume, no runtime re-sync step and no possibility of drift.
 
-**Waffle Dashboard's fix** (Confirmed, `../foss-reference/waffle-dashboard/docker/deployment/`): avoids the shared-volume mechanism entirely. There is no `laravel-public-assets` volume in the self-hoster-facing `docker-compose.yaml`. Instead, asset building happens **once**, inside the `php-fpm` image's own multi-stage build (Node/npm are installed in that Dockerfile's `builder` stage, not in a separate nginx-side build), and the published nginx image is built `FROM leanderchristmann/waffle-dashboard:${VERSION}` (i.e. from the exact matching php-fpm image for that version) and simply `COPY --from=php-fpm-source /var/www/public /var/www/public`. Because both images are built from the same source tree at the same version tag, their `public/build/manifest.json` is byte-identical by construction — there is no volume, no runtime re-sync step, and no possibility of drift. This is the simpler and more robust of the two fixes and is the pattern recommended for Nusszopf (§6).
+## 5. What Nusszopf does differently
 
-## 5. Comparison table
-
-| Aspect | laravel-docker-examples | LCxHolz | Waffle Dashboard | Nusszopf (as built) |
-|---|---|---|---|---|
-| Dev compose | `compose.dev.yaml`, bind-mounted code | same pattern | same pattern | same pattern |
-| Prod compose | `compose.prod.yaml`, builds locally | `compose.prod.yaml`, `image:` + `build:` both present, pulls from GHCR | **`docker-compose.yaml`** at repo root, `image:`-only, pulls from Docker Hub, meant to be curl'd by an operator who never clones the repo | Needs both: a dev/build-oriented `compose.dev.yaml`/`compose.prod.yaml` pair for contributors, **and** a standalone `docker-compose.yaml` for operators |
-| Asset/manifest consistency | Shared volume, unpopulated on redeploy (defect, §4) | Shared volume + custom re-sync entrypoint (works, but bespoke) | Nginx image built `FROM` the matching php-fpm image tag, no volume needed (simplest, correct by construction) | Waffle's pattern, verified by the smoke test |
-| Queue/scheduler | Not present | Dedicated `queue-worker` and `scheduler` services, same image, different `command:` | Not present (Waffle has no queued jobs) | Nusszopf needs both (search indexing, mail) — dedicated services, same image as php-fpm |
-| Health checks | `php-fpm-healthcheck`, `pg_isready`, `redis-cli ping` | identical mechanism | identical mechanism | Same three, plus a Meilisearch health check (no reference covers Meilisearch), and heartbeat checks for the queue worker and the scheduler |
-| TLS/reverse proxy | Out of scope, host port 80 exposed directly | Nginx Proxy Manager, pre-existing on host, shared external `proxy-net` network | Nginx Proxy Manager, documented as an optional add-on step for the operator | Operator-owned, not bundled (decided); one published port, documented for Nginx Proxy Manager, Caddy and Traefik |
-| Backups | None | `spatie/laravel-backup`, encrypted, retention-tiered, health-monitored, restore procedure tested | Plain shell script (`pg_dump` + `tar`) run via host crontab, documented restore steps | Waffle's tier: a cron-run shell script for the database, the storage volume and the installation directory, with a drilled restore; the search index is rebuilt, never backed up — `docs/deployment/operations.md` |
-| Registry | N/A (not published) | GHCR, private packages, `sha-<sha>` / `latest` / `vX.Y.Z` tags, "Build Once, Deploy Many" | Docker Hub, public, semver tags only (`2.5.0`) | GHCR, `ghcr.io/lchristmann/nusszopf-*`, version tag plus `latest` (decided; `docs/release/docker-images.md`) |
+| Aspect | laravel-docker-examples | Nusszopf (as built) |
+|---|---|---|
+| Compose files | `compose.dev.yaml` and `compose.prod.yaml`, builds locally | A `compose.dev.yaml`/`compose.prod.yaml` pair for contributors, **and** a standalone, `image:`-only `docker-compose.yaml` for operators who never clone the repository |
+| Asset/manifest consistency | Shared volume, unpopulated on redeploy (defect, §4) | Nginx image built `FROM` the matching php-fpm image, no volume needed; verified by the smoke test |
+| Queue/scheduler | Not present | Dedicated `queue-worker` and `scheduler` services, same image as php-fpm, different `command:` (search indexing, mail) |
+| Health checks | `php-fpm-healthcheck`, `pg_isready`, `redis-cli ping` | The same three, plus Meilisearch's `/health`, and heartbeat checks for the queue worker and the scheduler |
+| TLS/reverse proxy | Out of scope, host port 80 exposed directly | Operator-owned, not bundled (decided); one published port, documented for Caddy, Traefik and Nginx Proxy Manager |
+| Backups | None | A cron-run shell script for the database, the storage volume and the installation directory, with a drilled restore; the search index is rebuilt, never backed up (`docs/handbuch/backup.md`) |
+| Registry | N/A (not published) | GHCR, `ghcr.io/lchristmann/nusszopf-*`, version tag plus `latest` (`docs/release/docker-images.md`) |
 
 ## 6. Recommendation for Nusszopf (adopted; this is what was built)
 
 The simplest architecture that satisfies Nusszopf's actual requirements (PHP 8.5, Laravel 13, PostgreSQL, Redis, Meilisearch, Blade/Livewire — no separate SPA build pipeline beyond Vite):
 
-1. **Single application image**, built multi-stage like `docker/common/php-fpm/Dockerfile` here, but with the Node/`npm run build` step folded into its own `builder` stage (Waffle Dashboard's pattern), producing one image that contains both the compiled PHP app and the compiled Vite assets under `public/build/`.
+1. **Single application image**, built multi-stage like `docker/common/php-fpm/Dockerfile` here, but with the Node/`npm run build` step folded into its own `builder` stage, producing one image that contains both the compiled PHP app and the compiled Vite assets under `public/build/`.
 2. **A thin nginx image built `FROM` that exact application image tag**, copying only `public/` out of it — never a shared named volume for assets. This structurally eliminates the defect in §4 rather than working around it.
-3. **Dedicated `queue-worker` and `scheduler` services** using the same application image with a different `command:`, following LCxHolz's pattern — Nusszopf will have background work (search indexing, mail) that `compose.prod.yaml` here has no equivalent for.
-4. **Health checks** for every service that can be checked (`php-fpm-healthcheck`, `pg_isready`, `redis-cli ping`, plus Meilisearch's `/health` endpoint), gating `depends_on: condition: service_healthy` throughout — none of the three references show a Meilisearch health check, since none of them use Meilisearch.
-5. **Two audiences, two Compose files**, following Waffle Dashboard's split rather than LCxHolz's single `compose.prod.yaml`: a `compose.dev.yaml`/`compose.prod.yaml` pair for people building/testing the images themselves, and a standalone, curl-able `docker-compose.yaml` at the repository root for operators who only ever pull published images — see `docs/deployment/README.md`.
+3. **Dedicated `queue-worker` and `scheduler` services** using the same application image with a different `command:` — Nusszopf has background work (search indexing, mail) that `compose.prod.yaml` here has no equivalent for.
+4. **Health checks** for every service that can be checked (`php-fpm-healthcheck`, `pg_isready`, `redis-cli ping`, plus Meilisearch's `/health` endpoint), gating `depends_on: condition: service_healthy` throughout.
+5. **Two audiences, two Compose files**: a `compose.dev.yaml`/`compose.prod.yaml` pair for people building/testing the images themselves, and a standalone, curl-able `docker-compose.yaml` at the repository root for operators who only ever pull published images — see `docs/handbuch/installation.md`.
 
-The three questions left open when this was written are decided: GHCR as the registry, no Meilisearch backup (the index is rebuilt from PostgreSQL), and an operator-owned reverse proxy with Nginx Proxy Manager, Caddy and Traefik named, and Caddy given a one-line example (`docs/rewrite/decisions-register.md`).
+Decided since: GHCR as the registry, no Meilisearch backup (the index is rebuilt from PostgreSQL), and an operator-owned reverse proxy with Nginx Proxy Manager, Caddy and Traefik named, and Caddy given a one-line example (`docs/rewrite/decisions-register.md`).

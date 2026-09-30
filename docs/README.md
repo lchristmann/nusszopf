@@ -1,32 +1,48 @@
-# Documentation
+# Dokumentation
 
-This documentation describes Nusszopf 2 as a product, system, development project, and FOSS release.
+Die Dokumentation des Nusszopf hat zwei Teile.
 
-- `architecture/` — technical architecture
-- `authentication/` — authentication behavior
-- `design/` — exact historical UI specification (`screens.md` for narrative evidence, `screen-specs.md` for the per-screen implementation checklist)
-- `development/` — local development
-- `deployment/` — self-hosting and operations
-- `domain/` — domain model and business rules
-- `email/` — historical email behavior
-- `journeys/` — end-to-end acceptance journeys
-- `legal/` — where the code, fonts and images come from, and under which licenses (`provenance.md`)
-- `references/` — reference-project findings
-- `release/` — FOSS releases and upgrades, and `release/parity/` (the finish-line parity report: one evidence page per phase)
-- `rewrite/` — rewrite methodology and decisions, including `master-roadmap.md` (the plan and the finish-line phases), `bugs.md` (the historical-defect register), `intentional-changes.md` (every deliberate difference from the historical product), `decisions-register.md` (the concise already-decided vs. needs-a-human-decision index), `architecture-decisions.md`, and one page per implemented slice (`first-slice.md` … `tenth-slice.md`)
-- `search/` — search behavior
-- `security/` — security requirements, including `authorization-matrix.md` (the action-by-action authorization ruleset)
-- `testing/` — testing strategy, accessibility and visual regression
+## Das Handbuch (Deutsch)
 
-For an operator: start with `deployment/README.md` (install and configure) and `deployment/operations.md` (run, back up, upgrade, recover, troubleshoot). For a contributor: `../README-DEV.md`, then `development/`, `testing/` and `architecture/`.
+**[`handbuch/`](handbuch/README.md)** ist die Dokumentation für alle, die den Nusszopf betreiben, weiterentwickeln oder verstehen
+wollen. Es beschreibt den heutigen Stand, ist auf Deutsch und wird auf der Projektseite veröffentlicht:
+<https://lchristmann.github.io/nusszopf/handbuch/>.
 
-The historical Nusszopf repositories are the product reference. LCxHolz, Waffle Dashboard, and the Laravel Docker examples are implementation/process references.
+| Wenn Du … | dann |
+|---|---|
+| eine Instanz betreiben willst | [Installation](handbuch/installation.md), [Konfiguration](handbuch/konfiguration.md), [Deployment](handbuch/deployment.md) |
+| im Betrieb etwas suchst | [Betrieb](handbuch/betrieb.md), [Backup](handbuch/backup.md), [Fehlerbehebung](handbuch/fehlerbehebung.md) |
+| mitentwickeln willst | [Lokale Entwicklung](handbuch/entwicklung.md), [Architektur](handbuch/architektur.md), [Tests](handbuch/tests.md) |
+| wissen willst, wo was steht | [Dokumentation pflegen](handbuch/dokumentation.md) |
 
-## Where to start
+## Die Spezifikation (Englisch)
 
-1. `CLAUDE.md` and `.claude/rules/` — the constraints every change must respect.
-2. `docs/rewrite/source-map.md` — which historical repository revision every other document is a snapshot of.
-3. `docs/rewrite/decisions-register.md` — what's already decided vs. what still needs a human call.
-4. `docs/rewrite/bugs.md` — every classified historical defect, with severity and required regression test.
-5. `docs/rewrite/README.md` — the slice pages (`first-slice.md` … `tenth-slice.md`) say what each implemented slice contains and why; `docs/rewrite/master-roadmap.md` is the plan they followed.
-6. Topic directories above, as needed for the area you're touching.
+Alle übrigen Ordner hier sind die Spezifikation des Rewrites: die Belege für das Verhalten des historischen Nusszopf, die
+Entscheidungen und die Prüfberichte. Sie sind englisch, weil sie die englischsprachigen Originalquellen zitieren, und sie sind die Quelle
+der Wahrheit für das Produktverhalten.
+
+- `architecture/` — Zuordnung der historischen Bausteine zur neuen Architektur
+- `authentication/` — Verhalten der Anmeldung
+- `design/` — die genaue historische Oberfläche (`screens.md` als Beleg, `screen-specs.md` als Checkliste je Seite)
+- `domain/` — Domänenmodell und Geschäftsregeln
+- `email/` — Verhalten der Mails
+- `journeys/` — Abnahmeabläufe
+- `legal/` — Herkunft und Lizenzen von Code, Schriften und Bildern (`provenance.md`)
+- `release/` — Versionierung, Release-Prozess und die Prüfberichte unter `release/parity/`
+- `rewrite/` — Vorgehen und Entscheidungen: `decisions-register.md`, `bugs.md`, `intentional-changes.md`, `open-questions.md`,
+  `architecture-decisions.md`, `master-roadmap.md` und eine Seite je umgesetzter Etappe
+- `search/` — Verhalten der Suche
+- `security/` — Sicherheitsanforderungen, darin `authorization-matrix.md`
+- `testing/` — Teststrategie, Barrierefreiheit, visuelle Regression
+- `deployment/` und `development/` — Verweise auf das Handbuch (die Betriebs- und Entwicklungsdokumentation zog dorthin um);
+  `deployment/legal-examples/` enthält die Rechtstexte des ursprünglichen Betreibers als Beispiele
+
+## Wo Du anfängst, wenn Du am Produkt arbeitest
+
+1. `CLAUDE.md` und `.claude/rules/` — die Regeln, die jede Änderung einhalten muss.
+2. `rewrite/source-map.md` — welche Revision der historischen Repositories jede Seite abbildet.
+3. `rewrite/decisions-register.md` — was entschieden ist und was noch eine menschliche Entscheidung braucht.
+4. `rewrite/bugs.md` — jeder eingeordnete historische Fehler.
+5. Der passende Themenordner oben.
+
+Die archivierten Repositories des ursprünglichen Nusszopf sind die Referenz für das Produkt; siehe [Konventionen](handbuch/konventionen.md#wo-die-wahrheit-liegt).

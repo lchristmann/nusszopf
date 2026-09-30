@@ -124,7 +124,7 @@ Specification and evidence: `docs/rewrite/fourth-slice.md`. What matters for the
   `<em>` (BUG-029; the historical cards injected the raw highlighted string).
 - **Visibility, again**: every project and request of a result is re-read from PostgreSQL through `Project::visible(null)` /
   `ProjectRequest::visible(null)`; documents whose row is gone, private, or moved to another project are dropped, for owners too.
-- **Recovery**: `php artisan search:reindex` (settings → flush → import), idempotent, documented in `docs/deployment/operations.md`; drilled in P-11 (below).
+- **Recovery**: `php artisan search:reindex` (settings → flush → import), idempotent, documented in `docs/handbuch/betrieb.md`; drilled in P-11 (below).
 - **Resolved Unknowns**: the pagination behavior exposed to the UI (load-more button, offset paging, merge by id) — see the table in
   `fourth-slice.md`; the filterable attribute set (`req_type`, from `_mapFilterQuery`).
 

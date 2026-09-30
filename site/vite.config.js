@@ -1,7 +1,8 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath, URL } from 'node:url';
 import { defineConfig } from 'vite';
 import tailwindcss from '@tailwindcss/vite';
+import { buildDocs, OUTPUT_DIR, SOURCE_DIR } from './scripts/build-docs.mjs';
 
 // Transcludes the Docker self-hosting snippet from the repo root README.md's "Quick start" section
 // (between the `<!-- quickstart:start -->` / `<!-- quickstart:end -->` markers) into index.html at
@@ -14,7 +15,10 @@ function quickstart() {
 
     return {
         name: 'nusszopf:quickstart',
-        transformIndexHtml(html) {
+        transformIndexHtml(html, ctx) {
+            // Nur die Projektseite hat den Platzhalter, nicht die Seiten des Handbuchs.
+            if (ctx.filename !== fileURLToPath(new URL('./index.html', import.meta.url))) return html;
+
             const readmePath = fileURLToPath(new URL('../README.md', import.meta.url));
             const readme = readFileSync(readmePath, 'utf-8');
             const start = readme.indexOf(START);
@@ -70,15 +74,46 @@ function barlowLicense() {
     };
 }
 
+// Das Handbuch (docs/handbuch/*.md) wird vor dem Bauen zu HTML-Seiten unter site/handbuch/ gerendert
+// (scripts/build-docs.mjs; ein kaputter Link bricht den Build ab). Jede Seite ist ein eigener Einstiegspunkt.
+buildDocs();
+const handbuch = Object.fromEntries(
+    readdirSync(OUTPUT_DIR)
+        .filter((f) => f.endsWith('.html'))
+        .map((f) => [`handbuch-${f.replace(/\.html$/, '')}`, fileURLToPath(new URL(`./handbuch/${f}`, import.meta.url))]),
+);
+
+// Im Entwicklungsserver: Änderungen an den Markdown-Seiten rendern neu und laden die Seite neu.
+function handbuchWatcher() {
+    return {
+        name: 'nusszopf:handbuch-watch',
+        configureServer(server) {
+            server.watcher.add(SOURCE_DIR);
+            server.watcher.on('change', (file) => {
+                if (!file.startsWith(SOURCE_DIR) || !file.endsWith('.md')) return;
+                try {
+                    buildDocs();
+                    server.ws.send({ type: 'full-reload' });
+                } catch (error) {
+                    server.config.logger.error(String(error));
+                }
+            });
+        },
+    };
+}
+
 export default defineConfig({
     // GitHub Pages serves a project site (as opposed to a user/org root site) from a subpath —
     // https://lchristmann.github.io/nusszopf/, not the domain root — so an absolute base ('/')
     // would 404 every asset. A relative base works unconditionally for this single-page site: every
     // asset it references is served from the same directory as index.html, at any depth.
     base: './',
-    plugins: [tailwindcss(), quickstart(), barlowLicense()],
+    plugins: [tailwindcss(), quickstart(), barlowLicense(), handbuchWatcher()],
     build: {
         outDir: 'dist',
+        rollupOptions: {
+            input: { main: fileURLToPath(new URL('./index.html', import.meta.url)), ...handbuch },
+        },
         // The notice above pairs with Vite's own per-package legal-comment collector for the tiny
         // amount of JS this page ships (none of its own — Vite's client-side helpers only).
         license: { fileName: 'THIRD-PARTY-LICENSES.txt' },

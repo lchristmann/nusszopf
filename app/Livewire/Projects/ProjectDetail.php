@@ -157,7 +157,7 @@ class ProjectDetail extends Component
      */
     public function submitContact(): void
     {
-        // The public demo sends no messages, so it collects no visitor addresses (docs/deployment/demo.md).
+        // The public demo sends no messages, so it collects no visitor addresses (docs/handbuch/demo.md).
         if (Demo::enabled()) {
             $this->dispatch('toast', type: 'error', message: 'In der Demo werden keine Nachrichten verschickt.');
 

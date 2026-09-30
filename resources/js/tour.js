@@ -1,5 +1,5 @@
 /**
- * Guided tour of the public demo (docs/deployment/demo.md).
+ * Guided tour of the public demo (docs/handbuch/demo.md).
  *
  * A small non-modal overlay on the real pages, not a slideshow: each step highlights an element of the actual UI
  * and explains it in a card. The page stays usable, "Esc" or "Tour beenden" ends the tour at any point, and the

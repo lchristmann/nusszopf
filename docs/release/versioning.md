@@ -8,17 +8,17 @@ Semantic versioning: `MAJOR.MINOR.PATCH`.
 - **MINOR**: new user-visible functionality, backward compatible.
 - **PATCH**: bug fixes, security fixes, and other backward-compatible corrections.
 
-**Decided** (`docs/rewrite/decisions-register.md`): unlike Waffle Dashboard, Nusszopf does not claim a stable release before parity is proven. All ten feature slices are implemented and the finish-line phases (P-1…P-16) have produced the evidence.
+**Decided** (`docs/rewrite/decisions-register.md`): Nusszopf does not claim a stable release before parity is proven. All ten feature slices are implemented and the finish-line phases (P-1…P-16) have produced the evidence.
 
 **Decided by the maintainer at the start of P-16 (2026-09-26): the first tag is `1.0.0-rc.1`.** The sources disagreed: the register said `0.x` until parity, `release-process.md` suggested `0.1.0-rc.1`, and roadmap P-16 names `1.0.0-rc.N`. The maintainer chose the roadmap's number. So the parity claim is carried by the release-candidate line and by P-17's sign-off, not by a `0.x` number: while `1.0.0` is not tagged, every tag is a pre-release (`1.0.0-rc.N`), published as a GitHub pre-release that does not move `latest`, and `1.0.0` is tagged only after the maintainer's P-17 sign-off, on the commit of the last passing candidate. `0.x` is not used.
 
 ## Tag format
 
-**Adopted from Waffle Dashboard (Confirmed reference behavior)**: Git tags carry no `v` prefix — `1.2.0`, not `v1.2.0` — for consistency with the reference project. This is a convention choice, not a technical constraint; it is recorded as a decision (`docs/rewrite/architecture-decisions.md`) so it isn't silently reversed later by a contributor used to `v`-prefixed tags. The release workflow triggers on unprefixed tags only.
+**Adopted**: Git tags carry no `v` prefix — `1.2.0`, not `v1.2.0`. This is a convention choice, not a technical constraint; it is recorded as a decision (`docs/rewrite/architecture-decisions.md`) so it isn't silently reversed later by a contributor used to `v`-prefixed tags. The release workflow triggers on unprefixed tags only.
 
 ## Where the version is stored
 
-Unlike Waffle Dashboard (which has no version constant anywhere in the codebase), Nusszopf exposes its running version to operators, since self-hosters need to know what they're running without inspecting Docker image digests. **Adopted and implemented** (`docs/rewrite/architecture-decisions.md`, "Version exposure to operators"):
+Nusszopf exposes its running version to operators, since self-hosters need to know what they're running without inspecting Docker image digests. **Adopted and implemented** (`docs/rewrite/architecture-decisions.md`, "Version exposure to operators"):
 
 - The Git tag is the single source of truth for the version number.
 - The version is baked into the Docker image at build time (the `NUSSZOPF_VERSION` build argument becomes an environment variable and the `org.opencontainers.image.version` label), so `docker image inspect`, `php artisan about` and `php artisan nusszopf:health` (and `/health` with the token) all report it without a database round-trip. An image built from a working copy reports `dev`.

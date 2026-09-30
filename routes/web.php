@@ -33,7 +33,7 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 Route::view('/', 'home')->name('home');
 
 /*
-| Dependency health for operators and monitoring (docs/deployment/operations.md). `/up` is the
+| Dependency health for operators and monitoring (docs/handbuch/betrieb.md). `/up` is the
 | container liveness probe; this one is 503 while a dependency, the scheduler or the queue worker
 | is down. Details only for a caller holding HEALTH_TOKEN. It starts no session: with Redis down
 | (where sessions live) it must still answer, and say so.
@@ -79,7 +79,7 @@ Route::get('/contact/nusszopf-vcard.vcf', fn () => response(Operator::vcard(), 2
     'Content-Disposition' => 'attachment; filename="nusszopf-vcard.vcf"',
 ]))->name('contact.vcard');
 
-// The public demo's one-button entry (docs/deployment/demo.md); 404 unless NUSSZOPF_DEMO is on.
+// The public demo's one-button entry (docs/handbuch/demo.md); 404 unless NUSSZOPF_DEMO is on.
 Route::post('/demo/login', DemoLoginController::class)->middleware('throttle:60,1')->name('demo.login');
 
 Route::middleware('guest')->group(function () {

@@ -3,10 +3,10 @@
 # daemon (docker:dind), so the target really starts empty: no images, containers, volumes or files.
 #
 #   1. Source host: install this working copy's release with install.sh, fill it (tests/Upgrade/seed.php), sign a
-#      browser in, and let root's crontab run the backup script exactly as docs/deployment/operations.md "Backups"
+#      browser in, and let root's crontab run the backup script exactly as docs/handbuch/backup.md "Das Backup-Skript"
 #      prints it.
 #   2. Check the backup, copy it off the host, and destroy the source host.
-#   3. Target host: prove it is empty, then run the "Restore" block of operations.md exactly as printed.
+#   3. Target host: prove it is empty, then run the "Wiederherstellen" block of docs/handbuch/backup.md exactly as printed.
 #   4. Compare the restored installation with the source and use it: sign-in, privacy, search, avatars, mailed
 #      links, legal pages, queue, scheduler, and writing new files.
 #   5. With --rollback-from <ref>: install <ref>, back up, upgrade to this working copy, write data, roll back with
@@ -67,12 +67,12 @@ fail() { echo "FAIL: $1" >&2; [ -n "${CURRENT:-}" ] && on "$CURRENT" 'docker com
 on() { docker exec -i -w /opt/nusszopf "$1" sh -eu -c "$2"; }
 q() { on "$1" "docker compose exec -T postgres sh -c 'psql -U \"\$POSTGRES_USER\" -d \"\$POSTGRES_DB\" -Atc \"\$0\"' \"$2\""; }
 
-# The code block after the n-th "scripts/restore-test.sh runs this block" marker in operations.md, as printed.
+# The code block after the n-th "scripts/restore-test.sh runs this block" marker in docs/handbuch/backup.md, as printed.
 doc_block() {
     awk -v n="$1" '
         /<!-- P-10: scripts\/restore-test.sh runs this block/ { c++; if (c == n) found = 1; next }
         found && /^```/ { if (inside) exit; inside = 1; next }
-        found && inside' "$ROOT/docs/deployment/operations.md"
+        found && inside' "$ROOT/docs/handbuch/backup.md"
 }
 
 # build <tree> <version>: builds that tree's images, or, with RELEASE_TAG set (P-16), pulls the published ones.
@@ -109,7 +109,7 @@ new_host() {
     until docker exec "$name" docker info >/dev/null 2>&1; do
         i=$((i + 1)); [ "$i" -le 60 ] || fail "the Docker daemon of $name did not start"; sleep 1
     done
-    # curl and openssl for install.sh (docs/deployment/README.md); python3 only for tests/Upgrade/snapshot.sh.
+    # curl and openssl for install.sh (docs/handbuch/installation.md); python3 only for tests/Upgrade/snapshot.sh.
     docker exec "$name" apk add -q curl openssl python3 >/dev/null
     empty="$(docker exec "$name" sh -c 'echo "$(docker images -q | wc -l) $(docker ps -aq | wc -l) $(docker volume ls -q | wc -l) $(ls -d /opt/nusszopf* 2>/dev/null | wc -l)"')"
     [ "$empty" = "0 0 0 0" ] || fail "$name is not empty (images, containers, volumes, /opt/nusszopf*: $empty)"
@@ -197,8 +197,8 @@ link() { python3 -c 'import json, sys; d = json.load(open(sys.argv[1])); print(e
 
 doc_block 1 > "$WORK/nusszopf-backup.sh"
 doc_block 2 | sed 's/^docker compose pull$/docker compose pull --ignore-pull-failures/' > "$WORK/restore.sh"
-grep -q "pg_dump" "$WORK/nusszopf-backup.sh" || fail "operations.md has no marked backup script"
-grep -q "pg_restore" "$WORK/restore.sh" || fail "operations.md has no marked restore block"
+grep -q "pg_dump" "$WORK/nusszopf-backup.sh" || fail "backup.md has no marked backup script"
+grep -q "pg_restore" "$WORK/restore.sh" || fail "backup.md has no marked restore block"
 
 step "Build this working copy's release"
 build "$ROOT" "$NEW"
@@ -217,7 +217,7 @@ FAILED_SOURCE="$(q "$CURRENT" "select count(*) from failed_jobs")"
 DOCS="$(sed -n 's/^snapshot .*: \([0-9]*\) search documents.*/\1/p' "$WORK/before.txt")"
 head -1 "$WORK/before.txt"
 
-step "Source host: the backup script from operations.md, run by root's crontab"
+step "Source host: the backup script from backup.md, run by root's crontab"
 docker cp "$WORK/nusszopf-backup.sh" "$CURRENT:/usr/local/bin/nusszopf-backup.sh"
 docker exec "$CURRENT" sh -c 'chmod 700 /usr/local/bin/nusszopf-backup.sh
     echo "* * * * * /usr/local/bin/nusszopf-backup.sh >> /var/log/nusszopf-backup.log 2>&1" | crontab -
@@ -258,7 +258,7 @@ docker rm -f -v "$CURRENT" >/dev/null
 echo "source host destroyed; $BASE no longer answers"
 
 # ------------------------------------------------------------------------------------------------------------------
-step "Target host: empty, then the Restore block from operations.md"
+step "Target host: empty, then the restore block from backup.md"
 CURRENT=nusszopf-restore-target
 new_host "$CURRENT" "$NEW"
 docker exec "$CURRENT" mkdir -p /opt/nusszopf-backups
@@ -290,7 +290,7 @@ echo "nusszopf:health: every check ok, $NEW"
 on "$CURRENT" 'docker compose ps --format "{{.Service}} {{.Status}}"' | sed 's/^/  /'
 on "$CURRENT" 'docker compose ps --format "{{.Service}} {{.Status}}"' | grep -v "locationiq-stub" | grep -vq "(healthy)" && fail "a service is not healthy"
 on "$CURRENT" 'docker compose exec -T php-fpm php artisan schedule:list' | grep -q "newsletter:purge-unconfirmed" || fail "the scheduler has no tasks"
-# Sessions live in Redis, which is not backed up (operations.md, "Backups"): everybody signs in again.
+# Sessions live in Redis, which is not backed up (docs/handbuch/backup.md): everybody signs in again.
 if in_browser_image node tests/Upgrade/session.mjs check "$BASE" p9user05 /work/session.json > "$WORK/session.out" 2>&1; then
     fail "a session from the source is still signed in, although Redis is not part of the backup"
 fi
@@ -360,7 +360,7 @@ q "$CURRENT" "insert into leads (id, email, name, source, consent_version, reque
 q "$CURRENT" "update users set email = 'after-upgrade-user@example.test' where name = 'p9user07'" >/dev/null
 echo "upgraded to $NEW: $(tables | wc -w) tables (before: $(echo "$TABLES_BEFORE" | wc -w)), $(q "$CURRENT" "select count(*) from migrations") migrations (before: $MIGRATIONS_BEFORE); wrote a newsletter subscriber and changed an address"
 
-step "Rollback: operations.md \"Rollback\" = docker compose down, then the Restore block"
+step "Rollback: deployment.md \"Zurückgehen\" = docker compose down, then the restore block of backup.md"
 on "$CURRENT" 'docker compose down' >/dev/null 2>&1
 docker exec -w /root "$CURRENT" sh -eu -c "RESTORE_DIR='$PRE'; . /root/tools/restore.sh" > "$WORK/rollback.out" 2>&1 \
     || { tail -30 "$WORK/rollback.out"; fail "the Restore block failed as a rollback"; }

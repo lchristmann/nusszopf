@@ -2,10 +2,10 @@ import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 /**
- * The public demo and its guided tour (docs/deployment/demo.md). Needs a stack started with NUSSZOPF_DEMO=true,
+ * The public demo and its guided tour (docs/handbuch/demo.md). Needs a stack started with NUSSZOPF_DEMO=true,
  * so it is skipped elsewhere (CI runs it in its own step after the main run, docs/testing/README.md).
  */
-test.skip(!process.env.E2E_DEMO, 'Needs a stack with NUSSZOPF_DEMO=true and E2E_DEMO=1 (docs/deployment/demo.md).');
+test.skip(!process.env.E2E_DEMO, 'Needs a stack with NUSSZOPF_DEMO=true and E2E_DEMO=1 (docs/handbuch/demo.md).');
 
 const STEPS = 8;
 

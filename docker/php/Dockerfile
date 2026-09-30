@@ -12,7 +12,7 @@
 #               entrypoint migrates and caches before PHP-FPM starts.
 #   nginx     - production web image, built FROM the php-fpm stage's own
 #               /var/www/public so the two images can never drift out of sync
-#               (see docs/deployment/README.md, "Why a dedicated nginx image").
+#               (see docs/handbuch/architektur.md, "Der Betrieb als Bauplan").
 
 ARG PHP_VERSION=8.5
 
@@ -70,7 +70,7 @@ RUN composer dump-autoload --optimize --no-dev \
 # `laravel-storage` at `storage/app` — the `php-fpm`/`queue-worker`/
 # `scheduler` services always do (docker-compose.yaml); `web` mounts it
 # read-only so nginx can serve `/storage/...` (avatars) as a static file
-# without a PHP round trip (docs/deployment/README.md, "Persistent storage").
+# without a PHP round trip (docs/handbuch/betrieb.md, "Speicher und Medien").
 RUN ln -sfn ../storage/app/public public/storage
 
 # ---------------------------------------------------------------------------

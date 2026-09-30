@@ -10,7 +10,7 @@ use Meilisearch\Client;
 use Meilisearch\Exceptions\ApiException;
 
 /**
- * The recovery path (docs/deployment/operations.md): the index is derived from the
+ * The recovery path (docs/handbuch/betrieb.md): the index is derived from the
  * database, so `search:reindex` from an empty — or wrong — index must end up where
  * live syncing would have.
  */

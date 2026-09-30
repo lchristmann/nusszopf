@@ -57,7 +57,7 @@
 
                 <x-framed-grid-card.body-col variant="twoCols">
                     @if (\App\Support\Demo::isDemoUser(auth()->user()))
-                        {{-- The shared demo account cannot be deleted or edited (docs/deployment/demo.md). --}}
+                        {{-- The shared demo account cannot be deleted or edited (docs/handbuch/demo.md). --}}
                         <div id="delete" class="mt-10 lg:ml-16 lg:mt-0" data-test="demo-account-note">
                             <x-text as="h2" variant="textMd" class="mb-2">Demo-Account</x-text>
                             <x-text variant="textSm">Das ist ein gemeinsamer Demo-Account mit erfundenen Beispieldaten. Er kann weder gelöscht noch geändert werden, und alle Änderungen werden stündlich zurückgesetzt.</x-text>

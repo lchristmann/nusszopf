@@ -404,7 +404,7 @@ step_6() {
     await "the queue idle" 90 'queue_idle'
     echo "     the jobs ran against the empty Meilisearch: $(index_documents) documents; nusszopf:health: $(health_row search | cut -c1-200)"
     health_ok && fail "6c: the health check does not notice an index without settings"
-    echo "     the documented recovery (operations.md, \"Search index recovery\"):"
+    echo "     the documented recovery (docs/handbuch/betrieb.md, \"Suchindex\"):"
     on 'docker compose exec -T php-fpm php artisan search:reindex' | tail -2 | sed 's/^/     /'
     await "every document written" 90 'test "$(index_documents)" = "$want"'
     await "health ok" 120 'health_ok'
@@ -438,7 +438,7 @@ minutes = sorted({k[0] for k in c})
 stamps = [datetime.datetime.strptime(m, "%Y-%m-%d %H:%M") for m in minutes]
 dup = [(k, v) for k, v in sorted(c.items()) if v > 1]
 # A restart that spans the turn of the minute loses that minute: `schedule:work` starts a minute of tasks only while
-# it is running at :00, and a run that fell into a time the scheduler was down is not made up (operations.md). On
+# it is running at :00, and a run that fell into a time the scheduler was down is not made up (docs/handbuch/betrieb.md). On
 # a fast host the restart is over before :00 and nothing is lost; on a slow one (P-16: GitHub-hosted runners) it is
 # not. What must never happen is a doubled run, or more than one minute in a row lost (P-16, P16-09).
 every = [stamps[0] + datetime.timedelta(minutes=i) for i in range(int((stamps[-1] - stamps[0]).total_seconds() // 60) + 1)]

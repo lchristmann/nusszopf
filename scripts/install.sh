@@ -50,7 +50,7 @@ set_value() {
 }
 
 if [ "$VERSION" = "latest" ]; then DOCS_REF=main; else DOCS_REF="$VERSION"; fi
-DOCS="https://github.com/lchristmann/nusszopf/blob/$DOCS_REF/docs/deployment"
+DOCS="https://github.com/lchristmann/nusszopf/blob/$DOCS_REF/docs/handbuch"
 
 if [ "$MODE" = "upgrade" ]; then
     # P-9, finding P9-01: a release may change docker-compose.yaml (a new mount, a new required setting), so an
@@ -71,7 +71,7 @@ if [ "$MODE" = "upgrade" ]; then
         exit 1
     fi
     CURRENT="$(sed -n 's/^NUSSZOPF_VERSION=//p' .env)"
-    DOCS="https://github.com/lchristmann/nusszopf/blob/$TARGET/docs/deployment"
+    DOCS="https://github.com/lchristmann/nusszopf/blob/$TARGET/docs/handbuch"
 
     # Run again for the same release, the *.previous files already hold the release before it: keep them.
     if [ "$CURRENT" != "$TARGET" ]; then
@@ -98,7 +98,7 @@ if [ "$MODE" = "upgrade" ]; then
         LEGACY="$LEGACY
   TRUSTED_PROXIES=*     trusts every client's claimed address, which defeats the per-address limits on login,
                         registration and the public forms. Use the template's list of private networks, or your
-                        proxy's address (docs/deployment/README.md, \"Reverse proxy and TLS\")."
+                        proxy's address (docs/handbuch/installation.md, \"Reverse Proxy und TLS\")."
     fi
     if grep -q '^MAIL_FROM_ADDRESS=.*@nusszopf\.org' .env; then
         LEGACY="$LEGACY
@@ -130,14 +130,14 @@ Then start it and check it:
   docker compose ps                                          # wait until every service is "healthy"
   docker compose exec php-fpm php artisan nusszopf:health    # shows $TARGET
 
-Documentation: $DOCS/operations.md ("Upgrades", "Rollback")
+Documentation: $DOCS/deployment.md (deploying a release, going back)
 DONE
     exit 0
 fi
 
 if [ -e .env ]; then
     echo ".env already exists; refusing to overwrite it. To move this installation to another release, run" >&2
-    echo "  sh install.sh --upgrade <version>   (docs/deployment/operations.md, \"Upgrades\"); to install again, move .env away." >&2
+    echo "  sh install.sh --upgrade <version>   (docs/handbuch/deployment.md); to install again, move .env away." >&2
     exit 1
 fi
 
@@ -195,6 +195,6 @@ Then start it and check it:
 
 Open $APP_URL and register your account — there is no separate administrator to create.
 
-Documentation: $DOCS/README.md (installation, configuration)
-               $DOCS/operations.md (health, upgrades, backups, troubleshooting)
+Documentation: $DOCS/installation.md (installation), $DOCS/konfiguration.md (settings)
+               $DOCS/betrieb.md (health, logs, queue), $DOCS/backup.md (backups), $DOCS/deployment.md (upgrades)
 DONE

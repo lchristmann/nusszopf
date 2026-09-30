@@ -68,4 +68,4 @@ cmp -s docker-compose.yaml "$WORK/from/docker-compose.yaml" && echo "note: the c
 for path in /up /login /search; do
     [ "$(curl -s -o /dev/null -w '%{http_code}' "$BASE$path")" = "200" ] || fail "$path does not answer 200"
 done
-[ -f docker-compose.yaml.previous ] && [ -f .env.previous ] || fail "the upgrade kept no .previous files (the rollback path of operations.md)"
+[ -f docker-compose.yaml.previous ] && [ -f .env.previous ] || fail "the upgrade kept no .previous files (the rollback path of docs/handbuch/deployment.md)"

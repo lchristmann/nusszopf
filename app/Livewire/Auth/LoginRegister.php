@@ -135,7 +135,7 @@ class LoginRegister extends Component
 
     public function register(): void
     {
-        // A public demo must not collect real addresses (docs/deployment/demo.md); the form is not shown either.
+        // A public demo must not collect real addresses (docs/handbuch/demo.md); the form is not shown either.
         if (Demo::enabled()) {
             $this->dispatch('toast', type: 'error', message: 'In der Demo ist die Registrierung abgeschaltet.');
 

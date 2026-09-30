@@ -47,3 +47,4 @@ junit.xml
 # The static project site (site/README.md) — its own, independent Node project and build output.
 /site/node_modules
 /site/dist
+/site/handbuch

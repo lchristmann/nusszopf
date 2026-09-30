@@ -8,7 +8,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /**
- * The public demo (docs/deployment/demo.md): one shared, password-less account
+ * The public demo (docs/handbuch/demo.md): one shared, password-less account
  * owning fictional sample projects, rebuilt from scratch by {@see self::reset()}.
  *
  * The account has no password, so the login form can never sign in as it; the

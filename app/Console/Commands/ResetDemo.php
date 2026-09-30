@@ -8,7 +8,7 @@ use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
 /**
- * Rebuilds the public demo account and its fictional sample data (docs/deployment/demo.md). Refuses to run unless
+ * Rebuilds the public demo account and its fictional sample data (docs/handbuch/demo.md). Refuses to run unless
  * demo mode is on, so it can never wipe or create an account on an ordinary installation by mistake.
  */
 #[Signature('demo:reset')]

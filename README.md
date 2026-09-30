@@ -1,6 +1,6 @@
-# Nusszopf 2
+# Nusszopf
 
-> Revival and faithful reimplementation of the Nusszopf project.
+> Die quelloffene, selbst hostbare Community-Plattform für Ideen und Projekte.
 
 [![CI](https://github.com/lchristmann/nusszopf/actions/workflows/ci.yml/badge.svg)](https://github.com/lchristmann/nusszopf/actions/workflows/ci.yml)
 [![Security](https://github.com/lchristmann/nusszopf/actions/workflows/security.yml/badge.svg)](https://github.com/lchristmann/nusszopf/actions/workflows/security.yml)
@@ -21,15 +21,18 @@
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
 ![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-CI/CD-2088FF?logo=githubactions&logoColor=white)
 
-Nusszopf is a free and open-source, self-hostable application.
+Der Nusszopf ist eine Community-Plattform, auf der Menschen Projekte einstellen und dazuschreiben, was ihnen noch fehlt:
+Mitstreiter:innen, Räume, Materialien, Geld oder etwas anderes. Er ist freie Software und lässt sich von jeder und jedem selbst
+betreiben, für eine Community, eine Schule, eine Firma oder einen Verein.
 
-The Nusszopf 2 rewrite aims to preserve the historical Nusszopf product — its functionality, domain, workflows, information architecture, and visual design — while replacing its obsolete implementation and infrastructure.
+Diese Fassung ist die Neuimplementierung des ursprünglichen Nusszopf mit moderner Technik. Funktionen, Abläufe und Aussehen
+sind bewusst dieselben geblieben.
 
-## Quick start
+**[Demo ausprobieren](https://nusszopf.org)** · **[Handbuch](docs/handbuch/README.md)** · **[Projektseite](https://lchristmann.github.io/nusszopf/)**
 
-See `README-DEV.md` for development setup.
+## Selbst hosten
 
-Self-hosting (Docker and a domain name; nothing else to install):
+Du brauchst einen Server mit Docker und eine Domain, sonst nichts:
 
 <!-- quickstart:start -->
 <!-- Transcluded verbatim into site/index.html at build time (site/vite.config.js) — edit only here. -->
@@ -43,56 +46,40 @@ docker compose up -d
 ```
 <!-- quickstart:end -->
 
-`releases/latest` points at the newest stable release (`1.0.0` or later). GitHub's `latest` never points at a pre-release, so to install a
-release candidate, name it: `curl -fsSLO https://github.com/lchristmann/nusszopf/releases/download/1.0.0-rc.2/install.sh`,
-then `sh install.sh https://nusszopf.example.org 1.0.0-rc.2` (`docs/deployment/README.md`).
+`releases/latest` ist die neueste stabile Version. Das Handbuch führt Schritt für Schritt durch alles Weitere:
+[Installation](docs/handbuch/installation.md), [Konfiguration](docs/handbuch/konfiguration.md),
+[Deployment](docs/handbuch/deployment.md), [Betrieb](docs/handbuch/betrieb.md) und
+[Backup und Wiederherstellung](docs/handbuch/backup.md).
 
-See `docs/deployment/README.md` for the details (reverse proxy, mail, configuration) and `docs/deployment/operations.md` for running it (health, backups, upgrades, recovery, troubleshooting).
+## Mitentwickeln
 
-## Development
+Die Entwicklung läuft komplett in Docker; auf Deinem Rechner brauchst Du nur Docker, Docker Compose und Git.
+Der Einstieg ist [Lokale Entwicklung](docs/handbuch/entwicklung.md), danach [Architektur](docs/handbuch/architektur.md),
+[Geschäftslogik](docs/handbuch/geschaeftslogik.md) und [Tests und Qualität](docs/handbuch/tests.md).
 
-The development workflow is Docker-based and designed to be familiar to developers working on LCxHolz. Everything
-runs in containers; the host needs Docker, Docker Compose and Git. See `README-DEV.md`.
+## Dokumentation
 
-## Testing
+| Wenn Du … | dann lies |
+|---|---|
+| einen Nusszopf betreiben willst | [Installation](docs/handbuch/installation.md) → [Konfiguration](docs/handbuch/konfiguration.md) → [Deployment](docs/handbuch/deployment.md) |
+| etwas kaputt ist | [Fehlerbehebung](docs/handbuch/fehlerbehebung.md) |
+| mitentwickeln willst | [Lokale Entwicklung](docs/handbuch/entwicklung.md), [Konventionen](docs/handbuch/konventionen.md) |
+| wissen willst, warum etwas so ist | die englische Spezifikation unter [`docs/`](docs/README.md), zuerst [`decisions-register.md`](docs/rewrite/decisions-register.md) und [`bugs.md`](docs/rewrite/bugs.md) |
 
-See `docs/testing/README.md`.
+Versionen, Änderungen und Docker-Images stehen auf der [Releases-Seite](https://github.com/lchristmann/nusszopf/releases) und
+im [Changelog](CHANGELOG.md).
 
-## Architecture
+## Mitwirken, Sicherheit, Verhaltenskodex
 
-See `docs/architecture/README.md`.
+Beiträge sind willkommen: siehe [`CONTRIBUTING.md`](CONTRIBUTING.md). Sicherheitslücken meldest Du bitte privat, wie in
+[`SECURITY.md`](SECURITY.md) beschrieben. Alle Beteiligten befolgen den [Verhaltenskodex](CODE_OF_CONDUCT.md).
 
-## Documentation
+## Lizenz
 
-See `docs/README.md`.
+Der Nusszopf ist freie Software unter der **GNU General Public License v3.0 oder später** (`GPL-3.0-or-later`), siehe
+[`LICENSE`](LICENSE). Komponenten Dritter und ihre Lizenzen nennt [`NOTICE`](NOTICE), die Herkunft der Assets
+[`docs/legal/provenance.md`](docs/legal/provenance.md).
 
-Important specifications include design, domain, user journeys, search, authentication, email, and release process.
-
-Start with `docs/rewrite/decisions-register.md` (what's decided vs. what needs a human call), `docs/rewrite/bugs.md` (classified historical defects) and `docs/rewrite/README.md`, which lists the ten implemented vertical slices (registration and login through the public shell: Home, legal pages, error pages, SEO). All feature slices are done. The remaining work before the first release is the finish-line phases, whose evidence is in `docs/release/parity/README.md`.
-
-## Self-hosting
-
-Nusszopf is intended to be operated by its users. The reference deployment uses Docker Compose; `docs/deployment/README.md`
-is the installation guide and `docs/deployment/operations.md` the operator's handbook (health checks, backups and restore,
-upgrades and rollback, search recovery, troubleshooting).
-
-## Releases
-
-Released versions, changelogs, upgrade instructions, and Docker images are documented under `docs/release/`.
-
-## Contributing, security and conduct
-
-Contributions are welcome: see [`CONTRIBUTING.md`](CONTRIBUTING.md). Please report vulnerabilities privately as described
-in [`SECURITY.md`](SECURITY.md). Everyone taking part is expected to follow the
-[Code of Conduct](CODE_OF_CONDUCT.md).
-
-## License
-
-Nusszopf is free software, licensed under the **GNU General Public License v3.0 or later**
-(`GPL-3.0-or-later`); see [`LICENSE`](LICENSE). Third-party components and their licenses are listed
-in [`NOTICE`](NOTICE); where the assets come from is in [`docs/legal/provenance.md`](docs/legal/provenance.md).
-
-Nusszopf 2 is a reimplementation of the historical Nusszopf (`web-nusszopf`, `be-nusszopf`,
-`emails-nusszopf`), which is also licensed under the GPL v3.0. Its design, copy and email templates
-are reproduced here as derivative works under the same license; the original authors retain their
-copyright in that material.
+Der Nusszopf ist eine Neuimplementierung des ursprünglichen Nusszopf (`web-nusszopf`, `be-nusszopf`, `emails-nusszopf`), der
+ebenfalls unter der GPL v3.0 steht. Design, Texte und E-Mail-Vorlagen sind hier als abgeleitete Werke unter derselben Lizenz
+übernommen; die ursprünglichen Autor:innen behalten ihr Urheberrecht an diesem Material.

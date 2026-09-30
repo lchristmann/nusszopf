@@ -118,7 +118,7 @@ it('links the contribution and installation guides of the configured source repo
 
     $this->get('/')
         ->assertSee('href="https://git.example/fork/nusszopf/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer"', false)
-        ->assertSee('href="https://git.example/fork/nusszopf/blob/main/docs/deployment/README.md" target="_blank" rel="noopener noreferrer"', false);
+        ->assertSee('href="https://git.example/fork/nusszopf/blob/main/docs/handbuch/installation.md" target="_blank" rel="noopener noreferrer"', false);
 });
 
 it('points the feedback button at the operator mailbox', function () {
@@ -164,4 +164,11 @@ it('shows the demo card above the how-to only in demo mode, for visitors and the
         ->assertSeeInOrder(['data-test="home-demo"', 'Probier den Nusszopf aus!', 'action="'.route('demo.login').'"', 'Demo ausprobieren', 'Geführte Tour starten', 'data-test="home-how-to"'], false);
 
     $this->actingAs(User::factory()->create())->get('/')->assertDontSee('data-test="home-demo"', false);
+});
+
+it('links the German Handbuch below the demo actions, not as a third button', function () {
+    config(['nusszopf.demo' => true, 'nusszopf.source_url' => 'https://git.example/fork/nusszopf/']);
+
+    $this->get('/')
+        ->assertSeeInOrder(['Geführte Tour starten', 'data-test="home-demo-handbook"', 'href="https://git.example/fork/nusszopf/blob/main/docs/handbuch/README.md"', 'Zum Handbuch', 'data-test="home-how-to"'], false);
 });

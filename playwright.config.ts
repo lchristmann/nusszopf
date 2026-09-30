@@ -9,7 +9,7 @@ const DESKTOP_ONLY = /specs\/(a11y|security)\/|zz-aria/;
  * docs/testing/README.md: Playwright specs under tests/E2E/specs/<actor>/,
  * Page Object Models under tests/E2E/pages/, one shared fixture/env-constants
  * file under tests/E2E/support/ — every browser engine as a separate
- * parallel project, matching LCxHolz's convention.
+ * parallel project.
  */
 export default defineConfig({
     testDir: './tests/E2E/specs',

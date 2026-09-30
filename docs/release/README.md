@@ -12,9 +12,9 @@ This directory documents the full lifecycle:
 - [`breaking-changes.md`](breaking-changes.md) — how breaking changes are flagged and handled
 - [`parity/`](parity/README.md) — the finish-line parity report (roadmap §7.7): one page per phase P-1…P-16, then the maintainer sign-off
 
-## Process reference
+## Process
 
-[Waffle Dashboard](../references/waffle-dashboard.md) is the FOSS lifecycle reference: semantic versioning, unprefixed tags, Docker image publishing, and operator-facing backup/upgrade documentation. Its release *mechanics* (build/push/tag by hand) are a single-maintainer minimum, not the target — Nusszopf targets LCxHolz-level engineering discipline (`CLAUDE.md`), so the release build/publish/tag steps are automated in CI rather than run by hand. See `docs/references/lcxholz.md` for the CI/automation reference and `docs/rewrite/architecture-decisions.md` for the decisions this implied (registry choice, image layout), all now decided.
+The release build, publish and tag steps are automated in CI rather than run by hand (`CLAUDE.md`). `docs/rewrite/architecture-decisions.md` records the decisions this implied (registry choice, image layout), all now decided.
 
 ## Status
 

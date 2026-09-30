@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
 
 /**
- * The public demo (docs/deployment/demo.md): a shared, password-less account with fictional data, entered with one
+ * The public demo (docs/handbuch/demo.md): a shared, password-less account with fictional data, entered with one
  * button, protected from destructive changes and rebuilt by `demo:reset`.
  */
 beforeEach(fn () => config(['nusszopf.demo' => true]));

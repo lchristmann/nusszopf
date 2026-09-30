@@ -23,7 +23,7 @@ Different references have different responsibilities.
 
 ### Historical Nusszopf repositories
 
-Located under `../historical/`:
+The archived repositories of the original Nusszopf (GitHub organization `Nusszopf`). Clone them next to this repository, under `../historical/`, when you need the original code (`docs/handbuch/konventionen.md`, "Wo die Wahrheit liegt"):
 
 - `../historical/web-nusszopf`
 - `../historical/be-nusszopf`
@@ -31,25 +31,9 @@ Located under `../historical/`:
 
 These are the primary sources of truth for product behavior, domain, data model, workflows, permissions, routes, screens, navigation, UI design, responsive behavior, authentication, search, email behavior, and E2E journeys.
 
-### LCxHolz
-
-Located at `../development-reference/lcxholz`.
-
-Reference for developer experience, Laravel conventions, Docker development workflow, Livewire, Tailwind, testing, automation, CI, static analysis, documentation, Claude Code, and onboarding.
-
-Do not copy LCxHolz product/domain behavior.
-
-### Waffle Dashboard
-
-Located at `../foss-reference/waffle-dashboard`.
-
-Reference for FOSS project organization, releases, versioning, changelog, GitHub Releases, CI/CD, Docker image publishing, maintenance, contribution documentation, self-hosting documentation, and upgrade processes.
-
-Do not copy Waffle Dashboard product/domain behavior.
-
 ### Laravel Docker examples
 
-Located at `../infrastructure-reference/laravel-docker-examples`.
+Public repository `rw4lll/laravel-docker-examples`, the base Nusszopf's Docker setup began from; findings in `docs/references/laravel-docker-examples.md`.
 
 Technical reference for Docker Compose, development/production separation, Dockerfiles, PHP-FPM, Nginx, PostgreSQL, Redis, production builds, health checks, and multi-stage builds.
 
@@ -109,7 +93,7 @@ Tailwind is an implementation tool, not the design source of truth.
 
 ## Engineering quality
 
-Use the LCxHolz level of engineering discipline as the target.
+Hold the code to a high standard of engineering discipline.
 
 Expect automated tests, browser/E2E tests, static analysis, formatting, CI, reproducible Docker environments, documented workflows, regression tests, clear architecture boundaries, safe migrations, reliable background jobs, and maintainable code.
 
@@ -174,8 +158,6 @@ A feature is complete only when historical behavior is understood, domain rules 
 - invent UI
 - introduce SaaS concepts
 - copy historical infrastructure blindly
-- copy LCxHolz business logic
-- copy Waffle Dashboard business logic
 - treat a passing happy-path test as sufficient
 - resolve a documented Unknown (`docs/rewrite/open-questions.md`) by guessing instead of investigating or escalating
 - fix a suspected historical bug that has no entry in `docs/rewrite/bugs.md`/`docs/rewrite/intentional-changes.md`

@@ -60,7 +60,7 @@
     @livewireStyles
 </head>
 @php
-    // The guided tour belongs to the shared demo account only (docs/deployment/demo.md).
+    // The guided tour belongs to the shared demo account only (docs/handbuch/demo.md).
     $tour = \App\Support\Demo::enabled() && \App\Support\Demo::isDemoUser(auth()->user());
     $tourProject = $tour ? \App\Support\Demo::featuredProject() : null;
 @endphp
@@ -69,7 +69,7 @@
     @if ($tourProject)
         data-tour-enabled
         data-tour-project="{{ route('projects.show', $tourProject, false) }}"
-        data-tour-install="{{ rtrim((string) config('nusszopf.source_url'), '/') }}/blob/main/docs/deployment/README.md"
+        data-tour-install="{{ rtrim((string) config('nusszopf.source_url'), '/') }}/blob/main/docs/handbuch/installation.md"
     @endif
 >
     {{--

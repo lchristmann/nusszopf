@@ -7,9 +7,9 @@
 # next to a `.env` (copy `.env.production.example`, or run `install.sh`, which also generates the
 # secrets). Which release runs is decided by NUSSZOPF_VERSION in that `.env`. To upgrade, run the new release's
 # `sh install.sh --upgrade <version>`, which also replaces this file, then `docker compose pull && docker compose up -d`
-# (docs/deployment/operations.md, "Upgrades"). Keep your own changes in a compose.override.yaml, not here.
+# (docs/handbuch/deployment.md). Keep your own changes in a compose.override.yaml, not here.
 #
-# Documentation (paths such as docs/deployment/README.md below): https://github.com/lchristmann/nusszopf
+# Documentation (paths such as docs/handbuch/installation.md below): https://github.com/lchristmann/nusszopf
 #
 # Contributors build the same two images from a working copy with
 #
@@ -29,12 +29,12 @@ x-app: &app
   volumes:
     - laravel-storage:/var/www/storage/app
     # Your Impressum, Rechtliches and Datenschutz texts (legal-notice.md, legal-policy.md,
-    # privacy.md) — see docs/deployment/README.md, "Legal pages". Edits show up immediately.
+    # privacy.md) — see docs/handbuch/konfiguration.md, "Rechtstexte". Edits show up immediately.
     - ./legal:/var/www/legal:ro
 
 services:
   # Serves the static assets and passes everything else to php-fpm. It is the only service that
-  # publishes a port: put your TLS-terminating reverse proxy in front of it (docs/deployment/README.md),
+  # publishes a port: put your TLS-terminating reverse proxy in front of it (docs/handbuch/installation.md, "Reverse Proxy und TLS"),
   # and set APP_BIND=127.0.0.1 in .env when the proxy runs on the same host.
   web:
     image: ghcr.io/lchristmann/nusszopf-web:${NUSSZOPF_VERSION:?Set NUSSZOPF_VERSION in .env to the release you want to run}
@@ -44,7 +44,7 @@ services:
     # Read-only: `web` only ever serves uploaded files (avatars), never
     # writes them. Resolves through the `public/storage` symlink baked into
     # both images at build time (docker/php/Dockerfile) — `php-fpm` is the
-    # only writer (docs/deployment/README.md, "Persistent storage").
+    # only writer (docs/handbuch/betrieb.md, "Speicher und Medien").
     volumes:
       - laravel-storage:/var/www/storage/app:ro
     depends_on:
@@ -71,7 +71,7 @@ services:
         condition: service_healthy
 
   # Background jobs — search indexing today, e-mail later. A failed job is retried up to 5 times with
-  # growing pauses (10 s, 30 s, 1 min, 2 min), then kept in `failed_jobs` (docs/deployment/operations.md).
+  # growing pauses (10 s, 30 s, 1 min, 2 min), then kept in `failed_jobs` (docs/handbuch/betrieb.md).
   queue-worker:
     <<: *app
     command: ["php", "artisan", "queue:work", "--tries=5", "--backoff=10,30,60,120", "--max-time=3600"]

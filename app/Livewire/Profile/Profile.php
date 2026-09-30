@@ -57,7 +57,7 @@ class Profile extends Component
 
         $user = Auth::user();
 
-        // The shared demo account has no real mailbox (docs/deployment/demo.md).
+        // The shared demo account has no real mailbox (docs/handbuch/demo.md).
         if (Demo::isDemoUser($user)) {
             $this->dispatch('toast', type: 'error', message: 'In der Demo ist die Newsletter-Anmeldung deaktiviert.');
 

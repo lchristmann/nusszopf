@@ -9,7 +9,7 @@ use Illuminate\Console\Command;
 
 /**
  * The operator's view of an installation: the version that runs and each dependency's state,
- * with a non-zero exit when something is wrong (docs/deployment/operations.md, "Health checks").
+ * with a non-zero exit when something is wrong (docs/handbuch/betrieb.md, "Gesundheit prüfen").
  */
 #[Signature('nusszopf:health {--only= : Report only this check (database, redis, search, scheduler, queue, failed_jobs); used by the container health checks}')]
 #[Description('Show the running version and check the database, Redis, search, scheduler, queue worker and failed jobs')]

@@ -12,7 +12,7 @@ class DatabaseSeeder extends Seeder
      * Seed the application's database with local-development fixtures.
      *
      * Nusszopf has no admin/staff role and no first-user bootstrap step
-     * (docs/deployment/README.md, "Installation (operator path)") — this
+     * (docs/handbuch/installation.md, "Schritt für Schritt") — this
      * seeder exists purely for a contributor's local environment, not for
      * production installs, so it deliberately does not run in `compose.prod.yaml`.
      */

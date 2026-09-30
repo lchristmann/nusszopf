@@ -7,7 +7,7 @@ use Illuminate\Support\Str;
 /**
  * The operator's own legal texts (decision A-4): Markdown files in
  * `config('nusszopf.legal_path')`. The project ships none — a page whose file
- * is missing or empty says so instead (docs/deployment/README.md).
+ * is missing or empty says so instead (docs/handbuch/installation.md).
  */
 final class LegalText
 {

@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
- * docs/deployment/operations.md, "Health checks": /up is the liveness probe, /health the operator's
+ * docs/handbuch/betrieb.md, "Gesundheit prüfen": /up is the liveness probe, /health the operator's
  * dependency view, `nusszopf:health` the same from the shell.
  */
 function beat(string $key, int $secondsAgo = 0): void

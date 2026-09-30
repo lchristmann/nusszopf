@@ -12,7 +12,7 @@ use Illuminate\Console\Command;
  * confirms subscribers but sends no newsletter issues; an operator sends them
  * with a tool of their own, from this list. Only confirmed subscribers, with
  * their consent record. The external sender must link to this instance's
- * `/newsletter/unsubscribe/lead` page (docs/deployment/operations.md,
+ * `/newsletter/unsubscribe/lead` page (docs/handbuch/betrieb.md,
  * "Newsletter subscribers") so the `leads` table stays the source of truth —
  * export again before every send.
  */

@@ -116,9 +116,8 @@ These are established and should not be silently re-litigated by a future contri
   bug-fix protocol, not silent "improvement" (`CLAUDE.md`, `docs/rewrite/bugs.md`).
 - Historical bugs are fixed deliberately and individually (`docs/rewrite/bugs.md`,
   `docs/rewrite/intentional-changes.md`) — nine are already fully spec'd (BUG-001 through BUG-009).
-- LCxHolz is the engineering-quality/DX reference; Waffle Dashboard is the FOSS-lifecycle reference;
-  official Laravel Docker examples are the Docker-implementation reference — none of the three are
-  product/domain sources (`docs/references/README.md`).
+- The official Laravel Docker examples are the Docker-implementation reference — not a
+  product/domain source (`docs/references/README.md`).
 - Semantic versioning, unprefixed tags (`1.2.0`, not `v1.2.0`), starting at `0.x.y` until the
   first vertical slice(s) reach historical parity (`docs/release/versioning.md`). **Amended 2026-09-26 (P-16, maintainer):**
   the first tag is `1.0.0-rc.1`; every tag before the P-17 sign-off is a `1.0.0-rc.N` pre-release and `0.x` is not used.
@@ -126,7 +125,7 @@ These are established and should not be silently re-litigated by a future contri
   (`docs/release/changelog.md`).
 - Release build/publish/tag automated via GitHub Actions, gated on the full quality-gate suite
   passing (`docs/rewrite/architecture-decisions.md`).
-- Operators get a standalone, `image:`-only `docker-compose.yaml` (Waffle Dashboard's pattern),
+- Operators get a standalone, `image:`-only `docker-compose.yaml` (image-only),
   separate from the contributor-facing `compose.dev.yaml`/`compose.prod.yaml` pair
   (`docs/deployment/README.md`).
 - Reverse proxy/TLS is documented as operator-owned (Nginx Proxy Manager primary, Caddy/Traefik as
@@ -135,10 +134,10 @@ These are established and should not be silently re-litigated by a future contri
   (`docs/development/quality.md`).
 - Nusszopf 2's application image builds its own Vite assets in its own multi-stage Dockerfile, and
   the nginx image is built `FROM` that exact application image tag (no shared asset volume) —
-  Waffle Dashboard's pattern, chosen specifically to avoid a demonstrated defect in the Laravel
+  chosen specifically to avoid a demonstrated defect in the Laravel
   Docker examples reference (`docs/references/laravel-docker-examples.md` §4).
-- Dedicated `queue-worker` and `scheduler` Compose services (LCxHolz's pattern) — Nusszopf has real
-  background work (search indexing, mail) that needs them, unlike two of the three references.
+- Dedicated `queue-worker` and `scheduler` Compose services — Nusszopf has real
+  background work (search indexing, mail) that needs them.
 
 - Mail format (decided by the maintainer 2026-09-26, P-13; P13-03): every Nusszopf mail is **HTML-only**, with no
   `text/plain` alternative. It is the intended format, not a defect; do not add text parts. It was received and

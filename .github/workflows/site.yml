@@ -1,6 +1,7 @@
 name: Site
 
-# Builds and deploys the static project site (site/README.md) to GitHub Pages. Entirely independent
+# Builds and deploys the static project site (site/README.md), including the Handbuch rendered from
+# docs/handbuch/, to GitHub Pages. Entirely independent
 # of ci.yml/release.yml: the site has no PHP, no runtime services, and is not part of the
 # application's Docker images or release process, so it is not gated on the app's own checks and
 # only runs when the site's own files change.
@@ -9,6 +10,7 @@ on:
     branches: [main]
     paths:
       - "site/**"
+      - "docs/handbuch/**"
       - "resources/css/tokens.css"
       - "resources/css/components.css"
       - "README.md"

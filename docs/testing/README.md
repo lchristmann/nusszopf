@@ -1,6 +1,6 @@
 # Testing Strategy
 
-Nusszopf's testing pyramid follows the shape confirmed in the LCxHolz reference (`docs/references/lcxholz.md` §6): **Feature-test-heavy, unit tests where isolated logic warrants it, and a small, targeted set of browser/E2E tests for the journeys that matter.** Business rules belong in Feature tests, not duplicated at length in E2E specs. This document defines the strategy; `docs/development/quality.md` defines the gates that enforce it; `docs/journeys/README.md` is the shared source of truth both Pest and Playwright specs should cite.
+Nusszopf's testing pyramid follows a common, pragmatic shape: **Feature-test-heavy, unit tests where isolated logic warrants it, and a small, targeted set of browser/E2E tests for the journeys that matter.** Business rules belong in Feature tests, not duplicated at length in E2E specs. This document defines the strategy; `docs/handbuch/tests.md` defines the gates that enforce it; `docs/journeys/README.md` is the shared source of truth both Pest and Playwright specs should cite.
 
 ## Unit tests
 
@@ -14,14 +14,14 @@ Every row in `docs/security/authorization-matrix.md` needs both an allow-case an
 
 ## Browser (Playwright) tests
 
-A small number of important user journeys through the real UI, per role/actor, translated from the historical E2E suite (`../historical/web-nusszopf/projects/e2e`) and validated against `docs/journeys/README.md`. Adopt LCxHolz's Playwright conventions:
+A small number of important user journeys through the real UI, per role/actor, translated from the historical E2E suite (`../historical/web-nusszopf/projects/e2e`) and validated against `docs/journeys/README.md`. Playwright conventions:
 
 - **Page Object Model** under `tests/E2E/pages/`, specs under `tests/E2E/specs/<actor>/`.
 - **One fixture/env-constants file** (`tests/E2E/support/env.ts`) declaring the constants specs import (password, unique-name helpers), so drift is caught in one place instead of scattered magic strings.
 - **The demo spec** (`tests/E2E/specs/demo/`) needs a stack started with `NUSSZOPF_DEMO=true` and `E2E_DEMO=1`; it is skipped otherwise. CI runs it in its own step after the main run, once per Playwright project (`docs/deployment/demo.md`).
 - **`data-testid` attributes** on interactive elements Playwright needs to target reliably, matched onto the historical UI structure (`docs/design/components.md`) rather than invented ad hoc.
-- **No shared seeded accounts and no `global-setup`.** Every spec registers its own account through the real registration screen (`tests/E2E/support/session.ts`, `registerFreshUser`) with names made unique per run, so specs never collide and registration itself is exercised. This deliberately differs from LCxHolz's seeded-role `storageState` pattern: Nusszopf has no roles to seed, and the development index and database outlive every test.
-- Run against every browser engine Playwright supports in CI as separate parallel jobs (mirroring LCxHolz's per-engine matrix), not one job looping serially over engines.
+- **No shared seeded accounts and no `global-setup`.** Every spec registers its own account through the real registration screen (`tests/E2E/support/session.ts`, `registerFreshUser`) with names made unique per run, so specs never collide and registration itself is exercised. Nusszopf has no roles to seed, and the development index and database outlive every test.
+- Run against every browser engine Playwright supports in CI as separate parallel jobs, not one job looping serially over engines.
 - **Emulated devices (P-5, `docs/release/parity/P-05-browsers-devices.md`).** Three more projects run as their own CI jobs:
   `mobile-safari` (iPhone SE 3rd gen, WebKit, 375 px) and `mobile-chrome` (Galaxy S24, Chromium, 360 px) run every
   journey spec plus `tests/E2E/specs/devices/`; `tablet-safari` (iPad Mini) runs only `specs/devices/`. The keyboard,
@@ -133,7 +133,7 @@ A small number of important user journeys through the real UI, per role/actor, t
 `scripts/smoke-test.sh` (run from the host, needs Docker, curl and openssl; CI job "Production stack") builds the two production images from the working copy, installs into a fresh temporary directory exactly
 as an operator would (`install.sh` against the repository's own `docker-compose.yaml` and `.env.production.example`), starts the stack, waits for every healthcheck, and checks: the release is baked into the images,
 `/up`, `/search`, `/login` and a built stylesheet are served, migrations ran and the caches are warm, an unknown page is a plain 404, the security headers are present once with no PHP or nginx version and no link built from a forged `Host` (P-4), `/health` turns 200 and only the token reveals details, and `search:reindex` runs.
-`SMOKE_KEEP=1` leaves the stack running for manual drills (`docs/deployment/operations.md`). 
+`SMOKE_KEEP=1` leaves the stack running for manual drills (`docs/handbuch/betrieb.md`). 
 `scripts/prod-e2e.sh` (phase P-7, `docs/release/parity/P-07-production-e2e.md`; CI job `production-e2e`) runs the whole
 Playwright suite, every project, against those images. It installs `docker-compose.yaml` with `install.sh` as the smoke
 test does and layers `tests/E2E/production/compose.e2e.yaml` on it, which adds only test doubles: Mailpit as the SMTP
@@ -190,8 +190,8 @@ It then checks:
 ### Backup/restore drill (P-10, `docs/release/parity/P-10-backup-restore.md`)
 
 `sh scripts/restore-test.sh [--suite] [--rollback-from <ref>]` runs the backup and restore of
-`docs/deployment/operations.md`. It does not reimplement them: it takes the backup script and the Restore block out of
-`operations.md` by their markers and runs them as printed, so the page cannot drift from what is tested. The only
+`docs/handbuch/backup.md`. It does not reimplement them: it takes the backup script and the restore block out of
+`backup.md` by their markers and runs them as printed, so the page cannot drift from what is tested. The only
 change is `--ignore-pull-failures` on the `docker compose pull` line, because the Nusszopf images are built locally.
 Each host is a separate Docker daemon (`docker:dind`, privileged), so the target starts genuinely empty. CI does not
 run it; it is a release step, like the upgrade test. It does the following:
@@ -227,7 +227,7 @@ drills "Rollback":
 ### Search index recovery drill (P-11, `docs/release/parity/P-11-search-recovery.md`)
 
 `sh scripts/search-recovery-test.sh` loses the search index in four ways and repairs it each time with the blocks of
-`docs/deployment/operations.md`, "Search index recovery". Like the restore drill, it takes the blocks out of the page by
+`docs/handbuch/betrieb.md`, "Suchindex". Like the restore drill, it takes the blocks out of the page by
 their markers and runs them as printed. It uses one host, a separate Docker daemon (`docker:dind`, privileged). CI does
 not run it; it is a release step. It does the following:
 1. Installs the working copy with `install.sh` and fills it with `tests/Upgrade/seed.php`: public and private projects,
@@ -291,7 +291,7 @@ Because visual fidelity is a hard requirement (`CLAUDE.md`, `.claude/rules/02-vi
 
 ## Regression coverage
 
-Every historical bug knowingly fixed during the rewrite ships with a regression test in the same change (see `docs/development/quality.md`). The regression test should assert the *corrected* behavior and, where practical, be named or commented so a future contributor can see which historical defect it guards against.
+Every historical bug knowingly fixed during the rewrite ships with a regression test in the same change (see `docs/handbuch/tests.md`). The regression test should assert the *corrected* behavior and, where practical, be named or commented so a future contributor can see which historical defect it guards against.
 
 ## Search and mail testing
 
@@ -332,8 +332,8 @@ tests/
 └── Upgrade/, SearchRecovery/, QueueScheduler/ — the fixtures and probes of the release drills (`scripts/*-test.sh`)
 ```
 
-This mirrors the LCxHolz convention (`docs/references/lcxholz.md` §6); the actor set is visitor and user, because Nusszopf has no staff role.
+The actor set is visitor and user, because Nusszopf has no staff role.
 
 ## CI
 
-Every gate in this document runs locally with the command CI uses (`docs/development/quality.md`, "What CI must mirror exactly"). `.github/workflows/ci.yml` runs, in parallel: Pint, Larastan, the Pest suite (against PostgreSQL, Redis and Meilisearch service containers), the frontend build, the production-stack smoke test, the Playwright suite on the production images, the Playwright suite per engine and device project on the development stack, and the visual comparison. The release workflow (`release.yml`) calls the same workflow as its gate, so an image is never published from a tag whose checks fail.
+Every gate in this document runs locally with the command CI uses (`docs/handbuch/tests.md`). `.github/workflows/ci.yml` runs, in parallel: Pint, Larastan, the Pest suite (against PostgreSQL, Redis and Meilisearch service containers), the frontend build, the production-stack smoke test, the Playwright suite on the production images, the Playwright suite per engine and device project on the development stack, and the visual comparison. The release workflow (`release.yml`) calls the same workflow as its gate, so an image is never published from a tag whose checks fail.

@@ -1,11 +1,5 @@
 # Breaking Changes
 
-## Reference finding (Waffle Dashboard, Confirmed)
-
-No documented breaking-change procedure exists in the reference project. Across ten releases (`1.0.0` through `2.5.0`), including at least one MAJOR bump (`1.3.0` → `2.1.0`), there is no dedicated migration note, upgrade warning, or breaking-change section in the GitHub Release notes format described in `DEVELOPER-DOCS.md` (a plain `## What's Changed` bullet list). Whatever communication happened around the `1.x` → `2.x` jump is not captured in the reference materials available here (**Unknown** what changed or how it was communicated to existing operators, if at all).
-
-This is a gap, not a pattern to imitate: Waffle Dashboard is a single-maintainer project where the maintainer is also typically the only operator, so undocumented breaking changes carry low real-world risk. Nusszopf explicitly targets third-party self-hosting operators (`CLAUDE.md` → Self-hosting), so this gap must be closed rather than inherited.
-
 ## Policy for Nusszopf (decided with the changelog format; first exercised by P-9)
 
 - A MAJOR version bump is the only place a breaking change may occur (see [`versioning.md`](versioning.md)).
@@ -21,7 +15,7 @@ This is a gap, not a pattern to imitate: Waffle Dashboard is a single-maintainer
 
 ## Operator action in practice (P-9, 2026-09-25)
 
-`install.sh --upgrade` (`docs/deployment/operations.md`, "Upgrades") already brings the new `docker-compose.yaml` and
+`install.sh --upgrade` (`docs/handbuch/deployment.md`) already brings the new `docker-compose.yaml` and
 lists every setting `.env` lacks. So a new *optional* setting, or a changed compose file, needs no changelog tag.
 A **Migration required:** entry is needed when:
 - a new setting must be set and has no default (`docker compose` then refuses to start);
@@ -34,4 +28,4 @@ A **Migration required:** entry is needed when:
 
 ## Status
 
-Confirmed: no breaking-change documentation practice exists in Waffle Dashboard to adopt. The policy above is Nusszopf's own: the `**Breaking:**`/`**Migration required:**` tags are part of the decided changelog format (`docs/release/changelog.md`), and P-9 tested the triggers listed under "Operator action in practice". No release has used the tags yet (`CHANGELOG.md` is empty until P-16). One trigger remains inferred: the steps for a changed Meilisearch pin were not exercised.
+The policy above is Nusszopf's own: the `**Breaking:**`/`**Migration required:**` tags are part of the decided changelog format (`docs/release/changelog.md`), and P-9 tested the triggers listed under "Operator action in practice". No release has needed the tags yet (`1.0.0` is the first stable release). One trigger remains inferred: the steps for a changed Meilisearch pin were not exercised.

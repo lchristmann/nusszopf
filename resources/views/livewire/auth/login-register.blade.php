@@ -82,7 +82,7 @@
             </div>
         @endif
     @elseif ($this->demo())
-        {{-- Public demo: no registration, so no real address is ever collected (docs/deployment/demo.md). --}}
+        {{-- Public demo: no registration, so no real address is ever collected (docs/handbuch/demo.md). --}}
         <div class="w-full mt-5 text-center text-steel-700" data-test="demo-register-note">
             <x-text variant="textSm">In der Demo ist die Registrierung abgeschaltet – so werden keine echten E-Mail-Adressen gesammelt. Probiere den Nusszopf stattdessen mit dem Demo-Account aus.</x-text>
             <form method="POST" action="{{ route('demo.login') }}" class="mt-6">

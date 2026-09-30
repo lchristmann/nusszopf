@@ -68,8 +68,8 @@ Concrete mapping, derived from the archaeology in `docs/domain/`, `docs/authenti
 
 | Historical | Nusszopf 2 | Notes |
 |---|---|---|
-| Vercel (webapp + auth apps hosting) | Docker Compose self-hosting (per `docs/deployment/README.md`) | Complete replacement — Vercel's serverless model has no self-hosted equivalent needed; this is infrastructure, not product. |
-| Heroku (`be-nusszopf/heroku.yml`, Hasura hosting) | Same Docker Compose stack, `php-fpm`/`postgres`/`redis`/`meilisearch` services | See `docs/deployment/README.md`. |
+| Vercel (webapp + auth apps hosting) | Docker Compose self-hosting (per `docs/handbuch/installation.md`) | Complete replacement — Vercel's serverless model has no self-hosted equivalent needed; this is infrastructure, not product. |
+| Heroku (`be-nusszopf/heroku.yml`, Hasura hosting) | Same Docker Compose stack, `php-fpm`/`postgres`/`redis`/`meilisearch` services | See `docs/handbuch/installation.md`. |
 | DigitalOcean Spaces (profile pictures, Meilisearch droplet) | S3-compatible object storage via Laravel's filesystem abstraction (self-hosted MinIO or any S3-compatible provider, operator's choice) — **decision needed**: is object storage required for a first vertical slice, or can avatars start as local disk storage with S3 as a documented upgrade path? | Flag in `docs/rewrite/architecture-decisions.md`. |
 | Standalone nginx CORS proxy in front of Meilisearch (`meilisearch/nginx-cors-proxy.conf`) | Not needed — Meilisearch is called server-side from Laravel (via Scout), never directly from the browser, so there's no CORS concern to proxy around | A simplification enabled by the architecture change (server-rendered Livewire vs. a client-side SPA calling Meilisearch's HTTP API directly), not a feature loss. |
 

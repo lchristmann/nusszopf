@@ -1,6 +1,6 @@
 #!/bin/sh
 # P-11 (docs/release/parity/P-11-search-recovery.md): the search-index recovery drill. The search index is derived
-# from PostgreSQL; losing it must be repaired by the documented procedure (docs/deployment/operations.md, "Search
+# from PostgreSQL; losing it must be repaired by the documented procedure (docs/handbuch/betrieb.md, "Suchindex
 # index recovery"), without a database restore and without knowledge that is not written down.
 #
 #   1. A new Docker host (docker:dind) with this working copy's release, installed with install.sh and filled with
@@ -8,7 +8,7 @@
 #   2. The reference: every search answer (tests/SearchRecovery/probe.php: queries x filters x "Mehr laden" pages,
 #      through the search page's own query side), the page in a real browser (tests/SearchRecovery/browser.mjs), and
 #      the index's documents and settings (tests/Upgrade/snapshot.sh).
-#   3. Four ways to lose the index, each followed by the operations.md block as printed, and a comparison with the
+#   3. Four ways to lose the index, each followed by the betrieb.md block as printed, and a comparison with the
 #      reference:
 #        a. the meilisearch-data volume is deleted: Meilisearch starts empty, with no index at all;
 #        b. the same, but visitors keep writing before the operator notices: live indexing creates the index with
@@ -62,12 +62,12 @@ meili() {
 json() { python3 -c "import json, sys; d = json.load(sys.stdin); print($1)"; }
 tinker() { on "docker compose exec -T php-fpm php artisan tinker --execute '$1'" > "$WORK/tinker.out" 2>&1 || fail "tinker: $(tail -5 "$WORK/tinker.out")"; }
 
-# The code block after the "scripts/search-recovery-test.sh runs this block" marker in operations.md, as printed.
+# The code block after the "scripts/search-recovery-test.sh runs this block" marker in docs/handbuch/betrieb.md, as printed.
 doc_block() {
     awk -v n="$1" '
         /<!-- P-11: scripts\/search-recovery-test.sh runs this block/ { c++; if (c == n) found = 1; next }
         found && /^```/ { if (inside) exit; inside = 1; next }
-        found && inside' "$ROOT/docs/deployment/operations.md"
+        found && inside' "$ROOT/docs/handbuch/betrieb.md"
 }
 
 wait_for_idle_queue() {
@@ -132,7 +132,7 @@ expected_documents() {
              + (select count(*) from project_requests r join projects p on p.id = r.project_id where p.visibility = 'public')"
 }
 
-# recover <name> <block>: the n-th marked block of operations.md, "Search index recovery", as printed; then wait until
+# recover <name> <block>: the n-th marked block of betrieb.md, "Suchindex", as printed; then wait until
 # the queue worker has written every document.
 recover() {
     started="$(date +%s)"
@@ -168,9 +168,9 @@ wipe_volume() {
     [ "$(meili GET /indexes | json 'd["total"]')" = "0" ] || fail "Meilisearch still has an index after its volume was deleted"
 }
 
-doc_block 1 | grep -q "search:reindex" || fail "operations.md has no marked search recovery block"
-doc_block 2 | grep -q "meilisearch-data" || fail "operations.md has no marked block for a Meilisearch that does not start"
-echo "The documented recovery (operations.md, \"Search index recovery\"):"
+doc_block 1 | grep -q "search:reindex" || fail "betrieb.md has no marked search recovery block"
+doc_block 2 | grep -q "meilisearch-data" || fail "betrieb.md has no marked block for a Meilisearch that does not start"
+echo "The documented recovery (betrieb.md, \"Suchindex\"):"
 doc_block 1 | sed 's/^/     /'
 echo "and, if Meilisearch itself does not start:"
 doc_block 2 | sed 's/^/     /'

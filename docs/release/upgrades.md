@@ -1,18 +1,8 @@
 # Upgrades
 
-## Reference finding (Waffle Dashboard, Confirmed)
-
-The documented operator upgrade procedure (`docs/WAFFLE-INSTALLATION-GUIDE.md` → "Waffle Upgrade Guide") is deliberately minimal:
-
-1. Edit the image version tag(s) in `docker-compose.yaml` to the desired release.
-2. `docker compose down` then `docker compose up -d`.
-3. Data is preserved because it lives in named Docker volumes (Postgres data volume, Laravel storage volume), not in the containers.
-
-No explicit backup-before-upgrade step is called out in the upgrade guide itself, even though a full backup/restore procedure exists elsewhere in the same document (see `docs/references/waffle-dashboard.md`). No explicit migration step is documented — it is implied that migrations run automatically when the new `php-fpm` container starts, but the guide does not state where in the container lifecycle this happens (**Unknown** — would require inspecting the Dockerfile/entrypoint, which belongs to infrastructure archaeology, not this FOSS-lifecycle archaeology).
-
 ## Recommendation for Nusszopf (the reasoning; implemented and tested below)
 
-Nusszopf's operator-facing upgrade guide (to live in `docs/deployment/README.md` and be cross-referenced here) should be more explicit than the reference, because Nusszopf is meant to be operable by "a person who has never seen the source code" (`CLAUDE.md` → Self-hosting):
+Nusszopf's operator-facing upgrade guide (to live in `docs/handbuch/installation.md` and be cross-referenced here) should be more explicit than the reference, because Nusszopf is meant to be operable by "a person who has never seen the source code" (`CLAUDE.md` → Self-hosting):
 
 1. **Read the release notes / `CHANGELOG.md` for the target version first**, specifically for any `**Breaking:**`/`**Migration required:**` tagged entries (see [`breaking-changes.md`](breaking-changes.md)).
 2. **Take a backup** (database dump + storage volume archive) before upgrading — make this an explicit, non-optional step in the documented procedure, not just something covered in a separate backup section the operator has to know to go read.
@@ -23,7 +13,7 @@ Nusszopf's operator-facing upgrade guide (to live in `docs/deployment/README.md`
 
 ## Implemented (operational track O-1, 2026-09-22)
 
-The recommended procedure exists and is verified as `docs/deployment/operations.md`, "Upgrades": change `NUSSZOPF_VERSION`, `docker compose pull`, `docker compose up -d`. The entrypoint of the `php-fpm` container
+The recommended procedure exists and is verified as `docs/handbuch/deployment.md`: change `NUSSZOPF_VERSION`, `docker compose pull`, `docker compose up -d`. The entrypoint of the `php-fpm` container
 applies pending migrations (`migrate --force --isolated`) and rebuilds the caches before it serves, so migrations are an explicit, tested behavior of Nusszopf's own entrypoint; `queue-worker` and `scheduler` wait for it.
 Verifying health afterwards is `docker compose ps` and `php artisan nusszopf:health`.
 
@@ -40,7 +30,7 @@ populated data, and changed the procedure:
   that are new. `docker compose pull` and `docker compose up -d` follow, as before.
 - **Recommendation step 6 is settled as follows.** Rollback means restoring the pre-upgrade backup, never
   `migrate:rollback`. Starting the previous release on the newer schema is allowed only where the release notes say
-  so. Details: `docs/deployment/operations.md`, "Rollback". P-10 drilled that rollback from `8c4a2eb`: the restore
+  so. Details: `docs/handbuch/deployment.md`, "Zurückgehen (Rollback)". P-10 drilled that rollback from `8c4a2eb`: the restore
   empties the database first, because `pg_restore --clean` onto a newer schema left a mix that could not be
   upgraded again (P10-03).
 
@@ -62,6 +52,6 @@ populated installations, then in P-16 between two published releases: `1.0.0-rc.
 on populated data with a signed-in session and queued work (they survived), the whole browser suite afterwards, on amd64
 and natively on arm64, and `install.sh --upgrade` fetched from `releases/download/<version>/`
 (`scripts/upgrade-test.sh` and `scripts/release-upgrade-check.sh`, with `RELEASE_TAG`). Nusszopf's own procedure is
-`docs/deployment/operations.md`, "Upgrades" and "Rollback". `--upgrade` without a version asks for GitHub's "latest",
+`docs/handbuch/deployment.md`. `--upgrade` without a version asks for GitHub's "latest",
 which never is a pre-release: until `1.0.0` exists, name the version. The "Recommendation" section above is kept as the
 reasoning that led to it.

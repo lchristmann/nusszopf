@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * "Demo ausprobieren": signs the visitor in as the shared demo account with no credentials (docs/deployment/demo.md).
+ * "Demo ausprobieren": signs the visitor in as the shared demo account with no credentials (docs/handbuch/demo.md).
  * Answers 404 unless demo mode is on, and never replaces the session of someone signed in as a real account.
  */
 class DemoLoginController extends Controller

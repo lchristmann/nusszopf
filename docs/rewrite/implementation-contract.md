@@ -131,5 +131,4 @@ historical evidence proves the concept is part of the product — none currently
 role — confirmed absent from the entire historical system; do not add one without new, explicit,
 approved evidence (this was already miscopied once from the reference projects into the self-hosting
 installation guide and has been corrected — see `docs/rewrite/specification-review.md` SR-002; do
-not reintroduce it). Do not copy LCxHolz's or Waffle Dashboard's product/domain behavior, only their
-engineering-discipline and FOSS-lifecycle patterns respectively.
+not reintroduce it). Do not copy any reference project's product/domain behavior.

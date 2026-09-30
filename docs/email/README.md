@@ -30,7 +30,7 @@ through a real provider on the production stack: `docs/release/parity/P-13-email
 
 - **Transport:** Laravel's mail abstraction, `MAIL_MAILER`. **Resend is the recommended provider**; an SMTP relay is
   supported. There is no Nusszopf-specific provider layer (`docs/rewrite/decisions-register.md`, "Mail provider").
-  Setup for operators: `docs/deployment/README.md`, "Sending mail"; running it: `docs/deployment/operations.md`, "Mail".
+  Setup for operators: `docs/handbuch/konfiguration.md`, "Mailversand"; running it: `docs/handbuch/betrieb.md`, "Mail im Betrieb".
 - **Sender:** `MAIL_FROM_ADDRESS`/`MAIL_FROM_NAME` for every mail (an address on a domain the provider has verified).
   The human contact address shown in bodies and footers is `NUSSZOPF_CONTACT_EMAIL`, falling back to the sender.
 - **Format:** HTML only, with no plain-text part (decision P13-03). Only the contact mail has a `Reply-To` (the visitor).

@@ -16,9 +16,8 @@ that before you publish details; you are credited in the advisory if you wish.
 
 ## Supported versions
 
-Only the **latest release** receives security fixes. There is no release yet (`docs/release/versioning.md`); until
-there is one, the `main` branch is what is supported. Operators should stay on the latest release
-(`docs/deployment/operations.md`, "Upgrades").
+Only the **latest release** receives security fixes (`docs/release/versioning.md`). Operators should stay on the latest release
+(`docs/handbuch/deployment.md`).
 
 ## What is in scope
 
@@ -35,5 +34,5 @@ server or an operator's misconfiguration that the documentation warns against, a
 
 How authorization, secrets, rate limits, headers and the deployment are handled is described in
 `docs/security/README.md` (requirements) and `docs/release/parity/P-04-security.md` (the security review and its
-findings). The operator's side (reverse proxy and TLS, secrets, backups, upgrades) is in `docs/deployment/README.md`
-and `docs/deployment/operations.md`.
+findings). The operator's side (reverse proxy and TLS, secrets, backups, upgrades) is in `docs/handbuch/installation.md`
+and `docs/handbuch/betrieb.md`.

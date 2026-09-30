@@ -82,7 +82,7 @@ echo "pull: $((pulled - started)) s, start to healthy: $(($(date +%s) - pulled))
 
 step "The release runs"
 echo "host $(uname -m); images: $(docker image inspect --format '{{.Architecture}}' "ghcr.io/lchristmann/nusszopf-php-fpm:$TAG" "ghcr.io/lchristmann/nusszopf-web:$TAG" | tr '\n' ' ')"
-# The queue worker and the scheduler prove themselves with a heartbeat per minute (docs/deployment/README.md).
+# The queue worker and the scheduler prove themselves with a heartbeat per minute (docs/handbuch/betrieb.md).
 i=0
 until docker compose exec -T php-fpm php artisan nusszopf:health > health.out 2>&1 && ! grep -q "FAILED" health.out; do
     i=$((i + 1)); [ "$i" -le 40 ] || { cat health.out; fail "nusszopf:health did not turn healthy within 200 s"; }

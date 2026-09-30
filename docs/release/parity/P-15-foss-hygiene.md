@@ -1,6 +1,6 @@
 # P-15 FOSS repository hygiene (2026-09-26)
 
-Exit evidence (`master-roadmap.md` §4): "Checklist against Waffle Dashboard's repository layout". The phase covers:
+Exit evidence (`master-roadmap.md` §4): a checklist against a comparable FOSS project's repository layout. The phase covers:
 LICENSE, CONTRIBUTING, SECURITY.md, CODE_OF_CONDUCT, issue/PR templates, third-party license notices, asset provenance
 (A-5), Dependabot/Renovate, the `.env.example` audit and "no secrets in history" (roadmap §7.5, item 21).
 
@@ -13,12 +13,12 @@ that only the maintainer can change from their account, and the first run of the
 ## 1. Method
 
 1. Read the roadmap row and §7.5, the parity report, the P-4 secret-handling notes, decisions A-4, A-5, A-8 and A-10,
-   `docs/references/waffle-dashboard.md`, `README.md`, `README-DEV.md`, `docs/development/*` and the release documents.
-2. Took the three historical repositories and Waffle Dashboard from GitHub (public, at the revisions of
-   `docs/rewrite/source-map.md`) into a scratch directory, because the `../historical` and `../foss-reference` checkouts
-   the documents name are not on this machine. LCxHolz is not public and could not be read; nothing here needed it.
+   `README.md`, `README-DEV.md`, `docs/development/*` and the release documents.
+2. Took the three historical repositories and a comparable FOSS project from GitHub (public, at the revisions of
+   `docs/rewrite/source-map.md`) into a scratch directory, because the local checkouts the documents name were not on
+   this machine.
 3. Inventoried what the repository has (`git ls-files`, the workflows, the ignore files) against the list above and
-   against what the historical repositories and Waffle Dashboard have.
+   against what the historical repositories and the comparison project have.
 4. Audited licenses from the lock files, the production build output and the assets (section 4), and the environment
    templates against every `env()` call of the code.
 5. Scanned the secrets (section 3) and the dependencies (section 4).
@@ -111,13 +111,13 @@ Not run: the Playwright and production-image suites and the visual suite (its `r
 database, and the legal pages are already listed as an accepted difference in `docs/testing/visual-regression.md`; no
 other screen changed), and the workflows themselves on GitHub (D7).
 
-## 7. Checklist against Waffle Dashboard's repository layout
+## 7. Checklist against a comparable FOSS project's repository layout
 
-Waffle Dashboard's root (checked out from GitHub at `0f57a0b`) has `LICENSE`, `README.md`, `DEVELOPER-DOCS.md`,
+The comparison project's root (checked out from GitHub) has `LICENSE`, `README.md`, `DEVELOPER-DOCS.md`,
 `.env.example`, `docker-compose.yaml`, `compose.dev.yaml`, `compose.prod.yaml`, `.dockerignore`, `.editorconfig`,
 `.gitattributes`, `.gitignore`, `docs/` (an installation guide and a contribution guide), and no `.github` directory.
 
-| Waffle Dashboard | Nusszopf |
+| Comparison project | Nusszopf |
 |---|---|
 | `LICENSE`, `README.md` | Yes, and `NOTICE` |
 | `DEVELOPER-DOCS.md` | `README-DEV.md` and `docs/development/` |

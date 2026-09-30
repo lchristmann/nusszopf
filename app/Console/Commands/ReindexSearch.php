@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Queue;
 use Throwable;
 
 /**
- * The documented search recovery path (docs/deployment/operations.md): the
+ * The documented search recovery path (docs/handbuch/betrieb.md): the
  * index is derived data, so an empty, stale or wrongly configured one is
  * rebuilt from PostgreSQL. Historically no such operation existed
  * (docs/search/README.md, "Indexing triggers"); BUG-008 asks for reproducible

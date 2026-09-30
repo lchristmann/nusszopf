@@ -4,5 +4,5 @@ contact_links:
     url: https://github.com/lchristmann/nusszopf/security/advisories/new
     about: Please do not open a public issue for a vulnerability. See SECURITY.md.
   - name: Installing or running Nusszopf
-    url: https://github.com/lchristmann/nusszopf/blob/main/docs/deployment/operations.md
-    about: The operator's handbook has the troubleshooting table. Check it before opening an issue.
+    url: https://github.com/lchristmann/nusszopf/blob/main/docs/handbuch/fehlerbehebung.md
+    about: Das Handbuch hat eine Tabelle zur Fehlerbehebung (auf Deutsch). Schau dort nach, bevor Du ein Issue öffnest.

@@ -106,7 +106,7 @@ return [
     | turns it on. It offers one shared demo account with fictional sample data
     | that anyone can enter with one button (no password exists), guarded against
     | destructive changes, and reset by `demo:reset` every hour
-    | (docs/deployment/demo.md). It also swaps Home's newsletter form for an
+    | (docs/handbuch/demo.md). It also swaps Home's newsletter form for an
     | explanation, so the demo never collects real addresses from Home.
     |
     */

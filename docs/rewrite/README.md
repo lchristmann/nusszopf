@@ -12,7 +12,7 @@ The rewrite replaces technology, not product identity.
 Reproduce historical behavior, domain, UI, navigation, workflows, permissions, search, authentication, and emails.
 
 ### Engineering quality
-Reach the engineering discipline demonstrated by LCxHolz: testing, automation, CI, static analysis, documentation, reproducible development, and maintainable architecture.
+Reach a high standard of engineering discipline: testing, automation, CI, static analysis, documentation, reproducible development, and maintainable architecture.
 
 ### Operator experience
 Make installation, configuration, operation, upgrades, backups, and recovery straightforward.

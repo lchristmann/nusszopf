@@ -14,7 +14,7 @@ class UserPolicy
 {
     /**
      * Upload/replace own avatar: self-only. The shared demo account is the one exception: it belongs to every
-     * visitor at once, so nobody may change it (docs/deployment/demo.md).
+     * visitor at once, so nobody may change it (docs/handbuch/demo.md).
      */
     public function update(User $user, User $target): bool
     {

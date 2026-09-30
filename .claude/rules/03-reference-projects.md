@@ -2,10 +2,6 @@
 
 Historical Nusszopf: product/domain/UI/behavior.
 
-LCxHolz: developer experience, Laravel/Docker conventions, documentation, testing, automation.
-
-Waffle Dashboard: FOSS lifecycle, releases, versioning, CI/CD, maintenance.
-
-Laravel Docker examples: Docker implementation reference.
+Laravel Docker examples: Docker implementation reference (`docs/references/laravel-docker-examples.md`).
 
 Do not mix these responsibilities.

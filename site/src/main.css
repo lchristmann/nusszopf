@@ -34,3 +34,217 @@ html {
     font-family:
         ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
 }
+
+/*
+ * Das Handbuch (docs/handbuch/, gerendert von scripts/build-docs.mjs). Nur Layout und Fließtext;
+ * Farben, Schriftgrößen und Knöpfe kommen aus denselben Token und nz-* Klassen wie der Rest.
+ */
+.doc-plain-link {
+    @apply text-steel-700 hover:text-steel-500;
+}
+
+.doc-layout {
+    @apply grid grid-cols-1 gap-x-12 py-8 lg:grid-cols-[16rem_minmax(0,1fr)] xl:grid-cols-[16rem_minmax(0,1fr)_14rem];
+}
+.doc-main {
+    @apply min-w-0 pb-16;
+}
+
+/* Menü: auf schmalen Bildschirmen aufklappbar, ab lg als feste Seitenleiste. */
+.doc-menu {
+    @apply mb-6 rounded-lg border-2 border-steel-200 bg-steel-50 p-4 lg:hidden;
+}
+.doc-menu summary {
+    @apply cursor-pointer text-lg font-semibold;
+}
+.doc-menu nav {
+    @apply mt-4;
+}
+.doc-sidebar {
+    @apply hidden lg:sticky lg:top-6 lg:block lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto lg:pr-2;
+}
+.doc-nav-group {
+    @apply mb-6;
+}
+.doc-nav-title {
+    @apply mb-2 text-base font-bold uppercase tracking-wide text-steel-500;
+}
+.doc-nav-link {
+    @apply block rounded-md px-3 py-1.5 text-lg text-steel-700 hover:bg-steel-100;
+}
+.doc-nav-link[aria-current='page'] {
+    @apply bg-steel-700 font-semibold text-white hover:bg-steel-700;
+}
+
+.doc-toc {
+    @apply hidden xl:sticky xl:top-6 xl:block xl:max-h-[calc(100vh-3rem)] xl:self-start xl:overflow-y-auto;
+}
+.doc-toc a {
+    @apply block border-l-2 border-steel-200 py-1 pl-3 text-base text-steel-500 hover:border-steel-500 hover:text-steel-800;
+}
+.doc-toc .toc-l3 a {
+    @apply pl-6;
+}
+
+/* Fließtext. */
+.doc {
+    @apply max-w-3xl text-lg leading-relaxed text-steel-700;
+}
+.doc h1 {
+    @apply hidden;
+}
+.doc h2 {
+    @apply mb-4 mt-12 text-2xl font-bold leading-snug text-steel-800 first:mt-0;
+}
+.doc h3 {
+    @apply mb-3 mt-8 text-xl font-bold leading-snug text-steel-800;
+}
+.doc h4 {
+    @apply mb-2 mt-6 text-lg font-bold text-steel-800;
+}
+.doc h2 .header-anchor,
+.doc h3 .header-anchor {
+    @apply ml-2 text-steel-300 no-underline opacity-0 transition-opacity;
+}
+.doc h2:hover .header-anchor,
+.doc h3:hover .header-anchor,
+.doc .header-anchor:focus {
+    @apply opacity-100;
+}
+.doc p,
+.doc ul,
+.doc ol,
+.doc figure,
+.doc .table-wrap,
+.doc aside {
+    @apply my-4;
+}
+.doc ul {
+    @apply list-disc pl-6;
+}
+.doc ol {
+    @apply list-decimal pl-6;
+}
+.doc li {
+    @apply my-1.5 pl-1;
+}
+.doc li > ul,
+.doc li > ol {
+    @apply my-1.5;
+}
+.doc a:not(.header-anchor) {
+    @apply border-b-2 border-steel-300 font-medium text-steel-800 hover:border-steel-700;
+}
+.doc strong {
+    @apply font-semibold text-steel-800;
+}
+.doc hr {
+    @apply my-10 border-steel-200;
+}
+.doc code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+.doc :not(pre) > code {
+    @apply rounded bg-steel-100 px-1.5 py-0.5 text-[0.9em] text-steel-800;
+}
+
+/* Tabellen. */
+.doc .table-wrap {
+    @apply overflow-x-auto rounded-lg border-2 border-steel-200;
+}
+.doc table {
+    @apply w-full border-collapse text-base;
+}
+.doc th {
+    @apply bg-steel-50 px-4 py-2 text-left font-semibold text-steel-800;
+}
+.doc td {
+    @apply border-t border-steel-200 px-4 py-2 align-top;
+}
+.doc td code,
+.doc th code {
+    @apply whitespace-nowrap;
+}
+
+/* Code-Blöcke: dunkle Fläche wie auf der Projektseite, oben eine Zeile für Beschriftung und Kopieren. */
+.doc figure.code {
+    @apply overflow-hidden rounded-lg bg-steel-800 text-stone-200;
+}
+.doc figure.code figcaption {
+    @apply flex items-center justify-between gap-3 border-b border-steel-600 bg-steel-700 px-4 py-1.5 text-sm;
+}
+.doc .code-label {
+    @apply rounded-full px-2.5 py-0.5 text-sm font-semibold text-steel-800;
+}
+.doc .code-label-server {
+    @apply bg-pink-200;
+}
+.doc .code-label-dev {
+    @apply bg-turquoise-300;
+}
+.doc .code-label-plain {
+    @apply bg-steel-200;
+}
+.doc .code-copy {
+    @apply cursor-pointer rounded px-2 py-0.5 text-sm text-steel-200 hover:bg-steel-600;
+}
+.doc .code-copy[data-done] {
+    @apply text-turquoise-300;
+}
+.doc figure.code pre {
+    @apply overflow-x-auto p-4 text-[0.95rem] leading-relaxed;
+}
+.doc figure.code code {
+    @apply whitespace-pre;
+}
+.doc .tok-comment {
+    @apply text-steel-300;
+}
+
+/* Hinweiskästen: > [!NOTE], [!TIP], [!IMPORTANT], [!WARNING], [!CAUTION]. */
+.doc .callout {
+    @apply rounded-lg border-l-4 px-5 py-4;
+}
+.doc .callout > :last-child {
+    @apply mb-0;
+}
+.doc .callout p {
+    @apply my-2;
+}
+.doc .callout-title {
+    @apply mb-1 mt-0 text-base font-bold uppercase tracking-wide;
+}
+.doc .callout-note {
+    @apply border-steel-500 bg-steel-100;
+}
+.doc .callout-tip {
+    @apply border-turquoise-500 bg-turquoise-100;
+}
+.doc .callout-important {
+    @apply border-blue-500 bg-blue-100;
+}
+.doc .callout-warning {
+    @apply border-yellow-500 bg-yellow-100;
+}
+.doc .callout-caution {
+    @apply border-pink-500 bg-pink-100;
+}
+
+.doc-pager {
+    @apply mt-12 grid max-w-3xl gap-4 sm:grid-cols-2;
+}
+.doc-pager a {
+    @apply block rounded-lg border-2 border-steel-200 px-5 py-4 text-lg font-semibold text-steel-800 hover:border-steel-500;
+}
+.doc-pager a span {
+    @apply block text-sm font-medium uppercase tracking-wide text-steel-500;
+}
+.doc-pager-next {
+    @apply sm:text-right;
+}
+.doc-edit {
+    @apply mt-6 text-base text-steel-500;
+}
+.doc-edit a {
+    @apply border-b-2 border-steel-300 hover:border-steel-700;
+}

@@ -45,7 +45,7 @@ updates:
     schedule: { interval: weekly }
     ignore:
       # Stored data: a new major (PostgreSQL, Redis) or minor (Meilisearch) needs a dump/import or a reindex and the
-      # upgrade drills (docs/deployment/operations.md), so it is never proposed automatically.
+      # upgrade drills (docs/handbuch/betrieb.md), so it is never proposed automatically.
       - dependency-name: postgres
         update-types: ["version-update:semver-major"]
       - dependency-name: redis
