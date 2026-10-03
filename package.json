@@ -21,21 +21,21 @@
         "vite": "^8.3.1"
     },
     "optionalDependencies": {
-        "@laravel/multiplex": "^0.4.4"
+        "@laravel/multiplex": "^0.4.5"
     },
     "dependencies": {
         "@fontsource/barlow": "^5.3.0",
-        "@tiptap/core": "^3.31.3",
+        "@tiptap/core": "^3.31.4",
         "@tiptap/extension-bold": "^3.31.3",
         "@tiptap/extension-bullet-list": "^3.31.3",
         "@tiptap/extension-italic": "^3.31.3",
         "@tiptap/extension-link": "^3.31.3",
         "@tiptap/extension-list-item": "^3.31.3",
         "@tiptap/extension-ordered-list": "^3.31.3",
-        "@tiptap/extension-placeholder": "^3.31.3",
+        "@tiptap/extension-placeholder": "^3.31.4",
         "@tiptap/extension-underline": "^3.31.3",
-        "@tiptap/pm": "^3.31.3",
-        "@tiptap/starter-kit": "^3.31.3",
+        "@tiptap/pm": "^3.31.4",
+        "@tiptap/starter-kit": "^3.31.4",
         "cropperjs": "^1.6.2"
     }
 }
