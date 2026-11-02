@@ -6,6 +6,11 @@ inline (`**Breaking:**`, `**Migration required:**`); see `docs/release/changelog
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-11-02
+
+Security release: there is no migration, no new setting and nothing to do beyond the usual upgrade
+(`docs/handbuch/deployment.md`).
+
 ### Security
 
 - Dependency update closing two advisories: `livewire/livewire` 4.4.6→4.4.8 (GHSA-mhf7-xp6r-6qrc, authorization bypass in
