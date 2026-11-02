@@ -22,11 +22,12 @@ class ExportSubscribers extends Command
 {
     public function handle(): int
     {
-        $path = $this->option('output');
-        $handle = fopen(is_string($path) && $path !== '' ? $path : 'php://output', 'w');
+        $option = $this->option('output');
+        $path = is_string($option) && $option !== '' ? $option : null;
+        $handle = fopen($path ?? 'php://output', 'w');
 
         if ($handle === false) {
-            $this->error("Cannot write to {$path}.");
+            $this->error('Cannot write to '.($path ?? 'php://output').'.');
 
             return self::FAILURE;
         }

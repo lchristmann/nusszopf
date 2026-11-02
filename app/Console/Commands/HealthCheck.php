@@ -19,7 +19,7 @@ class HealthCheck extends Command
     {
         $checks = $health->run();
 
-        if ($only = $this->option('only')) {
+        if (is_string($only = $this->option('only')) && $only !== '') {
             $checks = array_intersect_key($checks, [$only => true]);
 
             if ($checks === []) {
