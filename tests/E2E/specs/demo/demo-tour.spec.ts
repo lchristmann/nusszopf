@@ -54,6 +54,7 @@ test('the demo offers no way to leave a real address: registration explains, and
 test('the demo account cannot be deleted', async ({ page }) => {
     await page.goto('/');
     await page.getByTestId('btn_demo-login_home').click();
+    await expect(page).toHaveURL((url) => url.pathname === '/user/projects');
     await page.goto('/user/profile');
 
     await expect(page.getByTestId('demo-account-note')).toBeVisible();

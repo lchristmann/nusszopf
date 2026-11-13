@@ -6,6 +6,23 @@ inline (`**Breaking:**`, `**Migration required:**`); see `docs/release/changelog
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-11-02
+
+Security release: there is no migration, no new setting and nothing to do beyond the usual upgrade
+(`docs/handbuch/deployment.md`).
+
+### Security
+
+- Dependency update closing two advisories: `livewire/livewire` 4.4.6→4.4.8 (GHSA-mhf7-xp6r-6qrc, authorization bypass in
+  `#[Authorize]`) and `symfony/mime` 8.1.7→8.1.10 (CVE-2026-45070, mail header injection). The Symfony components,
+  `laravel/framework` (13.33→13.39) and other minor/patch dependencies moved with them. There is no migration, no new
+  setting and nothing to do beyond the usual upgrade (`docs/handbuch/deployment.md`).
+
+### Fixed
+
+- A queued welcome or verification mail whose account was deleted before the worker sent it is dropped again instead of
+  landing in `failed_jobs` (Laravel 13.39 had stopped honouring the flag).
+
 ## [1.0.1] - 2026-09-30
 
 Documentation and links only: there is no migration, no new required setting and nothing to do for an ordinary installation

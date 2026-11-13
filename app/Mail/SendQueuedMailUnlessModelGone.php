@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use Illuminate\Contracts\Mail\Mailable as MailableContract;
 use Illuminate\Mail\SendQueuedMailable;
 
 /**
@@ -18,4 +19,15 @@ use Illuminate\Mail\SendQueuedMailable;
 class SendQueuedMailUnlessModelGone extends SendQueuedMailable
 {
     public bool $deleteWhenMissingModels = true;
+
+    /**
+     * Since Laravel 13.39 the parent constructor overwrites the flag from the mailable (false when it sets none), so
+     * it is set again afterwards.
+     */
+    public function __construct(MailableContract $mailable)
+    {
+        parent::__construct($mailable);
+
+        $this->deleteWhenMissingModels = true;
+    }
 }
