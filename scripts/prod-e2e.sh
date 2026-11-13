@@ -17,7 +17,7 @@ VERSION="e2e"
 PROJECT="nusszopf-prod-e2e"
 WORK="$(mktemp -d)"
 BASE="http://127.0.0.1:$PORT"
-PLAYWRIGHT_IMAGE="mcr.microsoft.com/playwright:v1.63.0-noble"
+PLAYWRIGHT_IMAGE="mcr.microsoft.com/playwright:v1.65.0-noble"
 
 compose() {
     NUSSZOPF_BUILD_CONTEXT="$ROOT" docker compose -p "$PROJECT" -f docker-compose.yaml -f "$ROOT/compose.prod.yaml" \

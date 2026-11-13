@@ -44,7 +44,7 @@ MAILPIT_PORT="${RESTORE_MAILPIT_PORT:-18125}"
 BASE="http://127.0.0.1:$PORT"
 WORK="$(mktemp -d)"
 DIND_IMAGE="docker:28-dind"
-PLAYWRIGHT_IMAGE="mcr.microsoft.com/playwright:v1.63.0-noble"
+PLAYWRIGHT_IMAGE="mcr.microsoft.com/playwright:v1.65.0-noble"
 HOSTS="nusszopf-restore-source nusszopf-restore-target nusszopf-restore-rollback"
 
 cleanup() {
