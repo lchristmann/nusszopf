@@ -26,7 +26,7 @@ if [ -n "${RELEASE_TAG:-}" ]; then OLD="$FROM"; NEW="$RELEASE_TAG"; fi
 PORT="${UPGRADE_PORT:-18093}"
 BASE="http://127.0.0.1:$PORT"
 WORK="$(mktemp -d)"
-PLAYWRIGHT_IMAGE="mcr.microsoft.com/playwright:v1.63.0-noble"
+PLAYWRIGHT_IMAGE="mcr.microsoft.com/playwright:v1.65.0-noble"
 
 export COMPOSE_PROJECT_NAME="nusszopf-upgrade"
 export COMPOSE_FILE="docker-compose.yaml:$ROOT/tests/E2E/production/compose.e2e.yaml"
