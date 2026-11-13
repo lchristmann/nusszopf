@@ -33,7 +33,7 @@ PORT="${SEARCH_RECOVERY_PORT:-18111}"
 BASE="http://127.0.0.1:$PORT"
 WORK="$(mktemp -d)"
 DIND_IMAGE="docker:28-dind"
-PLAYWRIGHT_IMAGE="mcr.microsoft.com/playwright:v1.63.0-noble"
+PLAYWRIGHT_IMAGE="mcr.microsoft.com/playwright:v1.65.0-noble"
 HOST="nusszopf-search-recovery"
 
 cleanup() {
