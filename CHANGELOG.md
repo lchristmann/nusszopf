@@ -6,6 +6,13 @@ inline (`**Breaking:**`, `**Migration required:**`); see `docs/release/changelog
 
 ## [Unreleased]
 
+### Security
+
+- Dependency update closing an advisory: `phpseclib/phpseclib` 4.0.1→4.0.3 (GHSA-w3p9-g4p2-h3rr, unbounded PBKDF
+  iteration count in encrypted key/PFX/CMS parsing enabling CPU-exhaustion DoS), pulled in transitively by
+  `laravel/socialite`. There is no migration, no new setting and nothing to do beyond the usual upgrade
+  (`docs/handbuch/deployment.md`).
+
 ## [1.0.2] - 2026-11-02
 
 Security release: there is no migration, no new setting and nothing to do beyond the usual upgrade
